@@ -1,5 +1,17 @@
 # Track 10 — Spec-driven development with BMAD
 
+> **About this track.** [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD)
+> is an MIT-licensed project by bmad-code-org. This track is **my reading of
+> it, not its documentation** — it is opinionated, it sometimes disagrees
+> with how the project presents itself, and it will drift as the upstream
+> changes. Go to the source for anything authoritative.
+>
+> It is here because BMAD independently arrives at the pattern this repo is
+> about: an append-only log (`.memlog.md`) that a contract (`SPEC.md`) is
+> *derived* from, never hand-merged. See
+> [the README](../../README.md#the-same-shape-three-times).
+
+
 **~90 minutes. Requires a project with `_bmad/` and `uv` installed.**
 
 BMAD is **hub-and-spoke**, not a pipeline. The spec is the hub. All analysis

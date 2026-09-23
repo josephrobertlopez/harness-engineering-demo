@@ -1,5 +1,16 @@
 # Track 20 — LLM Wiki
 
+> **About this track.** [LLM Wiki](https://github.com/nvk/llm-wiki) is an
+> MIT-licensed project by nvk ([llm-wiki.net](https://llm-wiki.net/)). This
+> track is **my reading of it, not its documentation** — opinionated, and
+> it will drift as the upstream changes. Go to the source for anything
+> authoritative.
+>
+> It is here because LLM Wiki is the clearest working example of the
+> pattern this repo is about: `raw/` is immutable, articles and indexes are
+> *derived*, and you never hand-maintain the derived thing. See
+> [the README](../../README.md#the-same-shape-three-times).
+
 **~90 minutes. WebFetch and WebSearch required.**
 
 Build a research knowledge base from URLs, documents, and PDFs. One command

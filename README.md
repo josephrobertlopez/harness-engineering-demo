@@ -5,7 +5,27 @@ measurably help.**
 
 A working implementation of **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
 *Compiling Agent Experience into Persistent Knowledge for Skill Evolution*),
-plus five tutorial tracks built on top of it.
+and five tutorial tracks about why that method is a specific case of a more
+general shape.
+
+## The same shape, three times
+
+Knowledge compounds when **the thing you edit and the thing you read are
+different objects**. Three tools arrive at that independently:
+
+| | append-only source | derived artifact | the rule |
+|---|---|---|---|
+| [**LLM Wiki**](#credits) | `raw/` — re-ingest, never overwrite | `wiki/` articles, every `_index.md` | never hand-maintain the index |
+| [**BMAD**](#credits) | `.memlog.md` | `SPEC.md` | a hand-edit is overwritten on the next derive |
+| **This harness** | traces in `raw/`, patterns in `wiki/` | `skills/` | rollback is "never move HEAD" |
+
+That separation is what lets LLM Wiki research a topic across ten parallel
+agents and still compile one coherent article; what lets BMAD absorb a PRD
+and a UX doc *in any order* without merge conflicts; and what lets this
+harness throw away a skill without losing the analysis that produced it.
+
+WikiSkill is the formal version of the argument. This repo is the version
+you can measure.
 
 Measured here, with real models: a held-out test split went from **0.400 to
 1.000** after one iteration of the loop. The full numbers and the caveats
@@ -238,6 +258,24 @@ Caveats worth stating: five test tasks, so 0.400 is 2/5 and 1.000 is 5/5.
 And converging in one iteration means this benchmark demonstrates that a
 skill helps -- not yet that knowledge *compounds across iterations*, which is
 the paper's actual claim. A harder task set is the next thing this repo needs.
+
+## Credits
+
+Two of the five tracks are about tools I did not write. Both are MIT
+licensed and worth your time on their own terms:
+
+| Project | Author | Source |
+|---|---|---|
+| **BMAD-METHOD** — spec-driven development for AI-assisted work | bmad-code-org | [github.com/bmad-code-org/BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) |
+| **LLM Wiki** — LLM-compiled knowledge bases for any agent | nvk | [github.com/nvk/llm-wiki](https://github.com/nvk/llm-wiki) · [llm-wiki.net](https://llm-wiki.net/) |
+
+**Tracks 10 and 20 are my reading of those projects, not their
+documentation.** They are opinionated, they occasionally disagree with how
+the tools present themselves, and they will drift as the upstreams change.
+Go to the source for anything authoritative.
+
+The method implemented here is from arXiv 2608.27454. The implementation,
+its two documented deviations, and every bug in it are mine.
 
 ## Licence
 

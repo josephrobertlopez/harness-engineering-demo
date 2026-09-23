@@ -1,19 +1,38 @@
 # Tutorials
 
-Five tracks. Two are **graded** — you write something and the harness scores
-it. Three are **guided** — real lessons, but they need a live agent, so
-there is nothing to check offline.
+Five tracks, grouped by their role in the argument the repo makes: that
+knowledge compounds when **the thing you edit and the thing you read are
+different objects** (see [the README](../README.md#the-same-shape-three-times)).
 
-Start with whichever one matches the problem you have. They are independent;
-only 00 and 30 reference each other.
+Two are **graded** — you write something and the harness scores it, offline.
+Three are **guided**: real lessons, but they need a live agent, so there is
+nothing honest to check without one.
+
+They are independent. Start wherever your problem is.
+
+### The pattern — two tools that already do this
+
+Both are other people's MIT-licensed projects, credited in
+[the README](../README.md#credits). These tracks are my reading of them,
+not their documentation.
 
 | Track | What you learn | Graded | Time |
 |---|---|---|---|
-| [00 — Prompting, measured](00-prompting/README.md) | What prompting can and cannot fix; rubric scoring; the seven anti-patterns; specificity | **yes** | ~50 min |
-| [10 — Spec-driven development](10-spec-driven/README.md) | BMAD: the spec as hub, the two slicing routes, the five personas | no | ~60 min |
-| [20 — Compounding knowledge](20-knowledge/README.md) | LLM Wiki: parallel research, credibility review, the three-tier edit rule | no | ~90 min |
-| [30 — Skill authoring](30-skill-authoring/README.md) | Write a skill, measure whether it helped, avoid memorising | **yes** | ~45 min |
-| [40 — Harness engineering](40-harness/README.md) | The three layers, the gate, rollback, resume | no | ~60 min |
+| [20 — Compounding knowledge](20-knowledge/README.md) | LLM Wiki: immutable sources, derived articles, parallel research with independent credibility review | no | ~90 min |
+| [10 — Spec-driven development](10-spec-driven/README.md) | BMAD: an append-only log, a derived spec, and why the two slicing routes must never be mixed | no | ~60 min |
+
+### The mechanism — the same shape, made measurable
+
+| Track | What you learn | Graded | Time |
+|---|---|---|---|
+| [40 — Harness engineering](40-harness/README.md) | Three layers, the gate, rollback, resume — and why the inference agent is structurally denied the wiki | no | ~60 min |
+
+### The practice — doing it yourself, with a number at the end
+
+| Track | What you learn | Graded | Time |
+|---|---|---|---|
+| [00 — Prompting, measured](00-prompting/README.md) | What prompting can and cannot fix; a five-dimension rubric; seven recurring failure patterns | **yes** | ~50 min |
+| [30 — Skill authoring](30-skill-authoring/README.md) | Write a skill, measure whether it helped, avoid memorising the answer | **yes** | ~45 min |
 
 ## If you only have an hour
 

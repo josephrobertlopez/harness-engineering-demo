@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-11 commit(s), oldest first.
+12 commit(s), oldest first.
 
 
 ---
@@ -335,11 +335,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 ---
 
-## `b053f0a` — Preserve directory entries when packaging
+## `929e323` — Preserve directory entries when packaging
 
 - **date:** 2026-09-23
 - **author:** Joseph Lopez
-- **sha:** `b053f0adf72809d1f4a2e243d484c724b9eb86d0`
+- **sha:** `929e323df228a27c7aa23f8649c1eb7c4a7c214f`
 
 `git gc` packs refs into `packed-refs`, which leaves `.git/refs/` empty.
 Zip does not store empty directories, so the extracted copy was missing a
@@ -349,5 +349,44 @@ every directory.
 
 Caught only because the artifact is verified by extracting and running it,
 not by inspecting the file list.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `9962981` — Reframe around the pattern, and credit the projects it borrows from
+
+- **date:** 2026-09-23
+- **author:** Joseph Lopez
+- **sha:** `9962981432c3472ef071e9811c6d8d23ce0cbc50`
+
+The repo presented as "a paper reproduction plus five tutorial tracks",
+which is a list, not an argument. A reader could not tell why BMAD and LLM
+Wiki share a repo with a skill-evolution harness.
+
+They share it because all three are the same shape: an append-only source
+and a derived artifact you never hand-edit. LLM Wiki re-ingests rather than
+overwriting `raw/` and rebuilds every index; BMAD derives `SPEC.md` from a
+memlog and discards hand edits; this harness never rolls back the wiki and
+implements rollback as "never move HEAD". That separation is what lets LLM
+Wiki compile ten parallel agents into one article, lets BMAD absorb a PRD
+and a UX doc in any order, and lets this harness discard a skill without
+losing the analysis behind it.
+
+The README now leads with that and the tutorial index groups tracks by
+their role in it -- the pattern, the mechanism, the practice -- rather than
+by number.
+
+It also fixes a real omission: the repo taught two other people's MIT
+projects across thirteen files and credited neither. No link, no author, no
+licence. On a public repo that reads as though they originated here, and it
+left a reader who wanted to install BMAD with nowhere to go. Both are now
+credited in the README, and tracks 10 and 20 open by saying plainly that
+they are my reading of those projects rather than their documentation --
+which is the only footing on which a track may open by correcting the
+upstream's own framing, as track 10 does.
+
+92 tests pass, including the link checker across the new cross-references.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

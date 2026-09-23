@@ -28,7 +28,9 @@ Never edit `SPEC.md` by hand. It is derived from an append-only log
 
 ### What goes into the spec
 
-Anything, really. The input truncates at roughly 40 pages, and input that is
+Anything, really. Very large inputs are worth splitting rather than pasting
+whole — the skill does not document a hard ceiling, so treat that as caution
+rather than a known limit. Input that is
 too thin ("an app for hikers") bounces to `bmad-product-brief`. But a
 brain dump, a Slack thread, a partial brief, or even a transcript all work.
 

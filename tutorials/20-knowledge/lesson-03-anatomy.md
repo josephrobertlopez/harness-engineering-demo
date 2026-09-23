@@ -83,9 +83,11 @@ Computed from four 25-point dimensions:
 | compile recency | compiled within last week | compiled >3 months ago |
 | source-chain integrity | all upstream sources still exist | dead link in citation chain |
 
-Freshness decays: a `hot` volatile article loses 2–3 points per week; `warm`
-loses 0.5 per week; `cold` does not decay. Run `lint` to check if any article
-fell below the threshold (default 70).
+Each dimension's decay curve is scaled by the article's `volatility` tier —
+`hot` decays Fast, `warm` Moderate, `cold` Slow. The reference documents
+those as qualitative tiers rather than a published formula, so do not expect
+a fixed points-per-week figure. Run `lint` to see which articles fell below
+the threshold (default 70).
 
 ### Volatility
 

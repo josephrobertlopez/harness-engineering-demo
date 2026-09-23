@@ -159,7 +159,7 @@ existing wiki.
 Topics can be archived:
 
 ```bash
-/wiki:archive --project old-topic
+/wiki:archive topic old-topic
 ```
 
 Archived topics are silently skipped by almost every command. If content
@@ -175,9 +175,11 @@ Archived topics are silently skipped by almost every command. If content
 There is no "current project" and no "current topic". Every command that can
 be scoped must be told, every time.
 
-Only five commands take `--project` at all: `audit`, `checkpoint`, `ingest`,
-`project`, and `research`. Everything else scopes with `--wiki <name>`,
-`--topic <name>`, or `--local`.
+Few commands take `--project` at all — `research`, `ingest` and `audit`
+carry it in their argument hints, and `checkpoint` accepts it too. Notably
+`project` does **not**: it is the command you manage projects *with*, and it
+uses subcommands (`new`, `list`, `show`) instead. Everything else scopes with
+`--wiki <name>`, `--topic <name>`, or `--local`.
 
 ```bash
 # scoping a research run to a project -- the project must already exist

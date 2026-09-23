@@ -77,10 +77,12 @@ you are keeping it as reference. Agents see old artifacts and treat them as
 source of truth, creating silent failures: you change the idea, the old
 document contradicts it, and the agent follows the document.
 
-**6. Deprecated skill names still resolve.**
-Old blog posts name `bmad-create-prd` and `bmad-market-research`. These are
-forwarders to the new names (`bmad-prd`, `bmad-deep-recon`) and still work,
-which means a typo can hide for months.
+**6. Older write-ups use names that may not be installed.**
+Blog posts name skills like `bmad-create-prd` and `bmad-market-research`.
+`bmad-prd` still honours a forwarded activation from a `bmad-create-prd`
+shim, but neither name is an installed skill in a current install — check
+`~/.claude/skills/` before assuming a name from an old post still resolves.
+The current equivalents are `bmad-prd` and `bmad-deep-recon`.
 
 ## Where to find real output
 

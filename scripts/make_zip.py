@@ -78,6 +78,20 @@ def main(argv: list[str] | None = None) -> int:
     size_mb = out.stat().st_size / (1024 * 1024)
     print(f"wrote {out}")
     print(f"  {len(files)} files, {size_mb:.1f} MB, git {'included' if not args.no_git else 'omitted'}")
+
+    # Windows refuses paths over 260 characters unless long-path support is
+    # enabled, and it fails during extraction with a bare WinError 206 that
+    # names the directory rather than the cause. Tell people the budget up
+    # front rather than letting them discover it halfway through unzipping.
+    longest = max(
+        (len(str(Path(REPO.name) / p.relative_to(REPO)).replace("/", "\\")) for p in files),
+        default=0,
+    )
+    headroom = 260 - longest
+    print(f"  longest path inside the archive: {longest} chars")
+    print(f"  extract into a directory shorter than {headroom} chars (Windows MAX_PATH)")
+    if headroom < 80:
+        print("  WARNING: little headroom -- extract somewhere short, like C:/dev")
     return 0
 
 

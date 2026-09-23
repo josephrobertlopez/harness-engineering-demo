@@ -3,6 +3,19 @@
 You have a zip. This gets you running in about two minutes, then points you
 at the right document for whatever you actually came to do.
 
+## 0. Where to unzip it (Windows)
+
+Extract somewhere **short** — `C:\dev\` is ideal, your Desktop is fine, a
+nested OneDrive-redirected Documents folder may not be.
+
+The longest path inside the archive is about 120 characters, and Windows
+refuses paths over 260 unless long-path support is enabled. If you extract
+into a deep folder you will get a `WinError 206: The filename or extension
+is too long` partway through, naming a directory rather than the actual
+cause. Nothing is wrong with the archive; move it and extract again.
+
+On macOS and Linux this does not apply.
+
 ## 1. Check you can run it
 
 Python **3.12 or newer**. That is the entire dependency list — no `pip

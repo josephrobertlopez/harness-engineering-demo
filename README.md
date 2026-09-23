@@ -24,8 +24,13 @@ agents and still compile one coherent article; what lets BMAD absorb a PRD
 and a UX doc *in any order* without merge conflicts; and what lets this
 harness throw away a skill without losing the analysis that produced it.
 
-WikiSkill is the formal version of the argument. This repo is the version
-you can measure.
+The arrangement is older than any of them — Niklas Luhmann worked it out in
+the 1950s with a box of index cards. WikiSkill is the formal version; this
+repo is the version you can measure.
+
+**[docs/THESIS.md](docs/THESIS.md) makes the full argument**, traces it from
+Zettelkasten through Second Brain to the two tools above, and is careful to
+separate what is measured here from what is only argued.
 
 Measured here, with real models: a held-out test split went from **0.400 to
 1.000** after one iteration of the loop. The full numbers and the caveats

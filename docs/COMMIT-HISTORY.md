@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-12 commit(s), oldest first.
+13 commit(s), oldest first.
 
 
 ---
@@ -355,11 +355,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 ---
 
-## `9962981` — Reframe around the pattern, and credit the projects it borrows from
+## `733c036` — Reframe around the pattern, and credit the projects it borrows from
 
 - **date:** 2026-09-23
 - **author:** Joseph Lopez
-- **sha:** `9962981432c3472ef071e9811c6d8d23ce0cbc50`
+- **sha:** `733c036c473e84502cc7f7deb0690cc9e9da4adf`
 
 The repo presented as "a paper reproduction plus five tutorial tracks",
 which is a list, not an argument. A reader could not tell why BMAD and LLM
@@ -388,5 +388,50 @@ which is the only footing on which a track may open by correcting the
 upstream's own framing, as track 10 does.
 
 92 tests pass, including the link checker across the new cross-references.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `de2f92c` — Add the thesis, and trace the pattern back to where it came from
+
+- **date:** 2026-09-23
+- **author:** Joseph Lopez
+- **sha:** `de2f92c8af405f03ba802b873d5934cfdf506d6e`
+
+The repo now leads with a claim -- knowledge compounds when the thing you
+edit and the thing you read are different objects -- but nothing stated the
+argument or said where it came from. It reads as though the pattern were
+noticed here. It was not.
+
+Niklas Luhmann worked it out in the 1950s with a box of index cards: capture
+is fleeting, literature notes are written in your own words rather than
+pasted, permanent notes are atomic and linked, and structure emerges from
+those links instead of being imposed. Tiago Forte rebuilt it for digital
+tools as CODE, where Distill is a compile step producing a separate
+artifact. Bryan Hogan's Obsidian walkthrough is the clearest short
+demonstration of the principles working in a real tool -- the method is
+Luhmann's and he says so, which is why it is cited as a demonstration
+rather than a source.
+
+docs/THESIS.md traces the arrangement through all four systems and names
+the two rules they share: never edit the source, never hand-maintain the
+derived thing. Both exist to prevent one failure -- a file that is
+simultaneously the evidence and the conclusion, which you can neither
+revise without losing its basis nor regenerate without losing your
+thinking.
+
+It also separates, explicitly, what this repo measures from what it merely
+argues. Measured: a gated skill set took a held-out split from 0.400 to
+1.000. Argued: that knowledge compounds across iterations, which rests on
+four systems agreeing and one paper's ablations, and which the bundled
+benchmark cannot yet demonstrate because it converges in a single
+iteration. A tidy argument should not be allowed to imply a result it has
+not earned.
+
+All sources cited with links and authors.
+
+92 tests pass.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

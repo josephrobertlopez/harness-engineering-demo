@@ -1,0 +1,3 @@
+# Skill snapshots are content-addressed over their bytes and unified diffs are
+# compared verbatim in tests. A CRLF checkout would change both. Pin LF.
+* text=auto eol=lf

@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wikiskill"
+version = "0.1.0"
+description = "Gated skill evolution over a compounding wiki (arXiv 2608.27454)."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+# Only needed for `--backend anthropic`. The default `claude-cli` backend and
+# the `mock` backend are stdlib-only.
+api = ["anthropic>=1"]
+
+[project.scripts]
+wikiskill = "wikiskill.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wikiskill"]

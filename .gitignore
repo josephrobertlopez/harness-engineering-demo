@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Run state and bulk traces are reproducible; the wiki and skills are not.
+workspace/.state/
+workspace/raw/iter-*/
+workspace/raw/eval-*/

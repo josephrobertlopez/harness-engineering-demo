@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-14 commit(s), oldest first.
+16 commit(s), oldest first.
 
 
 ---
@@ -439,11 +439,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 ---
 
-## `288fd67` — Recentre on harness and context engineering, and climb down a bit
+## `8d1a4f6` — Recentre on harness and context engineering, and climb down a bit
 
 - **date:** 2026-09-23
 - **author:** Joseph Lopez
-- **sha:** `288fd676eaa0ccc413be81d08c88f01a3a443725`
+- **sha:** `8d1a4f604b03c378dff431e3b2fa4715c863ae01`
 
 The framing had drifted. "The same shape, four times" and a document that
 opened by calling itself "the argument" is a larger claim than a weekend
@@ -474,5 +474,77 @@ whether your version of it worked on your task.
 A repo that teaches AP7 (overclaiming) should try not to commit it.
 
 92 tests pass.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `7127813` — Fix five claims the audit caught, including one I introduced myself
+
+- **date:** 2026-09-23
+- **author:** Joseph Lopez
+- **sha:** `7127813e556b9dec0b18c8b19b8faddfdb3fed7a`
+
+An audit of the generated tutorial prose against the installed tools found
+five wrong or unsupported claims. Each was verified against the source
+before being changed, and one audit finding was itself wrong.
+
+Corrected:
+
+- `/wiki:archive --project <slug>` is not a thing; archive takes subcommands
+  (`topic`, `list`, `restore`).
+- Freshness decay was given as "hot loses 2-3 points per week, warm 0.5,
+  cold none". The reference documents qualitative tiers -- Fast, Moderate,
+  Slow -- and no formula. Invented precision is worse than an admitted gap,
+  because a reader will plan around it.
+- "Only five commands take `--project`" listed `project` itself, which does
+  not take it. Three carry it in their argument hints and `checkpoint`
+  accepts it.
+- `bmad-create-prd` and `bmad-market-research` were described as deprecated
+  forwarders that still work. Neither is an installed skill; `bmad-prd`
+  honours a forwarded activation from a shim of that name, which is not the
+  same claim.
+- The "roughly 40 pages" input ceiling on `bmad-spec` appears nowhere in any
+  installed BMAD skill.
+
+That last one is mine. It came from a survey I ran early in the session, I
+carried it into the brief the track was written from, and the author wrote
+it in good faith. A fabrication laundered through a second party reads like
+a sourced fact, which is exactly why the claims were checked against the
+tools rather than against my notes.
+
+One reported finding was rejected: the five research angles (Academic,
+Technical, Applied, News/Trends, Contrarian) were flagged as unsupported,
+but they are a table in `commands/wiki/research.md`. The auditor missed it.
+Audits get audited too.
+
+92 tests pass.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `cbe5e7e` — Expose the byte-budget flags the README already promised
+
+- **date:** 2026-09-23
+- **author:** Joseph Lopez
+- **sha:** `cbe5e7e3fb357c6e8e091a34526ebb13c5d3c2e4`
+
+The audit found `--skill-budget-bytes` documented but not implemented. The
+knob existed on RunConfig with a sensible default; it was simply never
+wired to argparse, so a reader who hit the budget had no way to change it.
+
+Documenting a flag that does not exist is worse than not having the flag,
+because the reader plans around it and only finds out at the point of use.
+Both budgets are now real arguments, and a test asserts they reach the
+config and that their defaults match the dataclass -- so the two cannot
+drift apart again.
+
+The tone half of that audit came back clean, which is the first time this
+session that generated prose has survived a review unchanged.
+
+94 tests pass.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

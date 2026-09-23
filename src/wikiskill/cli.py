@@ -23,6 +23,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--gate-margin", type=float, default=0.0)
     p.add_argument("--max-steps", type=int, default=10)
     p.add_argument(
+        "--skill-budget-bytes",
+        type=int,
+        default=8192,
+        help="reject a proposal whose single skill exceeds this (default 8192)",
+    )
+    p.add_argument(
+        "--skillset-budget-bytes",
+        type=int,
+        default=32768,
+        help="reject a proposal that would take the whole set past this "
+        "(default 32768). Skills only accumulate, so this is the only thing "
+        "standing between you and a prompt made mostly of old advice.",
+    )
+    p.add_argument(
         "--concurrency",
         type=int,
         default=4,
@@ -82,6 +96,8 @@ def config_from(args: argparse.Namespace) -> RunConfig:
         iterations=getattr(args, "iterations", 8),
         gate_margin=args.gate_margin,
         max_steps=args.max_steps,
+        skill_budget_bytes=args.skill_budget_bytes,
+        skillset_budget_bytes=args.skillset_budget_bytes,
         concurrency=args.concurrency,
         seed=args.seed,
         extra=extra,

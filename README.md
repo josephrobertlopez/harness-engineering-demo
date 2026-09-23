@@ -210,7 +210,7 @@ Not fixed here, because the paper did not evaluate a fix and inventing one
 silently would make this a different method:
 
 - **No wiki pruning.** The wiki only grows. `WikiStore` has no delete API at all.
-- **No skill retrieval.** Every skill is injected into the prompt. Byte budgets (`--skill-budget-bytes`) are the only defence against dilution.
+- **No skill retrieval.** Every skill is injected into the prompt, so the set only grows. Byte budgets (`--skill-budget-bytes`, `--skillset-budget-bytes`) are what stands between you and a prompt made mostly of old advice.
 - **Strict gating excludes neutral proposals** that might have enabled a later gain.
 - **Short task horizons.** The bundled benchmark is a handful of tool calls per task.
 

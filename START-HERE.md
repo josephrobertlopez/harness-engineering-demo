@@ -97,7 +97,7 @@ from it — nothing here is locked to one tool.
 | You want to... | Read |
 |---|---|
 | Understand what the method *is* and why | [README.md](README.md) |
-| Read the argument behind all of it | [docs/THESIS.md](docs/THESIS.md) |
+| Notes on context engineering | [docs/CONTEXT-ENGINEERING.md](docs/CONTEXT-ENGINEERING.md) |
 | See the numbers from a real model, and reproduce them | [docs/RESULTS.md](docs/RESULTS.md) |
 | Look up a term | [docs/GLOSSARY.md](docs/GLOSSARY.md) |
 | Find your way around the code | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |

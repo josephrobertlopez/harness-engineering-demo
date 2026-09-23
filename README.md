@@ -1,36 +1,52 @@
 # harness-engineering-demo
 
-**An agent that writes its own instructions, and only keeps the ones that
-measurably help.**
+**A small harness for a context-engineering question: does the thing you
+just put in the model's context actually pay for itself?**
 
-A working implementation of **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
-*Compiling Agent Experience into Persistent Knowledge for Skill Evolution*),
-and five tutorial tracks about why that method is a specific case of a more
-general shape.
+It implements **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
+*Compiling Agent Experience into Persistent Knowledge for Skill Evolution*)
+— an agent that writes its own instructions and keeps only the ones that
+measurably help — and five tutorial tracks around it.
 
-## The same shape, three times
+## The context-engineering bit
 
-Knowledge compounds when **the thing you edit and the thing you read are
-different objects**. Three tools arrive at that independently:
+A skill is just curated context. The interesting question is not "what
+should I write" but "how would I know it helped", and that needs a harness:
+something that runs the agent, records what it did, and scores a change
+against a split it was not tuned on.
 
-| | append-only source | derived artifact | the rule |
-|---|---|---|---|
-| [**LLM Wiki**](#credits) | `raw/` — re-ingest, never overwrite | `wiki/` articles, every `_index.md` | never hand-maintain the index |
-| [**BMAD**](#credits) | `.memlog.md` | `SPEC.md` | a hand-edit is overwritten on the next derive |
-| **This harness** | traces in `raw/`, patterns in `wiki/` | `skills/` | rollback is "never move HEAD" |
+The paper's sharpest result is a context-engineering result, and it is
+counter-intuitive. Giving the agent **more** context made it **worse**:
 
-That separation is what lets LLM Wiki research a topic across ten parallel
-agents and still compile one coherent article; what lets BMAD absorb a PRD
-and a UX doc *in any order* without merge conflicts; and what lets this
-harness throw away a skill without losing the analysis that produced it.
+| what the agent can read | average score |
+|---|---|
+| distilled skills only | **63.7%** |
+| skills **plus** the accumulated notes | 60.9% |
+| no skills at all | 48.7% |
 
-The arrangement is older than any of them — Niklas Luhmann worked it out in
-the 1950s with a box of index cards. WikiSkill is the formal version; this
-repo is the version you can measure.
+The notes are what produced the skills. Handing them over too lowers the
+score — so the value is in the distillation, not the material. This repo
+enforces that structurally: the inference agent has no wiki handle, and a
+test fails if anyone adds one.
 
-**[docs/THESIS.md](docs/THESIS.md) makes the full argument**, traces it from
-Zettelkasten through Second Brain to the two tools above, and is careful to
-separate what is measured here from what is only argued.
+## A pattern I noticed while building it
+
+Not a claim, an observation, and I found the prior art afterwards rather
+than setting out to apply it. Three systems here keep the thing you *edit*
+separate from the thing you *read*:
+
+| | append-only source | derived artifact |
+|---|---|---|
+| [**LLM Wiki**](#credits) | `raw/` — re-ingest, never overwrite | articles and indexes |
+| [**BMAD**](#credits) | `.memlog.md` | `SPEC.md`, re-derived each run |
+| **This harness** | traces, wiki patterns | `skills/` |
+
+It buys concrete things — LLM Wiki can run parallel research and still
+compile one article; BMAD can take a PRD and a UX doc in any order because
+nothing is merged. Niklas Luhmann was doing it with index cards in the
+1950s. [docs/CONTEXT-ENGINEERING.md](docs/CONTEXT-ENGINEERING.md) has the
+longer version, and is explicit about which parts are measured and which
+are just me noticing a resemblance.
 
 Measured here, with real models: a held-out test split went from **0.400 to
 1.000** after one iteration of the loop. The full numbers and the caveats

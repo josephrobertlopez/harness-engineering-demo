@@ -1,48 +1,71 @@
-# The same shape, four times
+# Notes on context engineering
 
-> Knowledge compounds when **the thing you edit and the thing you read are
-> different objects.**
+Working notes, not a manifesto. I built a harness to answer one question —
+*does the context I just added actually pay for itself?* — and while
+building it I kept running into the same arrangement in tools that have
+nothing to do with each other. These are those notes, with the measured
+parts and the hand-wavy parts labelled.
 
-This repo implements a 2026 paper about agent skill evolution. But the
-mechanism the paper formalises is not new, and it is not about agents. It
-was worked out by a sociologist with a box of index cards in the 1950s, and
-it keeps getting rediscovered because it is the only arrangement that makes
-knowledge accumulate instead of churn.
+## Start with the measured bit
 
-This document is the argument. The code is the part you can measure.
+A skill is curated context. The paper this repo implements
+([arXiv 2608.27454][paper]) ran the ablation that matters, and the result
+is not what you would guess:
 
----
+| what the agent can read | average score |
+|---|---|
+| distilled skills only | **63.7%** |
+| skills **plus** the notes those skills came from | 60.9% |
+| nothing | 48.7% |
 
-## The pattern
+More context, worse output. The notes are the raw material the skills were
+distilled *from*, and handing them to the agent as well costs almost three
+points.
 
-Three moving parts, and the discipline is in the arrows, not the boxes:
+That has a practical consequence I have come to trust more than most
+prompting advice: **the win is in the distillation, not in the material.**
+Adding the source alongside the summary is not a hedge, it is a
+regression — and you would never catch it without something that measures.
+
+This repo enforces the separation structurally rather than by convention.
+`InferenceAgent` takes no wiki handle, `agents/inference.py` does not import
+the wiki layer, and `tests/test_no_wiki_leak.py` fails if anyone adds one.
+A prompt instruction saying "don't look at the notes" would be one refactor
+from being false.
+
+## The arrangement I kept running into
+
+Here I am on much thinner ice, so take it as an observation rather than a
+finding. Keep the thing you **edit** separate from the thing you **read**:
 
 ```
   capture  ──────►  compile  ──────►  use
   immutable         derived          derived
-  never edited      never hand-      regenerated
-  only appended     maintained       freely
+  only appended     not hand-        regenerated
+                    maintained       freely
 ```
 
-Two rules follow, and everything below is a restatement of them:
+Two rules, and they are easier to state than to keep:
 
-1. **Never edit the source.** New information means a new entry, not a
-   revision of an old one. The record of what you actually saw has to stay
-   intact, because it is the only thing you can re-derive from when your
-   conclusions turn out to be wrong.
-2. **Never hand-maintain the derived thing.** The moment an index, a
-   summary or a contract is edited by hand, it stops being derivable — and
-   the next regeneration either destroys the edit or has to be abandoned.
-   Either way the system quietly stops compounding.
+1. **Do not edit the source.** New information is a new entry, not a
+   revision. Otherwise you cannot re-derive when your conclusions turn out
+   wrong, because the record of what you actually saw is gone.
+2. **Do not hand-maintain the derived thing.** The moment an index or a
+   summary is hand-edited it stops being regenerable — the next rebuild
+   either destroys the edit or gets abandoned.
 
-The failure mode both rules prevent is the same: **a file that is
-simultaneously the evidence and the conclusion.** You cannot revise it
-without losing what it was based on, and you cannot regenerate it without
-losing the thinking you put in.
+Both prevent one failure: a file that is at once the evidence and the
+conclusion. You cannot revise it without losing its basis, and you cannot
+regenerate it without losing your thinking.
+
+I did not invent any of this and did not set out to apply it. I noticed the
+resemblance partway through and went looking for prior art, which is the
+honest order of events and probably why the connections below are looser
+than they would be if someone had designed for them.
 
 ---
 
-## 1. Zettelkasten (1950s)
+## Where it comes from: Zettelkasten (1950s)
 
 Niklas Luhmann, a German sociologist, kept roughly 90,000 index cards and
 credited them with 70 books and nearly 400 articles. The method — the
@@ -70,7 +93,7 @@ Luhmann also refused to file cards into a predetermined taxonomy. Structure
 emerged from links. That is the second rule in embryo: **the index is
 derived.**
 
-## 2. Second Brain (2022)
+## And again: Second Brain (2022)
 
 Tiago Forte's *Building a Second Brain* is the same arrangement rebuilt for
 digital tools, as **CODE** — Capture, Organize, Distill, Express — with
@@ -96,11 +119,12 @@ His **Map of Contents** — an overview note aggregating related notes as the
 system grows — is the derived index, written by hand only because Obsidian
 will not write it for you.
 
-## 3. Two tools that automate it
+## Two tools that automate it
 
 Both are other people's MIT-licensed projects, credited in
-[the README](../README.md#credits). Neither cites Luhmann. Both land on his
-arrangement anyway.
+[the README](../README.md#credits). Neither cites Luhmann, and I am not
+suggesting either author was influenced by him — more likely the constraint
+is just real enough that you end up here if you build carefully.
 
 **[LLM Wiki][llmwiki]** makes the rules mechanical:
 
@@ -130,7 +154,7 @@ in **in any order**, because nothing is ever merged — it is re-derived. The
 ordering problem that makes most spec workflows brittle simply does not
 arise.
 
-## 4. This harness
+## And this harness
 
 The paper this repo implements ([arXiv 2608.27454][paper]) separates agent
 experience into three layers, and they are the same three:
@@ -141,8 +165,8 @@ experience into three layers, and they are the same three:
 | `wiki/patterns/` | compounding knowledge, **never rolled back** |
 | `skills/` | derived, discarded freely |
 
-Two details are where the argument stops being an analogy and becomes
-load-bearing.
+Two details are where this stops being a resemblance and starts doing
+actual work.
 
 **The wiki is never rolled back.** When a proposed skill fails its
 validation gate, the skill is discarded and the patterns that motivated it

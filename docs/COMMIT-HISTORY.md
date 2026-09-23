@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-13 commit(s), oldest first.
+14 commit(s), oldest first.
 
 
 ---
@@ -394,11 +394,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 ---
 
-## `de2f92c` — Add the thesis, and trace the pattern back to where it came from
+## `1294dff` — Add the thesis, and trace the pattern back to where it came from
 
 - **date:** 2026-09-23
 - **author:** Joseph Lopez
-- **sha:** `de2f92c8af405f03ba802b873d5934cfdf506d6e`
+- **sha:** `1294dff90357b1a617a2dee2f9eaad7993be6bc4`
 
 The repo now leads with a claim -- knowledge compounds when the thing you
 edit and the thing you read are different objects -- but nothing stated the
@@ -431,6 +431,47 @@ iteration. A tidy argument should not be allowed to imply a result it has
 not earned.
 
 All sources cited with links and authors.
+
+92 tests pass.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `288fd67` — Recentre on harness and context engineering, and climb down a bit
+
+- **date:** 2026-09-23
+- **author:** Joseph Lopez
+- **sha:** `288fd676eaa0ccc413be81d08c88f01a3a443725`
+
+The framing had drifted. "The same shape, four times" and a document that
+opened by calling itself "the argument" is a larger claim than a weekend
+build earns, and it buried what the repo actually is: a small harness for
+checking whether context you added paid for itself.
+
+The README now leads with that question, and with the paper's ablation,
+which is a context-engineering result and a counter-intuitive one. More
+context made the agent worse: distilled skills score 63.7%, the same skills
+plus the notes they were distilled from score 60.9%, nothing scores 48.7%.
+The win is in the distillation, not the material -- and adding the source
+alongside the summary is a regression you would never notice without
+measuring. This repo enforces the separation in the constructor signature
+rather than in a prompt, because a prompt instruction is one refactor from
+being false.
+
+THESIS.md is now docs/CONTEXT-ENGINEERING.md and reads as working notes. It
+says plainly that I noticed the resemblance partway through and went
+looking for prior art afterwards, which is the honest order of events, and
+it no longer implies Luhmann influenced tools whose authors have probably
+never heard of him.
+
+Two tutorial openers elevated themselves by swiping at "most prompting
+advice" and "most advice about writing skills". Both now make their point
+without the swipe -- good advice is plentiful, the hard part is knowing
+whether your version of it worked on your task.
+
+A repo that teaches AP7 (overclaiming) should try not to commit it.
 
 92 tests pass.
 

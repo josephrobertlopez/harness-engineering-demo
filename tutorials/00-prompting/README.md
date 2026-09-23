@@ -2,10 +2,13 @@
 
 **~50 minutes. Offline, no API key.**
 
-Most prompting advice is a list of tips you cannot check. This track gives
-you two things that make it an engineering activity instead: a **vocabulary**
+Two things I have found useful, neither of them original: a **vocabulary**
 for saying precisely why an output was bad, and a **harness** that turns
-"I think this is better" into a number.
+"I think this is better" into a number you can check.
+
+Plenty of good prompting advice exists. What is harder to come by is a way
+to tell whether *your* version of it worked on *your* task, which is the
+gap this track tries to fill.
 
 ## Prerequisites
 

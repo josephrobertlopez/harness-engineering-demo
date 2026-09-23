@@ -2,9 +2,13 @@
 
 **~45 minutes. Offline, no API key.**
 
-Most advice about writing skills is unfalsifiable. This track is not: you
-write a skill, run one command, and get a number. Then you change it and get
-a different number.
+You write a skill, run one command, and get a number. Then you change it
+and get a different number.
+
+That is the whole idea. Not because judgement does not matter — it matters
+more than the number — but because it is very easy to write a skill that
+feels helpful and changes nothing, and measuring is the cheapest way to
+find out which kind you wrote.
 
 ## Prerequisites
 

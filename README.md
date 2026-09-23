@@ -1,7 +1,11 @@
-# wikiskill
+# harness-engineering-demo
 
 A working implementation of **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
 *Compiling Agent Experience into Persistent Knowledge for Skill Evolution*).
+
+> The repo is named for what it demonstrates -- how to engineer an agent
+> harness. The Python package and CLI keep the method's own name,
+> `wikiskill`, so the code lines up with the paper it implements.
 
 The paper's claim is that agents improve not by accumulating transcripts but by
 **compiling** them. Experience is separated into three layers — immutable raw
@@ -33,7 +37,7 @@ Nothing to install. The package is stdlib-only on Python 3.12+; the
 `anthropic` SDK is an optional extra used by one backend.
 
 ```bash
-git clone <this repo> && cd wikiskill
+git clone <this repo> && cd harness-engineering-demo
 python -m unittest discover -s tests -t .
 ```
 

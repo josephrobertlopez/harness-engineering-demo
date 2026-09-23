@@ -9,6 +9,8 @@ description = "Gated skill evolution over a compounding wiki (arXiv 2608.27454).
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
+authors = [{ name = "Joseph Lopez", email = "josephrobertlopez@gmail.com" }]
+keywords = ["llm", "agents", "evaluation", "skill-evolution"]
 dependencies = []
 
 [project.optional-dependencies]

@@ -1,9 +1,23 @@
 # harness-engineering-demo
 
-A working implementation of **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
-*Compiling Agent Experience into Persistent Knowledge for Skill Evolution*).
+**An agent that writes its own instructions, and only keeps the ones that
+measurably help.**
 
-> The repo is named for what it demonstrates -- how to engineer an agent
+A working implementation of **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
+*Compiling Agent Experience into Persistent Knowledge for Skill Evolution*),
+plus five tutorial tracks built on top of it.
+
+Measured here, with real models: a held-out test split went from **0.400 to
+1.000** after one iteration of the loop. The full numbers and the caveats
+that matter are in [docs/RESULTS.md](docs/RESULTS.md).
+
+```
+python -m unittest discover -s tests -t .     # 92 tests, ~1 min
+```
+
+No install, no API key, no network. Python 3.12+ and nothing else.
+
+> The repo is named for what it demonstrates — how to engineer an agent
 > harness. The Python package and CLI keep the method's own name,
 > `wikiskill`, so the code lines up with the paper it implements.
 
@@ -30,6 +44,16 @@ iter 6: train=0.80 val cand=1.00 inc=0.80 -> ACCEPT  R_best=1.00
 
 Held-out test goes 0.000 → 1.000. Iteration 3 is a real rejection with a real
 rollback, not a decorative one.
+
+## What this is not
+
+- **Not a library.** It is a worked example you read and modify. There is no
+  stable API and the seam you are meant to touch is documented in
+  [docs/EXTENDING.md](docs/EXTENDING.md).
+- **Not a benchmark result you should cite.** Five test tasks. See the
+  caveats in [docs/RESULTS.md](docs/RESULTS.md) before quoting any number.
+- **Not a reproduction of the paper's experiments.** It implements the
+  method and runs it on a small task set of its own.
 
 ## Install
 

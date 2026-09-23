@@ -32,7 +32,7 @@ from .bench import starter
 from .config import RunConfig
 from .gating import check_budget, decide
 from .layers.raw import RawStore
-from .layers.skills import SkillSetStore
+from .layers.skills import SkillSetStore, load_skillset_from_dir
 from .layers.wiki import WikiStore
 from .types import IterationResult, SkillSet, Task, Trace
 from .util import append_text, canonical_json, read_json, read_text_lf, write_json
@@ -423,11 +423,12 @@ class EvolutionLoop:
             p.removeprefix("patterns/").removesuffix(".md").replace("-", "_")
             for p in self.ws.wiki.pages()
         ]
-        covered = [
-            f
-            for f in starter.FAMILIES
-            if any(starter.QUIRK_TOKEN.format(family=f) in s.body for s in skillset.skills)
-        ]
+        # Ask the mock what it recognises rather than re-deriving it here.
+        # Two copies of this rule silently diverged once, and the loop
+        # plateaued while every individual component looked correct.
+        from .backends import mock as mock_backend
+
+        covered = mock_backend.covered_families(skillset.render_for_prompt())
         return {
             "iteration": iteration,
             "documented_families": documented,
@@ -464,9 +465,22 @@ class EvolutionLoop:
 
     # -- final evaluation -------------------------------------------------
 
-    def evaluate(self, split: str, skills: str = "accepted") -> tuple[float, list[Trace]]:
-        """Score a split under the evolved skills, or under none (the baseline)."""
-        if skills == "none":
+    def evaluate(
+        self,
+        split: str,
+        skills: str = "accepted",
+        skills_dir: Path | None = None,
+    ) -> tuple[float, list[Trace]]:
+        """Score a split under a chosen skill set.
+
+        `skills_dir` beats `skills`, and loads a hand-written folder rather
+        than a snapshot from the store -- the path a tutorial learner takes.
+        Evaluation never touches HEAD, the wiki, or the journal, so measuring
+        someone's draft skill cannot corrupt a real run.
+        """
+        if skills_dir is not None:
+            skillset = load_skillset_from_dir(skills_dir)
+        elif skills == "none":
             skillset = SkillSet()
         elif skills == "accepted":
             skillset = self.ws.skills.head_skillset()

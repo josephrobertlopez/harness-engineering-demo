@@ -149,6 +149,28 @@ class SkillSetStore:
         return "".join(out)
 
 
+def load_skillset_from_dir(path: Path) -> SkillSet:
+    """Read a plain folder of `<name>/SKILL.md` into a SkillSet.
+
+    This is the seam for skills a human wrote by hand, outside the evolution
+    loop -- which is exactly what the skill-authoring tutorial needs, so a
+    learner can find out whether the skill they just wrote actually moved the
+    score or only felt like it did.
+
+    `PURPOSE.md` is optional here. The loop always writes one, but requiring
+    it would fail a learner's first attempt for a reason that has nothing to
+    do with whether their skill works.
+    """
+    if not path.is_dir():
+        raise NotADirectoryError(f"not a directory: {path}")
+    dirs = [d for d in sorted(path.iterdir()) if d.is_dir() and (d / "SKILL.md").is_file()]
+    if not dirs:
+        raise FileNotFoundError(
+            f"no skills in {path} -- expected at least one <name>/SKILL.md"
+        )
+    return SkillSet(skills=tuple(_read_skill(d) for d in dirs))
+
+
 def _tree(skillset: SkillSet) -> dict[str, str]:
     tree: dict[str, str] = {}
     for s in skillset.sorted():

@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -41,10 +42,40 @@ def atomic_write_text(path: Path, text: str) -> None:
             fh.write(data)
             fh.flush()
             os.fsync(fh.fileno())
-        os.replace(tmp, path)
+        _replace_with_retry(Path(tmp), path)
     except BaseException:
         _quiet_unlink(Path(tmp))
         raise
+
+
+#: Windows fails `os.replace` with "Access is denied" when anything holds a
+#: handle on the destination -- an antivirus scanner or the search indexer
+#: opening a file we just wrote is enough. The window is milliseconds, it is
+#: not deterministic, and it surfaces as a test that fails on one machine and
+#: never on another. Retrying is the standard remedy; the alternative is
+#: telling people to disable their antivirus.
+_REPLACE_ATTEMPTS = 8
+_REPLACE_BACKOFF = 0.02
+
+
+def _replace_with_retry(src: Path, dst: Path) -> None:
+    """`os.replace`, tolerant of a transient Windows lock on `dst`.
+
+    Atomicity is unaffected: each attempt is still a single rename, so the
+    destination holds either the old file or the new one at every instant.
+    """
+    last: OSError | None = None
+    for attempt in range(_REPLACE_ATTEMPTS):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError as exc:  # Windows: something holds a handle
+            last = exc
+            time.sleep(_REPLACE_BACKOFF * (attempt + 1))
+    raise OSError(
+        f"could not replace {dst} after {_REPLACE_ATTEMPTS} attempts; "
+        "something is holding a handle on it"
+    ) from last
 
 
 def append_text(path: Path, text: str) -> None:

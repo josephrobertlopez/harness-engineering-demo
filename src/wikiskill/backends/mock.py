@@ -18,6 +18,7 @@ the benchmark knowledge a real model would get from the environment.
 from __future__ import annotations
 
 import json
+import re
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
@@ -43,13 +44,58 @@ class MockBackend:
         return LLMResponse(text=text, model=req.model, usage={"input_tokens": 0, "output_tokens": 0})
 
 
+#: What a skill has to *say* for the simulated agent to act on it.
+#:
+#: Each family lists groups of alternatives; every group must match somewhere
+#: in the skill text. So `iso_z` needs the skill to name the standard *and*
+#: the trailing Z -- mentioning only one is not a usable instruction.
+#:
+#: This is keyword recognition standing in for comprehension. It is a
+#: simulation, and an honest one only if you know its limits: it rewards a
+#: skill that states the rule unambiguously and rejects one that waffles,
+#: but it cannot tell a well-written skill from a merely correct one. That
+#: judgement needs a real model. It exists so tutorial exercises can be
+#: graded offline, with no API key.
+_PROSE_SIGNALS: dict[str, tuple[str, ...]] = {
+    "iso_z": (r"iso[-\s]?8601", r"z|zulu|trailing\s+z"),
+    "rec_prefix": (r"rec-", r"upper|canonical"),
+    "page_two": (r"page\s*2|second\s+page|paginat|next\s+page",),
+    "round_even": (r"half[-\s]?(to[-\s]?)?even|banker",),
+    "idem_key": (r"idempotency[_\s-]?key", r"colon|:"),
+}
+
+
 def _knows(system: str, family: str) -> bool:
-    return starter.QUIRK_TOKEN.format(family=family) in system
+    """Does the injected skill set actually teach this family's rule?
+
+    Two ways to satisfy it: the explicit marker (used by the mock maintainer
+    and proposer inside the evolution loop) or prose that states the rule
+    (used by humans writing skills by hand in the tutorials).
+    """
+    if starter.QUIRK_TOKEN.format(family=family) in system:
+        return True
+    body = system.lower()
+    groups = _PROSE_SIGNALS.get(family)
+    if not groups:
+        return False
+    return all(re.search(pattern, body) for pattern in groups)
 
 
 # ---------------------------------------------------------------------------
 # Inference
 # ---------------------------------------------------------------------------
+
+
+def covered_families(skill_text: str) -> list[str]:
+    """Which families a body of skill text actually teaches.
+
+    Exposed because the mock proposer has to agree with the mock inference
+    agent about what is already covered. When they disagreed, the proposer
+    kept re-proposing a family the skills already handled, every proposal
+    was correctly rejected for not improving anything, and the run plateaued
+    -- a loop that looked broken but was only mis-informed.
+    """
+    return [f for f in starter.FAMILIES if _knows(skill_text, f)]
 
 
 def _inference(req: LLMRequest) -> str:
@@ -166,7 +212,16 @@ def _proposer(req: LLMRequest) -> str:
     # One deliberately useless proposal, so the offline test exercises a real
     # rejection and a real rollback rather than only the happy path.
     is_decoy = decoy_at is not None and iteration == int(decoy_at)
+    # The decoy must teach *nothing*. Merely restating the rule without the
+    # marker is now enough for the agent to act on it, so a decoy that kept
+    # the rule text would quietly succeed and the rejection path would stop
+    # being exercised at all.
     marker = "" if is_decoy else starter.QUIRK_TOKEN.format(family=target)
+    rule = (
+        "Pay closer attention to this family and double-check the answer."
+        if is_decoy
+        else _RULES[target]
+    )
     slug = target.replace("_", "-")
     page = f"patterns/{slug}.md"
 
@@ -180,7 +235,7 @@ def _proposer(req: LLMRequest) -> str:
         "evidence_patterns": [page],
         "evidence_traces": [],
         "description": f"Apply the {target} rule when answering records-service tasks.",
-        "body": f"## Rule\n\n{_RULES[target]}\n\n{marker}".strip(),
+        "body": f"## Rule\n\n{rule}\n\n{marker}".strip(),
         "purpose": f"Encodes the rule root-caused in `{page}`.",
     }
     return _fence(proposal, prefix="PROPOSAL:\n")

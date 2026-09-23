@@ -52,6 +52,14 @@ def build_parser() -> argparse.ArgumentParser:
     e = sub.add_parser("eval", help="score a split under a chosen skill set")
     e.add_argument("--split", default="test", choices=("train", "val", "test"))
     e.add_argument("--skills", default="accepted", help="accepted | none | <sha>")
+    e.add_argument(
+        "--skills-dir",
+        type=Path,
+        default=None,
+        help="score a hand-written folder of <name>/SKILL.md instead; "
+        "overrides --skills. This is how you find out whether a skill you "
+        "wrote yourself actually helped.",
+    )
 
     s = sub.add_parser("show", help="print a workspace artifact")
     s.add_argument("what", choices=("wiki", "skills", "impact", "log"))
@@ -125,8 +133,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "eval":
-        score, traces = loop.evaluate(args.split, args.skills)
-        print(f"{args.split} ({args.skills}): {score:.3f} over {len(traces)} task(s)")
+        label = str(args.skills_dir) if args.skills_dir else args.skills
+        score, traces = loop.evaluate(args.split, args.skills, args.skills_dir)
+        print(f"{args.split} ({label}): {score:.3f} over {len(traces)} task(s)")
+        failed = [t for t in traces if not t.passed]
+        for t in failed:
+            print(f"  FAIL {t.task_id:<16} {t.failure_summary or ''}")
+        if not failed:
+            print("  all tasks passed")
         return 0
 
     if args.command == "show":

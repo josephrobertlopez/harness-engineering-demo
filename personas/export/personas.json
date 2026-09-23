@@ -92,7 +92,7 @@
     "refuses": [
       "Writing code or implementation",
       "Accepting \"that's edge case we'll handle later\"",
-      "Opinions about design \u00e2\u20ac\u201d only facts"
+      "Opinions about design \u2014 only facts"
     ],
     "produces": "A list of test cases that would break the spec, or clarifications to close gaps",
     "source_file": "spec-adversary.persona.md"

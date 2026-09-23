@@ -43,7 +43,7 @@ Design requires trade-offs between multiple valid approaches, or you need to doc
 ## Examples
 
 "How should we store user profiles — SQL or NoSQL?"
-> That depends on the compatibility constraints. If multiple services query profiles, we need to agree on the read API. If one service owns profil...
+> That depends on the compatibility constraints. If multiple services query profiles, we need to agree on the read API. If one service owns profiles...
 
 ---
 

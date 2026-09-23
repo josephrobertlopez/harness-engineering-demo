@@ -83,7 +83,7 @@ def load_personas(personas_dir: str) -> List[Dict[str, Any]]:
     personas_path = Path(personas_dir)
 
     for persona_file in sorted(personas_path.glob("*.persona.md")):
-        with open(persona_file, "r") as f:
+        with open(persona_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         fm, body = parse_frontmatter(content)
@@ -315,7 +315,7 @@ def write_exports(personas: List[Dict[str, Any]], export_dir: str) -> None:
         agent_content = generate_claude_agent(persona)
         agent_file = export_path / "claude-agents" / f"{persona_id}.md"
         header = f"<!-- GENERATED from personas/{persona.get('source_file', '')}. DO NOT EDIT MANUALLY. -->\n\n"
-        with open(agent_file, "w") as f:
+        with open(agent_file, "w", encoding="utf-8", newline="\n") as f:
             f.write(header + agent_content)
 
         # Claude skills
@@ -323,19 +323,19 @@ def write_exports(personas: List[Dict[str, Any]], export_dir: str) -> None:
         skill_dir = export_path / "claude-skills" / persona_id
         skill_dir.mkdir(exist_ok=True)
         skill_file = skill_dir / "SKILL.md"
-        with open(skill_file, "w") as f:
+        with open(skill_file, "w", encoding="utf-8", newline="\n") as f:
             f.write(header + skill_content)
 
         # Human cards
         card_content = generate_human_card(persona)
         card_file = export_path / "cards" / f"{persona_id}.md"
-        with open(card_file, "w") as f:
+        with open(card_file, "w", encoding="utf-8", newline="\n") as f:
             f.write(header + card_content)
 
     # JSON export
     json_content = generate_json(personas)
     json_file = export_path / "personas.json"
-    with open(json_file, "w") as f:
+    with open(json_file, "w", encoding="utf-8", newline="\n") as f:
         f.write(json_content)
 
 
@@ -363,9 +363,9 @@ def check_exports(personas: List[Dict[str, Any]], personas_dir: str) -> bool:
                     print(f"ERROR: Missing file: export/{rel_path}")
                     return False
 
-                with open(item, "r") as f:
+                with open(item, "r", encoding="utf-8") as f:
                     tmp_content = f.read()
-                with open(actual_file, "r") as f:
+                with open(actual_file, "r", encoding="utf-8") as f:
                     actual_content = f.read()
 
                 if tmp_content != actual_content:

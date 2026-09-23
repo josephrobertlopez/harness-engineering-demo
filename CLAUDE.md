@@ -136,6 +136,43 @@ command, and re-auth with `claude auth login`.
 split carried no signal for that family and the baseline looked better than
 it was. Every benchmark value must actually discriminate; assert it.
 
+**`os.replace` fails intermittently on Windows.** Atomic writes started
+failing with "Access is denied" on `HEAD.json`, on one machine, at random.
+Nothing in the code was wrong: an antivirus scanner or the search indexer
+holds a handle on the destination for a few milliseconds after we write it.
+`util._replace_with_retry` retries with backoff. Each attempt is still a
+single rename, so atomicity is unchanged. A nondeterministic failure that
+only reproduces on some machines is worth a fix even when the code is
+correct.
+
+**One broken exercise took down discovery of all the others.** A zero-byte
+`check.py` from an interrupted write made `tutorials/check.py` raise during
+discovery, so three unrelated tests errored and the real cause was four
+stack frames away. Discovery now reports a broken exercise *as* a failing
+exercise. When you are enumerating plugins, exercises, or skills, one bad
+entry must never hide the good ones.
+
+**A checker that cries wolf gets ignored.** The docs link checker flagged an
+*illustrative* link inside a code example -- the LLM Wiki track demonstrates
+a dual-link format whose sample path deliberately points nowhere. It now
+strips fenced blocks and inline code before looking for links. A false
+positive in a lint is worse than no lint, because it teaches people to skip
+the output.
+
+**`open(path, "w")` on Windows writes CRLF and uses the locale codepage.**
+The persona exporter did both. The repo pins LF via `.gitattributes` and
+`export.py --check` compares bytes, so the exports would have matched
+locally and failed `--check` on any fresh clone -- and the locale encoding
+would have mangled the Pi character in the rubric persona. Always pass
+`encoding="utf-8"` and, for writes, `newline` explicitly.
+
+**Generated content needs verifying, not trusting.** Tutorial prose written
+by a subagent self-reported success and contained three invented LLM Wiki
+flags (`audit --report`, `compile --project`, `archive unarchive`). They
+were found by scanning every command and flag in the tutorials against the
+installed command definitions, not by reading. If you generate docs about a
+tool, diff the claims against the tool.
+
 ## Style
 
 - LF endings, UTF-8, atomic writes. `util.py` has the helpers; use them.

@@ -100,6 +100,37 @@ the last iteration that reached `commit`.
 point and burned more iterations — free on the mock, real money otherwise.
 It now returns immediately when `R_best` has already hit `early_stop_score`.
 
+**The Windows `.CMD` shim silently corrupted every system prompt.**
+`shutil.which("claude")` returns `claude.CMD`, a batch wrapper. Batch mangles
+arguments containing `{`, `%`, quotes and newlines -- which is every prompt
+this package sends. It does not error. The model simply receives garbled
+instructions and answers in prose, so the bug presents as a *prompting*
+problem and you can burn an hour rewriting prompts that were never delivered.
+`resolve_executable()` now skips the shim and runs
+`node_modules/@anthropic-ai/claude-code/bin/claude.exe` directly.
+
+**`--append-system-prompt` left Claude Code's identity in charge.** Appending
+puts our instructions *after* the default coding-agent prompt, and the
+default wins: asked to look up a record, the model went hunting for a real
+records service in the repo and explained it could not find one. Use
+`--system-prompt` to replace. Side benefit that is not a side benefit: it
+drops ~25k tokens of default prompt per call, taking cost from $0.052 to
+$0.0016 -- a 33x difference that decides whether a full run is affordable.
+
+**`--allowed-tools ""` does not disable tools; `--tools ""` does.** They are
+different options and the first one quietly does nothing. An evaluated model
+with real Read and Bash can solve -- or appear to solve -- a simulated task
+by means the trace never records, which makes every downstream wiki pattern
+fiction. `--restricted` and `--strict-mcp-config` close the same hole for
+settings files and MCP servers.
+
+**`claude auth status` reports `loggedIn: true` for expired credentials.**
+It does not check `expiresAt`. A CLI with a 105-day-expired access token and
+an empty refresh token reported healthy while failing every start with a
+message blaming *managed settings*. When the CLI will not start, read
+`expiresAt` out of `~/.claude/.credentials.json` before believing any status
+command, and re-auth with `claude auth login`.
+
 **A validation task passed without its skill.** Two of the original
 `round_even` amounts rounded identically under half-even and half-up, so the
 split carried no signal for that family and the baseline looked better than

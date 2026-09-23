@@ -96,6 +96,15 @@ is single-shot and takes no custom tool schemas, so the ReAct loops here use a
 native `tool_use` blocks. One protocol across all three backends, one set of
 parsers to test.
 
+Getting a clean measurement out of it needs four flags, all set automatically:
+`--system-prompt` (replace, not append -- otherwise Claude Code's coding-agent
+identity overrides the benchmark instructions, and you pay ~25k extra tokens
+per call for the privilege), `--tools ""` (the real kill switch;
+`--allowed-tools ""` is a different option and disables nothing),
+`--restricted` and `--strict-mcp-config` (so no CLAUDE.md, hook or MCP server
+leaks into the run). On Windows the backend also bypasses the `claude.CMD`
+shim, which corrupts any argument containing braces, quotes or newlines.
+
 Model defaults: inference `claude-haiku-4-5`, maintainer `claude-sonnet-5`,
 proposer `claude-opus-5` at `effort=high`. The backend branches on model
 family because the shapes differ — Opus 5 and Sonnet 5 take adaptive thinking

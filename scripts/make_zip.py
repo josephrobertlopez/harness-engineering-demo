@@ -71,7 +71,28 @@ def main(argv: list[str] | None = None) -> int:
         if p.is_file() and should_include(p.relative_to(REPO), not args.no_git)
     ]
 
+    # Directory entries matter here. `git gc` packs refs into `packed-refs`,
+    # which leaves `.git/refs/` empty -- and zip does not store empty
+    # directories, so the extracted copy is missing a directory git requires
+    # and reports "not a git repository". Write an entry for every directory
+    # so the layout survives the round trip.
+    directories = sorted(
+        {
+            parent.relative_to(REPO)
+            for path in files
+            for parent in path.parents
+            if parent != REPO and REPO in parent.parents or parent.parent == REPO
+        }
+        | {
+            d.relative_to(REPO)
+            for d in REPO.rglob("*")
+            if d.is_dir() and should_include(d.relative_to(REPO), not args.no_git)
+        }
+    )
+
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+        for rel in directories:
+            zf.writestr(str(Path(REPO.name) / rel).replace("\\", "/") + "/", "")
         for path in files:
             zf.write(path, arcname=str(Path(REPO.name) / path.relative_to(REPO)))
 

@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-10 commit(s), oldest first.
+11 commit(s), oldest first.
 
 
 ---
@@ -324,10 +324,30 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 ---
 
-## `d53d2e9` — Tidy the rubric persona wording
+## `1c42cc0` — Tidy the rubric persona wording
 
 - **date:** 2026-09-23
 - **author:** Joseph Lopez
-- **sha:** `d53d2e9457522e0994f21dbf718ab2e55ddc8873`
+- **sha:** `1c42cc0178a669a62b0149bbb4f2d69edea374cc`
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `b053f0a` — Preserve directory entries when packaging
+
+- **date:** 2026-09-23
+- **author:** Joseph Lopez
+- **sha:** `b053f0adf72809d1f4a2e243d484c724b9eb86d0`
+
+`git gc` packs refs into `packed-refs`, which leaves `.git/refs/` empty.
+Zip does not store empty directories, so the extracted copy was missing a
+directory git requires and reported "not a git repository" -- history
+present in the archive but unreachable. The packager now writes an entry for
+every directory.
+
+Caught only because the artifact is verified by extracting and running it,
+not by inspecting the file list.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

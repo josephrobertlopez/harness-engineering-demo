@@ -193,6 +193,28 @@ wikiskill report                                baseline vs evolved
 Resume is automatic: `run` restarts from the first iteration that never
 reached its commit phase.
 
+## Measured, against a real model
+
+One live run on the bundled benchmark, Haiku 4.5 as the inference agent,
+Sonnet 5 maintaining the wiki, Opus 5 proposing:
+
+| split | no skills | evolved | |
+|---|---|---|---|
+| validation (gated on) | 0.400 | 1.000 | contaminated -- it *is* the gate |
+| **held-out test** | **0.400** | **1.000** | never gated on, never shown to any agent |
+
+Converged in a single iteration. What the agent got wrong unaided is the
+interesting part: it *passed* the two quirks the environment reveals
+(`rec_prefix` -- it read the error and retried with the canonical id;
+`page_two` -- it saw `more_pages` and paginated) and failed exactly the three
+**silent conventions** nothing tells it about. That is the failure shape this
+method is for.
+
+Caveats worth stating: five test tasks, so 0.400 is 2/5 and 1.000 is 5/5.
+And converging in one iteration means this benchmark demonstrates that a
+skill helps -- not yet that knowledge *compounds across iterations*, which is
+the paper's actual claim. A harder task set is the next thing this repo needs.
+
 ## Licence
 
 MIT.

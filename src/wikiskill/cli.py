@@ -22,6 +22,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--proposer-effort", default="high")
     p.add_argument("--gate-margin", type=float, default=0.0)
     p.add_argument("--max-steps", type=int, default=10)
+    p.add_argument(
+        "--concurrency",
+        type=int,
+        default=4,
+        help="parallel rollouts (default 4; use 1 to serialise)",
+    )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument(
         "--decoy-iteration",
@@ -68,6 +74,7 @@ def config_from(args: argparse.Namespace) -> RunConfig:
         iterations=getattr(args, "iterations", 8),
         gate_margin=args.gate_margin,
         max_steps=args.max_steps,
+        concurrency=args.concurrency,
         seed=args.seed,
         extra=extra,
     )

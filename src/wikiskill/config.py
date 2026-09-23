@@ -140,6 +140,14 @@ class RunConfig:
     skill_budget_bytes: int = 8_192
     skillset_budget_bytes: int = 32_768
     proposer_max_reads: int = 8
+    concurrency: int = 4
+    """Parallel rollouts.
+
+    Rollouts are independent -- a fresh environment per task, per-task trace
+    files, a content-addressed response cache -- so this is close to linear
+    speedup. Keep it modest: each `claude-cli` rollout spawns a ~237MB
+    subprocess, and the account has rate limits.
+    """
     seed: int = 0
     bench: str = "starter"
     extra: dict[str, str] = field(default_factory=dict)

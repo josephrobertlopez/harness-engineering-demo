@@ -18,6 +18,7 @@ rolled back, so there is no wiki state to restore -- only patterns to add.
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
@@ -114,24 +115,69 @@ class Workspace:
 
 
 class Evaluator:
-    """Runs a split under a given skill set, skipping completed rollouts."""
+    """Runs a split under a given skill set, skipping completed rollouts.
 
-    def __init__(self, agent: InferenceAgent, raw: RawStore, env_factory: Callable[[Task], object]) -> None:
+    Rollouts execute in a thread pool. They are independent by construction --
+    a fresh environment per task, a separate trace file per task, and a
+    content-addressed response cache whose writes are atomic -- so the only
+    shared state needing a lock is the backends' counters, which have one.
+
+    Results are returned in task order regardless of completion order, so the
+    scores and the maintainer's trace sample do not depend on which rollout
+    happened to finish first.
+    """
+
+    def __init__(
+        self,
+        agent: InferenceAgent,
+        raw: RawStore,
+        env_factory: Callable[[Task], object],
+        concurrency: int = 4,
+    ) -> None:
         self.agent = agent
         self.raw = raw
         self.env_factory = env_factory
+        self.concurrency = max(1, concurrency)
 
     def run(self, tasks: Iterable[Task], skillset: SkillSet, iteration: int) -> list[Trace]:
         sha = skillset.sha
-        traces: list[Trace] = []
-        for task in tasks:
+        ordered = list(tasks)
+
+        # Resolve cached rollouts first, on this thread. They are file reads,
+        # and doing them up front keeps the pool for work that actually calls
+        # a model.
+        results: dict[str, Trace] = {}
+        pending: list[Task] = []
+        for task in ordered:
             cached = self.raw.load(iteration, task.split, task.task_id, sha)
             if cached is not None:
-                traces.append(cached)
-                continue
-            env = self.env_factory(task)
-            traces.append(self.agent.run(task, env, skillset, iteration=iteration, raw=self.raw))
-        return traces
+                results[task.task_id] = cached
+            else:
+                pending.append(task)
+
+        if pending:
+            workers = min(self.concurrency, len(pending))
+            if workers == 1:
+                for task in pending:
+                    results[task.task_id] = self._rollout(task, skillset, iteration)
+            else:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    futures = {
+                        pool.submit(self._rollout, task, skillset, iteration): task
+                        for task in pending
+                    }
+                    for future in as_completed(futures):
+                        task = futures[future]
+                        # Let exceptions propagate: a rollout that dies is a
+                        # harness bug, and completed traces are already on
+                        # disk, so --resume picks up exactly here.
+                        results[task.task_id] = future.result()
+
+        return [results[t.task_id] for t in ordered]
+
+    def _rollout(self, task: Task, skillset: SkillSet, iteration: int) -> Trace:
+        env = self.env_factory(task)
+        return self.agent.run(task, env, skillset, iteration=iteration, raw=self.raw)
 
 
 def mean_score(traces: list[Trace]) -> float:
@@ -153,7 +199,9 @@ class EvolutionLoop:
         self.proposer = SkillProposer(
             self.backend, config.proposer_model, config.proposer_effort, config.proposer_max_reads
         )
-        self.evaluator = Evaluator(self.inference, self.ws.raw, starter.StarterEnv)
+        self.evaluator = Evaluator(
+            self.inference, self.ws.raw, starter.StarterEnv, concurrency=config.concurrency
+        )
 
     # -- helpers ----------------------------------------------------------
 

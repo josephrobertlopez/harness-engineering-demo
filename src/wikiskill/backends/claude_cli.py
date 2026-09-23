@@ -17,6 +17,7 @@ import json
 import os
 import shutil
 import subprocess
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -55,6 +56,7 @@ class ClaudeCliBackend:
         self.executable = resolve_executable(executable)
         self.timeout = timeout
         self.total_cost_usd = 0.0
+        self._lock = threading.Lock()  # rollouts run concurrently
 
     def describe(self) -> dict[str, Any]:
         return {"backend": self.name, "executable": self.executable}
@@ -113,7 +115,8 @@ class ClaudeCliBackend:
             )
 
         text, usage, cost = _parse(proc.stdout)
-        self.total_cost_usd += cost
+        with self._lock:
+            self.total_cost_usd += cost
         return LLMResponse(text=text, model=req.model, usage=usage)
 
 

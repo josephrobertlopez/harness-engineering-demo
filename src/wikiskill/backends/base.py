@@ -14,6 +14,7 @@ is carried by re-rendering the transcript into the prompt each turn.
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -83,6 +84,11 @@ class CachingBackend:
         self.name = inner.name
         self.hits = 0
         self.misses = 0
+        # Rollouts run in a thread pool, so the counters need a lock. The
+        # cache files themselves do not: keys are content addresses, writes
+        # are atomic, and two threads racing on the same key write identical
+        # bytes.
+        self._lock = threading.Lock()
 
     def describe(self) -> dict[str, Any]:
         return {**self.inner.describe(), "cache": self.enabled}
@@ -92,10 +98,12 @@ class CachingBackend:
             return self.inner.complete(req)
         path = self.cache_dir / f"{req.cache_key()}.json"
         if path.exists():
-            self.hits += 1
+            with self._lock:
+                self.hits += 1
             d = read_json(path)
             return LLMResponse(text=d["text"], model=d["model"], usage=d.get("usage", {}))
-        self.misses += 1
+        with self._lock:
+            self.misses += 1
         resp = self.inner.complete(req)
         write_json(path, {"text": resp.text, "model": resp.model, "usage": resp.usage})
         return resp

@@ -19,8 +19,9 @@ Format, exactly:
   - `Source: interview.md Q<n>` naming the answer(s) it came from.
 - Every exact value the product owner gave — numbers, status codes, error
   strings, file names, model ids, command lines — appears verbatim.
-- Inside requirements, do not use these words: the `vague_terms` listed in
-  `rubric.json`. Replace each with the behaviour or number it stood for.
+- Inside requirements, do not use the ticket's vague words: {{VAGUE_TERMS}}.
+  Replace each with the behaviour or number it stood for. (Quoted text and
+  `code` are exempt.)
 - Anything the product owner declined to decide goes in Non-goals. Open
   questions lists only questions that were *resolved*, each with where it
   was resolved (e.g. `"Should be fast" → PRD-3`). Never leave `TBD`.
@@ -35,5 +36,13 @@ writing or editing `prd.md`, run `{{PYTHON}} {{JUDGE}} . --stage prd` again
 yourself. Repeat until it passes, at most three rounds.
 
 **If a finding says the PRD "does not pin down" something, do not invent
-it.** It means a question was never asked. Stop, tell me which question to
-ask, and wait — the fix is `/fidelity:interrogate`, not a guess.
+it.** It means a question was never asked, or its answer never made it into
+the PRD. First look for the answer in `interview.md`; if it is there, write
+it into the right requirement. If it is not, stop, tell me which question
+to ask, and wait — the fix is `/fidelity:interrogate`, not a guess. (The
+"PO notes Q<n>" in a finding is the product owner's own numbering, not
+`interview.md`'s.)
+
+**If a finding says the PRD "contradicts the product owner", re-read the
+interview.** Either the PRD misquotes it, or the wording states the opposite
+of what you meant; fix the sentence.

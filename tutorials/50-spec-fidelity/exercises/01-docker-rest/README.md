@@ -84,9 +84,14 @@ login`, or pull `mirror.gcr.io/library/python:3.12-slim` and tag it
 
 ## Traps in this exercise
 
-**Using `float` anywhere.** `0.135` has no exact binary representation, so
-a float implementation passes most tests and fails the one finance cares
-about. `rubric.json` forbids `float(` in `app.py` for this reason.
+**Using `float` anywhere.** Most ties round the same way as a float and as
+a Decimal, so a float implementation passes most tests. `2.675` does not:
+a float gives 2.67, banker's rounding on the decimal value gives 2.68, and
+2.675 is finance's audit case. (This README once claimed `0.135` would
+catch it. An adversarial review showed it does not; the reference suite
+now has a scenario for 2.675, and a repo test proves a float version fails
+it.) `rubric.json` also forbids `float(`, `round(` and `:.2f` formatting in
+`app.py`, and rates written as JSON numbers in `rates.json`.
 
 **Rounding the rate, then multiplying.** The rate is *shown* to 6 places;
 the result is computed from the unrounded rate. On a large invoice the

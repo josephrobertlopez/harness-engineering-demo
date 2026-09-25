@@ -22,7 +22,8 @@ the file and redeploys at month end. **No network calls**, ever.
 
 **Q3. How is the result rounded?**
 To 2 decimal places using banker's rounding (round half to even,
-`ROUND_HALF_EVEN`). Finance audits against that. The `rate` field is shown
+`ROUND_HALF_EVEN`). Finance audits against that — and their favourite audit
+case is 2.675, which comes out 2.68, not the 2.67 a float gives you. The `rate` field is shown
 to 6 decimal places, same rounding. The result is computed from the
 unrounded rate.
 
@@ -33,12 +34,14 @@ or network.
 
 **Q5. "Handle errors properly" — which errors, which responses?**
 
-- `amount` missing, not a number, NaN/Infinity, or negative → **400**
-  `{"error": "invalid_amount"}`
+- `amount` missing, not a number, NaN/Infinity, negative, or larger than
+  **1,000,000,000,000** (one trillion — no invoice is that big, and it keeps
+  the arithmetic exact) → **400** `{"error": "invalid_amount"}`
 - `from` or `to` missing or not in the rates file → **404**
   `{"error": "unknown_currency", "currency": "<the code>"}`
 - any other path → **404** `{"error": "not_found"}`
-- any method other than GET → **405** `{"error": "method_not_allowed"}`
+- any method other than GET — HEAD, OPTIONS and DELETE included → **405**
+  `{"error": "method_not_allowed"}`
 
 **Q6. How does ops know it is alive?**
 `GET /healthz` → 200 `{"status": "ok"}`.

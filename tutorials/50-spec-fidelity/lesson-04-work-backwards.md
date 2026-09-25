@@ -84,19 +84,25 @@ outputs shown are what the judge actually prints.
 **a. Drop a trace.** In the spec, delete the line `Trace: PRD-7`.
 
 ```
-- ...spec.md:105 'Health check' -- traces to no PRD requirement -- add 'Trace: PRD-<n>' or cut it (gold-plating)
+- ...spec.md:121 'Health check' -- no 'Trace: PRD-<n>' line -- trace it to the PRD, or cut it (gold-plating)
 - prd.md -- PRD-7 is not traced by any spec requirement -- it was dropped
 ```
 
 One edit, two findings: the requirement is now an orphan *and* the PRD
 item is unaccounted for. Both directions matter.
 
+Try the sneakier version too: instead of deleting the line, delete the
+whole Health check requirement and change `Trace: PRD-1` to
+`Trace: PRD-1, PRD-7`. Every id is still "traced". The judge still says
+`PRD-7 is only traced alongside other PRD ids` — a model tidying traces
+does exactly this, so every PRD item must have a requirement of its own.
+
 **b. Rename a scenario.** Change `#### Scenario: Tie rounds down to even`
 to `#### Scenario: Tie rounds to even`.
 
 ```
-- impl/tests -- no test names 'Scenario: Tie rounds to even' (requirement 'Half-to-even rounding')
-- impl/tests/test_app.py -- names 'Scenario: Tie rounds down to even', which the spec does not contain -- stale or invented
+- impl/tests/test_app.py -- Conversion names 'Scenario: Tie rounds down to even', which the spec does not contain -- stale or invented
+- impl/tests -- no test's docstring is 'Scenario: Tie rounds to even' (requirement 'Half-to-even rounding')
 ```
 
 This is how spec drift looks in real projects: the spec moved, the test did
@@ -106,22 +112,31 @@ not, and until now nothing noticed.
 `ROUND_HALF_EVEN` with `ROUND_HALF_UP`.
 
 ```
-- impl/tests -- tests fail:
-    AssertionError: '0.13' != '0.12'
+- impl/tests -- Scenario 'Tie rounds down to even': Conversion.test_tie_down fails: AssertionError: '0.13' != '0.12'
+- impl/tests -- Scenario 'Tie a float cannot represent': Conversion.test_tie_a_float_cannot_represent fails: AssertionError: '0.17' != '0.16'
 ```
 
-The tie test is the only one that notices. That is why the spec has two
-tie scenarios and not a general "rounds correctly": a value that rounds the
-same under both rules proves nothing.
+Only the tie tests notice, and the judge names the *scenario* each one
+proves, not just a test id. That is why the spec has tie scenarios and not
+a general "rounds correctly": a value that rounds the same under both rules
+proves nothing.
+
+The third tie, 2.675, exists for a different mistake. An adversarial
+review of this track found that 0.125 and 0.135 round the same under a
+binary float too — so a float implementation passed the original tests,
+and the README's claim that it would fail was false. 2.675 (float: 2.67,
+Decimal half-even: 2.68) and 0.165 are values where they disagree.
 
 **d. Run as root.** In `impl/Dockerfile`, change `USER fx` to `USER root`.
 
 ```
-- impl/Dockerfile -- container runs as non-root: expected /^USER (?!root\b|0\b)\S+/
+- impl/tests -- Scenario 'Non-root image': Operations.test_non_root_image fails: AssertionError: 'root' unexpectedly found in {'0', 'root'}
+- impl/Dockerfile -- the container runs as non-root: expected /^USER (?!root\b|0\b)\S+/
 ```
 
-An exercise-specific rule from `rubric.json`, and the deterministic half of
-`HARNESS.md`'s constraint.
+Two nets catch it: the scenario's own test, and an exercise-specific rule
+from `rubric.json`. The rule checks the *last* `USER` line, because only
+that one decides who the container runs as.
 
 **e. Let a vague word back in.** In `prd.md`'s PRD-3, add the words
 "so it is fast".

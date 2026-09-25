@@ -11,14 +11,15 @@ It judges three artifacts against each other, in the order they are written:
 
 Stage ``prd``   the PRD is ready to become an OpenSpec change: every
                 requirement has an ID, uses SHALL/MUST, carries a WHEN/THEN,
-                avoids the ticket's vague words, and pins down every fact the
-                stakeholder gave.
+                avoids the ticket's vague words, pins down every fact the
+                stakeholder gave, and contradicts none of them.
 Stage ``spec``  the OpenSpec change is valid (the rules ``openspec validate
-                --strict`` enforces that matter here) and traces to the PRD in
-                both directions -- nothing dropped, nothing invented.
-Stage ``build`` every scenario is named by a test, every test names a real
-                scenario, every task is ticked, the tests pass, and the
-                exercise's own implementation rules hold.
+                --strict`` enforces that matter here, plus a few it does not)
+                and traces to the PRD in both directions -- nothing dropped,
+                nothing invented.
+Stage ``build`` every scenario is named by a unittest test that runs, asserts
+                something and passes; every test names a real scenario; every
+                task is ticked; the exercise's own implementation rules hold.
 
 The report uses the same shape as the ai-literacy-superpowers
 ``harness-enforcer`` agent, because this script *is* the Tool line of the
@@ -33,14 +34,21 @@ LangChain install, and no MCP client.
 from __future__ import annotations
 
 import argparse
+import ast
+import io
 import json
 import re
 import subprocess
 import sys
+import tempfile
+import tokenize
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
+TRACK = Path(__file__).resolve().parent
 STAGES = ("prd", "spec", "build")
+MARKER = ".fidelity.json"
 
 # From OpenSpec's src/core/validation/constants.ts. Copied, not imported: the
 # point is to run without Node. If upstream moves these, the lesson text that
@@ -49,10 +57,20 @@ MIN_WHY = 50
 MAX_WHY = 1000
 DELTA_HEADERS = ("ADDED", "MODIFIED", "REMOVED", "RENAMED")
 
-PRD_ID = re.compile(r"\bPRD-(\d+)\b")
-PRD_HEADING = re.compile(r"^###\s+(PRD-\d+)\b[:.\s-]*(.*)$")
+PRD_ID = re.compile(r"\bPRD-0*(\d+)\b")
+PRD_HEADING = re.compile(r"^#{3,4}\s+PRD-0*(\d+)\b[\s:.\-–—]*(.*)$")
+TRACE_LINE = re.compile(r"^\s*(?:[-*]\s*)?\**Trace\**:\s*(.+)$", re.MULTILINE)
 SHALL = re.compile(r"\b(SHALL|MUST)\b")
-SCENARIO_TAG = re.compile(r"Scenario:\s*(.+?)\s*$")
+TEST_TIMEOUT = 300
+
+# Heading aliases a reasonable PRD uses. Rejecting "## Out of Scope" for not
+# being spelled "## Non-goals" is a checker crying wolf.
+PRD_SECTIONS = {
+    "Problem": ("problem", "problem statement", "background"),
+    "Requirements": ("requirements", "functional requirements"),
+    "Non-goals": ("non-goals", "non goals", "nongoals", "out of scope"),
+    "Open questions": ("open questions", "questions", "resolved questions"),
+}
 
 
 @dataclass
@@ -83,9 +101,11 @@ class StageResult:
 @dataclass
 class Requirement:
     name: str
+    capability: str
     section: str
     body: str
     scenarios: dict[str, str]
+    traces: set[str]
     line: int
 
 
@@ -94,14 +114,23 @@ class Requirement:
 
 
 def find_rubric(target: Path) -> tuple[Path, dict]:
-    """The rubric lives next to ticket.md. A ``solution/`` folder borrows its
-    parent's, which is what lets a learner judge the reference answer with the
-    same command they judge their own with."""
+    """Find the rubric without putting it in front of the developer.
+
+    In the repo it sits next to ticket.md, and a ``solution/`` folder borrows
+    its parent's. A workspace made by start.py holds only a marker naming the
+    exercise: the rubric's facts *are* the stakeholder's answers, so copying
+    it into a folder Claude reads would hand them over.
+    """
     for directory in (target, target.parent):
         candidate = directory / "rubric.json"
         if candidate.is_file():
-            return directory, json.loads(candidate.read_text(encoding="utf-8"))
-    raise FileNotFoundError(f"no rubric.json in {target} or its parent")
+            return directory, json.loads(read(candidate))
+    marker = target / MARKER
+    if marker.is_file():
+        exercise = json.loads(read(marker))["exercise"]
+        candidate = TRACK / "exercises" / exercise / "rubric.json"
+        return candidate.parent, json.loads(read(candidate))
+    raise FileNotFoundError(f"no rubric.json or {MARKER} in {target} or its parent")
 
 
 def read(path: Path) -> str:
@@ -111,7 +140,7 @@ def read(path: Path) -> str:
 def find_change(answer: Path) -> tuple[Path | None, str]:
     changes = answer / "openspec" / "changes"
     if not changes.is_dir():
-        return None, f"no {rel(changes, answer)}/ -- run /opsx:propose, or create it by hand"
+        return None, f"no {rel(changes, answer)}/ -- run /fidelity:propose, or create it by hand"
     live = sorted(
         d for d in changes.iterdir() if d.is_dir() and d.name != "archive" and not d.name.startswith(".")
     )
@@ -128,8 +157,13 @@ def rel(path: Path, root: Path) -> str:
         return path.as_posix()
 
 
+def canon(ident: str) -> str:
+    m = PRD_ID.search(ident)
+    return f"PRD-{int(m.group(1))}" if m else ident
+
+
 # --------------------------------------------------------------------------
-# Parsing
+# Parsing markdown
 
 
 def sections(text: str, level: int = 2) -> dict[str, str]:
@@ -153,23 +187,28 @@ def sections(text: str, level: int = 2) -> dict[str, str]:
 def section_named(text: str, *names: str, level: int = 2) -> str | None:
     wanted = {n.lower() for n in names}
     for heading, body in sections(text, level).items():
-        if heading.lower() in wanted:
+        if heading.lower().strip(" :") in wanted:
             return body
     return None
 
 
+def prd_section(text: str, canonical: str) -> str | None:
+    return section_named(text, canonical, *PRD_SECTIONS[canonical])
+
+
 def prd_requirements(text: str) -> dict[str, tuple[str, str]]:
-    """``### PRD-n: title`` blocks inside ``## Requirements`` -> (title, body)."""
-    body = section_named(text, "Requirements") or ""
+    """``### PRD-n: title`` blocks (or ``####`` under a group heading) inside
+    the requirements section -> {canonical id: (title, body)}."""
+    body = prd_section(text, "Requirements") or ""
     found: dict[str, tuple[str, list[str]]] = {}
     current: str | None = None
     for line in body.splitlines():
         m = PRD_HEADING.match(line)
         if m:
-            current = m.group(1)
+            current = f"PRD-{int(m.group(1))}"
             found[current] = (m.group(2).strip(), [])
             continue
-        if line.startswith("### "):
+        if line.startswith("### ") or line.startswith("#### "):
             current = None
             continue
         if current:
@@ -177,9 +216,33 @@ def prd_requirements(text: str) -> dict[str, tuple[str, str]]:
     return {k: (title, "\n".join(lines).strip()) for k, (title, lines) in found.items()}
 
 
-def spec_requirements(text: str) -> tuple[list[Requirement], list[str]]:
+def flatten(text: str) -> str:
+    """One line per paragraph or bullet.
+
+    Fact patterns use ``[^\\n]*`` to mean "in the same sentence". Without
+    this, a PRD hard-wrapped at 80 columns -- this repo's own style -- fails a
+    fact because the status code and the error name landed on adjacent lines.
+    """
+    units: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        starts_unit = (
+            not stripped
+            or not units
+            or re.match(r"^([-*+]|\d+[.)])\s", stripped)
+            or stripped.startswith("#")
+            or not units[-1]
+        )
+        if starts_unit:
+            units.append(stripped)
+        else:
+            units[-1] += " " + stripped
+    return "\n".join(u for u in units if u)
+
+
+def spec_requirements(text: str, capability: str = "") -> tuple[list[Requirement], list[str]]:
     """Requirements inside delta sections, plus the names of any stranded
-    outside one (OpenSpec silently ignores those, so we do not)."""
+    outside one (OpenSpec reports those; so do we)."""
     reqs: list[Requirement] = []
     orphans: list[str] = []
     section = ""
@@ -204,7 +267,7 @@ def spec_requirements(text: str) -> tuple[list[Requirement], list[str]]:
                 orphans.append(name)
                 current = None
                 continue
-            current = Requirement(name, section, "", {}, number)
+            current = Requirement(name, capability, section, "", {}, set(), number)
             reqs.append(current)
             scenario = None
             continue
@@ -219,8 +282,13 @@ def spec_requirements(text: str) -> tuple[list[Requirement], list[str]]:
             continue
         _append(current, scenario, line)
     for r in reqs:
-        r.body = r.body.strip()
-        r.scenarios = {k: v.strip() for k, v in r.scenarios.items()}
+        # A Trace line counts wherever it sits in the requirement's block --
+        # "end every requirement with a Trace line" puts it after the scenarios.
+        block = r.body + "\n" + "\n".join(r.scenarios.values())
+        for m in TRACE_LINE.finditer(block):
+            r.traces |= {canon(i) for i in re.findall(r"PRD-0*\d+", m.group(1))}
+        r.body = TRACE_LINE.sub("", r.body).strip()
+        r.scenarios = {k: TRACE_LINE.sub("", v).strip() for k, v in r.scenarios.items()}
     return reqs, orphans
 
 
@@ -229,6 +297,14 @@ def _append(req: Requirement, scenario: str | None, line: str) -> None:
         req.body += line + "\n"
     else:
         req.scenarios[scenario] += line + "\n"
+
+
+def change_requirements(change: Path) -> list[Requirement]:
+    out: list[Requirement] = []
+    for spec in sorted((change / "specs").glob("**/spec.md")):
+        capability = spec.parent.relative_to(change / "specs").as_posix()
+        out.extend(spec_requirements(read(spec), capability)[0])
+    return out
 
 
 def tasks(text: str) -> list[tuple[bool, str]]:
@@ -240,27 +316,191 @@ def tasks(text: str) -> list[tuple[bool, str]]:
     return out
 
 
-def test_scenario_tags(tests_dir: Path) -> dict[str, list[str]]:
-    """Map scenario name -> test files naming it with ``Scenario: <name>``."""
-    tags: dict[str, list[str]] = {}
-    for py in sorted(tests_dir.rglob("test_*.py")):
-        for line in read(py).splitlines():
-            m = SCENARIO_TAG.search(line)
-            if m:
-                name = m.group(1).strip().strip("\"'").rstrip(".")
-                tags.setdefault(name, []).append(py.name)
-    return tags
-
-
 def strip_code(text: str) -> str:
+    """Drop fenced blocks, inline code and quoted speech.
+
+    A vague word inside `code`, a path, or a customer's quoted question is
+    not the PRD being vague -- flagging it is the checker crying wolf.
+    """
     kept, in_fence = [], False
     for line in text.splitlines():
         if line.lstrip().startswith("```"):
             in_fence = not in_fence
             continue
         if not in_fence:
-            kept.append(re.sub(r"`[^`]*`", "", line))
+            line = re.sub(r"`[^`]*`", "", line)
+            line = re.sub(r"\"[^\"]*\"|“[^”]*”", "", line)
+            kept.append(line)
     return "\n".join(kept)
+
+
+# --------------------------------------------------------------------------
+# Parsing code
+
+
+def strip_py(source: str) -> str:
+    """Python with comments and docstrings blanked out.
+
+    ``# never use shell=True`` is the opposite of using it. A rule that
+    fires on the comment teaches people to stop writing the comment.
+    """
+    try:
+        tokens = list(tokenize.generate_tokens(io.StringIO(source).readline))
+    except (tokenize.TokenError, SyntaxError):
+        return source
+    lines = source.splitlines(keepends=True)
+    drop: list[tuple[tuple[int, int], tuple[int, int]]] = []
+    prev = tokenize.NEWLINE
+    for tok in tokens:
+        if tok.type == tokenize.COMMENT:
+            drop.append((tok.start, tok.end))
+        elif tok.type == tokenize.STRING and prev in (tokenize.NEWLINE, tokenize.NL, tokenize.INDENT, tokenize.DEDENT):
+            drop.append((tok.start, tok.end))
+        if tok.type not in (tokenize.COMMENT, tokenize.NL):
+            prev = tok.type
+    for (sr, sc), (er, ec) in reversed(drop):
+        if sr == er:
+            line = lines[sr - 1]
+            lines[sr - 1] = line[:sc] + " " * (ec - sc) + line[ec:]
+        else:
+            lines[sr - 1] = lines[sr - 1][:sc] + "\n"
+            for i in range(sr, er - 1):
+                lines[i] = "\n"
+            lines[er - 1] = " " * ec + lines[er - 1][ec:]
+    return "".join(lines)
+
+
+def strip_dockerfile(source: str) -> str:
+    """Comments gone, ``\\`` continuations joined: one instruction per line,
+    so a rule about RUN sees the whole RUN."""
+    joined = re.sub(r"\\\n", " ", source)
+    return "\n".join(l for l in joined.splitlines() if not l.lstrip().startswith("#"))
+
+
+def prepared(path: Path) -> str:
+    text = read(path)
+    if path.suffix == ".py":
+        return strip_py(text)
+    if path.name.startswith("Dockerfile") or path.suffix == ".dockerfile":
+        return strip_dockerfile(text)
+    return text
+
+
+@dataclass
+class TaggedTest:
+    file: str
+    owner: str  # class name, or "" for a module-level function
+    name: str
+    scenario: str
+    asserts: bool
+
+
+def _asserts(node: ast.AST) -> bool:
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.Assert):
+            return True
+        if isinstance(sub, ast.Call):
+            f = sub.func
+            name = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) else ""
+            if name.startswith(("assert", "fail")):
+                return True
+    return False
+
+
+def _scenario_of(doc: str | None) -> str | None:
+    first = (doc or "").strip().splitlines()[0].strip() if (doc or "").strip() else ""
+    if not first.startswith("Scenario:"):
+        return None
+    return first[len("Scenario:"):].strip().strip("\"'").rstrip(".")
+
+
+def tagged_tests(tests_dir: Path) -> list[TaggedTest]:
+    """Tests whose docstring's first line is ``Scenario: <name>``.
+
+    Only a docstring counts. A tag in a comment is a promise, not a test.
+    """
+    found: list[TaggedTest] = []
+    for py in sorted(tests_dir.rglob("test_*.py")):
+        try:
+            tree = ast.parse(read(py))
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                s = _scenario_of(ast.get_docstring(node))
+                if s:
+                    found.append(TaggedTest(py.name, "", node.name, s, _asserts(node)))
+            if isinstance(node, ast.ClassDef):
+                for item in node.body:
+                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name.startswith("test"):
+                        s = _scenario_of(ast.get_docstring(item))
+                        if s:
+                            found.append(TaggedTest(py.name, node.name, item.name, s, _asserts(item)))
+    return found
+
+
+# Runs in the implementation's own interpreter and folder, and reports every
+# test's outcome with its scenario -- so "tagged" can mean "ran and passed",
+# not "the string appears in a file".
+RUNNER = r'''
+import json, sys, unittest
+sys.path.insert(0, ".")
+records = []
+
+def scenario(test):
+    method = getattr(test, getattr(test, "_testMethodName", ""), None)
+    doc = (getattr(method, "__doc__", None) or "").strip()
+    first = doc.splitlines()[0].strip() if doc else ""
+    return first[9:].strip().strip("\"'").rstrip(".") if first.startswith("Scenario:") else None
+
+class Result(unittest.TestResult):
+    def rec(self, test, outcome, detail=""):
+        records.append({"id": test.id(), "outcome": outcome, "detail": detail[-1500:], "scenario": scenario(test)})
+    def addSuccess(self, test):
+        self.rec(test, "pass")
+    def addFailure(self, test, err):
+        self.rec(test, "fail", self._exc_info_to_string(err, test))
+    def addError(self, test, err):
+        self.rec(test, "error", self._exc_info_to_string(err, test))
+    def addSkip(self, test, reason):
+        self.rec(test, "skip", reason)
+    def addSubTest(self, test, subtest, err):
+        if err is not None:
+            self.rec(test, "fail", self._exc_info_to_string(err, test))
+    def addExpectedFailure(self, test, err):
+        self.rec(test, "fail", "marked expectedFailure")
+    def addUnexpectedSuccess(self, test):
+        self.rec(test, "fail", "unexpected success")
+
+unittest.defaultTestLoader.discover("tests", top_level_dir=".").run(Result())
+with open(sys.argv[1], "w", encoding="utf-8") as fh:
+    json.dump(records, fh)
+'''
+
+
+def run_tests(impl: Path) -> tuple[list[dict] | None, str]:
+    with tempfile.TemporaryDirectory(prefix="fidelity-") as tmp:
+        out = Path(tmp) / "results.json"
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-c", RUNNER, str(out)],
+                cwd=str(impl), capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=TEST_TIMEOUT,
+            )
+        except subprocess.TimeoutExpired:
+            return None, f"tests did not finish within {TEST_TIMEOUT} s"
+        if not out.is_file():
+            tail = "\n    ".join((proc.stderr or proc.stdout).strip().splitlines()[-8:])
+            return None, f"the test run crashed before reporting:\n    {tail}"
+        return json.loads(out.read_text(encoding="utf-8")), ""
+
+
+def _last_line(detail: str) -> str:
+    """The exception line of a traceback -- not the last line, which for an
+    assertEqual on strings is a difflib marker like ``?    ^``."""
+    lines = [l.strip() for l in detail.strip().splitlines() if l.strip()]
+    errors = [l for l in lines if re.match(r"^[\w.]+(Error|Exception|Exit|Interrupt)\b", l)]
+    return (errors or lines or ["no detail"])[-1]
 
 
 # --------------------------------------------------------------------------
@@ -271,20 +511,24 @@ def judge_prd(answer: Path, rubric: dict) -> StageResult:
     res = StageResult("prd", TITLES["prd"])
     path = answer / "prd.md"
     if not path.is_file():
-        res.add("prd.md", "missing -- turn ticket.md into a PRD first (lesson 3, steps 1-2)")
+        res.add("prd.md", "missing -- interrogate the ticket, then write the PRD (lesson 3, steps 1-2)")
         return res
     text = read(path)
 
-    for name in ("Problem", "Requirements", "Non-goals", "Open questions"):
-        if section_named(text, name) is None:
-            res.add("prd.md", f"no '## {name}' section")
+    for canonical in PRD_SECTIONS:
+        if prd_section(text, canonical) is None:
+            res.add("prd.md", f"no '## {canonical}' section")
 
     reqs = prd_requirements(text)
     if not reqs:
-        res.add("prd.md", "no '### PRD-<n>: <title>' requirements under '## Requirements'")
+        found = [h for h in sections(text) if h]
+        res.add("prd.md", "no '### PRD-<n>: <title>' requirements under '## Requirements' "
+                          f"(top-level headings found: {', '.join(found) or 'none'})")
         return res
 
-    vague = [re.compile(rf"\b{re.escape(w)}\b", re.IGNORECASE) for w in rubric["vague_terms"]]
+    vague = [
+        re.compile(rf"(?<![\w/.-]){re.escape(w)}(?![\w/])", re.IGNORECASE) for w in rubric["vague_terms"]
+    ]
     for rid, (title, body) in reqs.items():
         where = f"prd.md {rid}"
         if not body:
@@ -300,16 +544,51 @@ def judge_prd(answer: Path, rubric: dict) -> StageResult:
             if hit:
                 res.add(where, f"vague term '{hit.group(0)}' -- replace it with the number or behaviour it stands for")
 
-    open_q = section_named(text, "Open questions") or ""
+    open_q = prd_section(text, "Open questions") or ""
     for line in open_q.splitlines():
         if re.search(r"\bTBD\b|\bTODO\b|\?\?\?", line):
             res.add("prd.md Open questions", f"unresolved: {line.strip()}")
 
-    requirements_text = "\n".join(body for _, body in reqs.values())
+    stated = flatten("\n\n".join(body for _, body in reqs.values()))
     for fact in rubric["prd_facts"]:
-        if not any(re.search(p, requirements_text, re.IGNORECASE) for p in fact["any_of"]):
-            res.add("prd.md", f"does not pin down {fact['label']} ({fact['source']})")
+        verdict = fact_verdict(fact, stated)
+        source = fact["source"].replace("stakeholder-answers.md", "PO notes")
+        if verdict == "missing":
+            res.add("prd.md", f"does not pin down {fact['label']} -- ask the product owner ({source})")
+        elif verdict.startswith("contradicts:"):
+            res.add("prd.md", f"contradicts the product owner on {fact['label']}: "
+                              f"'{verdict.split(':', 1)[1]}' ({source})")
     return res
+
+
+def fact_verdict(fact: dict, text: str) -> str:
+    """"ok", "missing", or "contradicts:<the offending words>".
+
+    ``any_of`` proves the fact was mentioned; ``none_of`` catches it being
+    mentioned the wrong way round -- "SHALL set temperature to 0.7" mentions
+    temperature too.
+    """
+    for pattern in fact.get("none_of", []):
+        for m in re.finditer(pattern, text, re.IGNORECASE):
+            if not _negated(text, m.start()):
+                return "contradicts:" + m.group(0)
+    if any(re.search(p, text, re.IGNORECASE) for p in fact["any_of"]):
+        return "ok"
+    return "missing"
+
+
+NEGATION = re.compile(r"\b(not|never|no|none|without|instead of|rather than)\b", re.IGNORECASE)
+
+
+def _negated(text: str, start: int) -> bool:
+    """Whether the clause leading up to ``start`` already negates it.
+
+    "no money values appear as JSON floats" is the fact stated correctly,
+    not contradicted. Found the hard way: Haiku wrote exactly that line and
+    the first version of this check called it a contradiction.
+    """
+    clause_start = max(text.rfind(c, 0, start) for c in ".;!?\n") + 1
+    return bool(NEGATION.search(text[clause_start:start]))
 
 
 def judge_spec(answer: Path, rubric: dict) -> StageResult:
@@ -329,7 +608,7 @@ def judge_spec(answer: Path, rubric: dict) -> StageResult:
         if why_body is None:
             res.add(f"{where}/proposal.md", "no '## Why' section")
         elif not MIN_WHY <= len(why_body) <= MAX_WHY:
-            res.add(f"{where}/proposal.md", f"'## Why' is {len(why_body)} chars; OpenSpec wants {MIN_WHY}-{MAX_WHY}")
+            res.add(f"{where}/proposal.md", f"'## Why' is {len(why_body)} chars; OpenSpec's guidance is {MIN_WHY}-{MAX_WHY}")
         if not section_named(text, "What Changes"):
             res.add(f"{where}/proposal.md", "no (or empty) '## What Changes' section")
 
@@ -337,26 +616,30 @@ def judge_spec(answer: Path, rubric: dict) -> StageResult:
     if not task_file.is_file() or not tasks(read(task_file)):
         res.add(f"{where}/tasks.md", "missing, or has no '- [ ]' checkbox tasks")
 
-    spec_files = sorted((change / "specs").glob("*/spec.md")) if (change / "specs").is_dir() else []
+    spec_files = sorted((change / "specs").glob("**/spec.md")) if (change / "specs").is_dir() else []
     if not spec_files:
         res.add(where, "no specs/<capability>/spec.md delta")
         return res
 
     prd_ids = set(prd_requirements(read(answer / "prd.md"))) if (answer / "prd.md").is_file() else set()
-    traced: set[str] = set()
-    seen: set[str] = set()
+    traced_by: dict[str, list[Requirement]] = defaultdict(list)
+    seen_req: set[tuple[str, str]] = set()
+    seen_scenario: dict[str, str] = {}
     for spec in spec_files:
         sw = rel(spec, answer)
-        reqs, orphans = spec_requirements(read(spec))
+        capability = spec.parent.relative_to(change / "specs").as_posix()
+        reqs, orphans = spec_requirements(read(spec), capability)
         for name in orphans:
             res.add(sw, f"Requirement '{name}' is outside a delta section; OpenSpec ignores it")
         if not reqs:
             res.add(sw, "no requirements under '## ADDED/MODIFIED Requirements'")
         for r in reqs:
             rw = f"{sw}:{r.line} '{r.name}'"
-            if r.name in seen:
-                res.add(rw, "duplicate requirement name")
-            seen.add(r.name)
+            # Keyed on capability too: OpenSpec accepts the same requirement
+            # name in two capabilities, and so must we.
+            if (r.capability, r.name) in seen_req:
+                res.add(rw, "duplicate requirement name in this capability")
+            seen_req.add((r.capability, r.name))
             if r.section == "REMOVED":
                 continue
             if not SHALL.search(r.body):
@@ -365,24 +648,35 @@ def judge_spec(answer: Path, rubric: dict) -> StageResult:
             if not r.scenarios:
                 res.add(rw, "no '#### Scenario:' -- every requirement needs one")
             for sname, sbody in r.scenarios.items():
+                if sname in seen_scenario:
+                    res.add(rw, f"scenario name '{sname}' is also used by '{seen_scenario[sname]}' -- "
+                                "tests cite scenarios by name, so names must be unique")
+                seen_scenario[sname] = r.name
                 if not sbody:
                     res.add(rw, f"scenario '{sname}' is empty")
                 elif not (re.search(r"\bWHEN\b", sbody) and re.search(r"\bTHEN\b", sbody)):
                     res.add(rw, f"scenario '{sname}' needs WHEN and THEN")
-            ids = set(PRD_ID.findall(r.body))
-            refs = {f"PRD-{n}" for n in ids}
-            if not refs:
-                res.add(rw, "traces to no PRD requirement -- add 'Trace: PRD-<n>' or cut it (gold-plating)")
-            for ref in sorted(refs - prd_ids):
+            if not r.traces:
+                res.add(rw, "no 'Trace: PRD-<n>' line -- trace it to the PRD, or cut it (gold-plating)")
+            for ref in sorted(r.traces - prd_ids):
                 res.add(rw, f"traces to {ref}, which the PRD does not define")
-            traced |= refs & prd_ids
+            for ref in r.traces & prd_ids:
+                traced_by[ref].append(r)
 
-    for rid in sorted(prd_ids - traced, key=lambda s: int(s.split("-")[1])):
-        res.add("prd.md", f"{rid} is not traced by any spec requirement -- it was dropped")
+    for rid in sorted(prd_ids, key=lambda s: int(s.split("-")[1])):
+        reqs_for = traced_by.get(rid, [])
+        if not reqs_for:
+            res.add("prd.md", f"{rid} is not traced by any spec requirement -- it was dropped")
+        elif all(len(r.traces) > 1 for r in reqs_for):
+            # Adding PRD-7 to another requirement's Trace line is the quiet way
+            # to drop PRD-7. Give every PRD item one requirement of its own.
+            names = ", ".join(f"'{r.name}'" for r in reqs_for)
+            res.add("prd.md", f"{rid} is only traced alongside other PRD ids (by {names}) -- "
+                              "give it a requirement of its own, so dropping it cannot hide")
     return res
 
 
-def judge_build(answer: Path, rubric: dict, run_tests: bool = True) -> StageResult:
+def judge_build(answer: Path, rubric: dict, run: bool = True, allow_skips: bool = False) -> StageResult:
     res = StageResult("build", TITLES["build"])
     change, why = find_change(answer)
     impl = answer / "impl"
@@ -393,21 +687,50 @@ def judge_build(answer: Path, rubric: dict, run_tests: bool = True) -> StageResu
         res.add("impl/", "missing -- build against the spec (lesson 3, step 4)")
         return res
 
-    scenarios: dict[str, str] = {}
-    for spec in sorted((change / "specs").glob("*/spec.md")):
-        for r in spec_requirements(read(spec))[0]:
-            if r.section != "REMOVED":
-                for s in r.scenarios:
-                    scenarios[s] = r.name
+    scenarios = {s: r.name for r in change_requirements(change) if r.section != "REMOVED" for s in r.scenarios}
 
+    # Layout first, one finding each: a missing __init__.py otherwise shows
+    # up as twelve lines of unittest internals, or as one finding per scenario.
     tests_dir = impl / "tests"
-    tags = test_scenario_tags(tests_dir) if tests_dir.is_dir() else {}
-    for s, req in scenarios.items():
-        if s not in tags:
-            res.add("impl/tests", f"no test names 'Scenario: {s}' (requirement '{req}')")
-    for s, files in tags.items():
-        if s not in scenarios:
-            res.add(f"impl/tests/{files[0]}", f"names 'Scenario: {s}', which the spec does not contain -- stale or invented")
+    layout_ok = True
+    if not tests_dir.is_dir():
+        res.add("impl/", "no tests/ folder -- tests live in impl/tests/test_*.py")
+        layout_ok = False
+    else:
+        if not (tests_dir / "__init__.py").is_file():
+            res.add("impl/tests", "no __init__.py -- unittest discovery needs tests/ to be a package (an empty file is enough)")
+            layout_ok = False
+        if not any(tests_dir.rglob("test_*.py")):
+            others = sorted(p.name for p in tests_dir.rglob("*.py") if p.name != "__init__.py")
+            hint = f" (found {', '.join(others)})" if others else ""
+            res.add("impl/tests", f"no test_*.py files{hint} -- unittest discovers test_*.py only")
+            layout_ok = False
+
+    if layout_ok:
+        tagged = tagged_tests(tests_dir)
+        by_scenario: dict[str, list[TaggedTest]] = defaultdict(list)
+        for t in tagged:
+            by_scenario[t.scenario].append(t)
+        for t in tagged:
+            where = f"impl/tests/{t.file}"
+            if not t.owner:
+                res.add(where, f"'{t.name}' is a module-level function -- unittest does not collect it; "
+                               "make it a method of a unittest.TestCase class")
+            elif not t.asserts:
+                res.add(where, f"{t.owner}.{t.name} names 'Scenario: {t.scenario}' but asserts nothing")
+            if t.scenario not in scenarios:
+                res.add(where, f"{t.owner or t.name} names 'Scenario: {t.scenario}', which the spec does not "
+                               "contain -- stale or invented")
+        for s, req in scenarios.items():
+            if not any(t.owner for t in by_scenario.get(s, [])):
+                res.add("impl/tests", f"no test's docstring is 'Scenario: {s}' (requirement '{req}')")
+
+        if run:
+            records, crash = run_tests(impl)
+            if records is None:
+                res.add("impl/tests", crash)
+            else:
+                judge_outcomes(res, records, scenarios, allow_skips)
 
     task_file = change / "tasks.md"
     if task_file.is_file():
@@ -416,46 +739,69 @@ def judge_build(answer: Path, rubric: dict, run_tests: bool = True) -> StageResu
                 res.add(rel(task_file, answer), f"unticked: {text}")
 
     for rule in rubric.get("impl_rules", []):
-        files = sorted(impl.glob(rule["glob"]))
-        if not files:
-            res.add("impl/", f"no file matches {rule['glob']} ({rule['label']})")
-            continue
-        blob = "\n".join(read(f) for f in files)
-        for pattern in rule.get("must_match", []):
-            if not re.search(pattern, blob, re.MULTILINE):
-                res.add(f"impl/{rule['glob']}", f"{rule['label']}: expected /{pattern}/")
-        for pattern in rule.get("must_not_match", []):
-            m = re.search(pattern, blob, re.MULTILINE)
-            if m:
-                res.add(f"impl/{rule['glob']}", f"{rule['label']}: found '{m.group(0)}'")
-
-    if run_tests and tests_dir.is_dir() and not res.findings:
-        proc = subprocess.run(
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-t", "."],
-            cwd=str(impl),
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=300,
-        )
-        if proc.returncode != 0:
-            tail = (proc.stderr or proc.stdout).strip().splitlines()[-12:]
-            res.add("impl/tests", "tests fail:\n    " + "\n    ".join(tail))
-        else:
-            # A skipped scenario test is not a failed one, but a green run
-            # that quietly skipped half the scenarios is not the whole story
-            # either -- so say how many, every time.
-            m = re.search(r"skipped=(\d+)", proc.stderr)
-            if m:
-                res.notes.append(
-                    f"{m.group(1)} test(s) skipped -- their scenarios are tagged but were not "
-                    "exercised here; install the optional dependency to run them"
-                )
+        judge_rule(res, impl, rule)
     return res
 
 
-JUDGES = {"prd": judge_prd, "spec": judge_spec, "build": judge_build}
+def judge_outcomes(res: StageResult, records: list[dict], scenarios: dict[str, str], allow_skips: bool) -> None:
+    if not records:
+        res.add("impl/tests", "no tests ran -- tests must be unittest.TestCase methods in impl/tests/test_*.py")
+        return
+    for r in records:
+        if r["id"].startswith("unittest.loader._FailedTest"):
+            res.add("impl/tests", f"could not import {r['id'].rsplit('.', 1)[-1]}: {_last_line(r['detail'])}")
+        elif r["outcome"] in ("fail", "error") and not r["scenario"]:
+            res.add("impl/tests", f"{r['id']} {r['outcome']}s: {_last_line(r['detail'])}")
+    skipped: list[str] = []
+    for s in scenarios:
+        mine = [r for r in records if r["scenario"] == s]
+        if not mine or any(r["outcome"] == "pass" for r in mine) and not any(r["outcome"] in ("fail", "error") for r in mine):
+            continue  # missing tags are reported statically
+        bad = next((r for r in mine if r["outcome"] in ("fail", "error")), None)
+        if bad:
+            res.add("impl/tests", f"Scenario '{s}': {bad['id'].rsplit('.', 2)[-2]}.{bad['id'].rsplit('.', 1)[-1]} "
+                                  f"{bad['outcome']}s: {_last_line(bad['detail'])}")
+        else:
+            skipped.append((s, mine[0]["detail"] or "no reason given"))
+    module_skips = [r for r in records if r["outcome"] == "skip" and not r["scenario"]]
+    if skipped or module_skips:
+        # A skipped scenario was not exercised. That is fine on a CI machine
+        # without an optional dependency, and not fine as "done".
+        by_reason: dict[str, list[str]] = defaultdict(list)
+        for s, reason in skipped:
+            by_reason[reason].append(f"'{s}'")
+        what = "; ".join(f"{len(v)} scenario(s) because '{k}': {', '.join(v)}" for k, v in by_reason.items())
+        what = what or f"{len(module_skips)} untagged test(s)"
+        if allow_skips:
+            res.notes.append(f"not exercised (skipped): {what} -- run where the dependency is installed before calling it done")
+        else:
+            res.add("impl/tests", f"not exercised (skipped): {what} -- install what they need, "
+                                  "or pass --allow-skips to accept that knowingly")
+
+
+def judge_rule(res: StageResult, impl: Path, rule: dict) -> None:
+    files = sorted(impl.glob(rule["glob"]))
+    where = f"impl/{rule['glob']}"
+    if not files:
+        res.add("impl/", f"no file matches {rule['glob']} ({rule['label']})")
+        return
+    blob = "\n".join(prepared(f) for f in files)
+    if "last" in rule:
+        # Only the final FROM builds the image; only the final USER runs it.
+        lines = [l.strip() for l in blob.splitlines() if re.match(rule["last"], l.strip())]
+        if not lines:
+            res.add(where, f"{rule['label']}: no line matches /{rule['last']}/")
+            return
+        blob = lines[-1]
+    for pattern in rule.get("must_match", []):
+        if not re.search(pattern, blob, re.MULTILINE):
+            res.add(where, f"{rule['label']}: expected /{pattern}/")
+    for pattern in rule.get("must_not_match", []):
+        m = re.search(pattern, blob, re.MULTILINE)
+        if m:
+            res.add(where, f"{rule['label']}: found '{m.group(0)}'")
+
+
 TITLES = {
     "prd": "PRD is OpenSpec-ready",
     "spec": "OpenSpec change is valid and traces to the PRD",
@@ -463,7 +809,8 @@ TITLES = {
 }
 
 
-def judge(target: Path, stages: tuple[str, ...] = STAGES, run_tests: bool = True) -> list[StageResult]:
+def judge(target: Path, stages: tuple[str, ...] = STAGES, run_tests: bool = True,
+          allow_skips: bool = False) -> list[StageResult]:
     """Judge stages in order; a later stage is skipped once an earlier fails.
 
     Skipping is deliberate. A spec judged against a broken PRD produces a
@@ -479,10 +826,12 @@ def judge(target: Path, stages: tuple[str, ...] = STAGES, run_tests: bool = True
         if blocked:
             results.append(StageResult(name, TITLES[name], skipped=f"blocked by {blocked}"))
             continue
-        if name == "build":
-            r = judge_build(target, rubric, run_tests=run_tests)
+        if name == "prd":
+            r = judge_prd(target, rubric)
+        elif name == "spec":
+            r = judge_spec(target, rubric)
         else:
-            r = JUDGES[name](target, rubric)
+            r = judge_build(target, rubric, run=run_tests, allow_skips=allow_skips)
         results.append(r)
         if not r.ok:
             blocked = name
@@ -490,19 +839,21 @@ def judge(target: Path, stages: tuple[str, ...] = STAGES, run_tests: bool = True
 
 
 HINTS = {
-    "prd": "interrogate ticket.md (answers are in stakeholder-answers.md) and write prd.md -- lesson 3, steps 1-2",
-    "spec": "turn prd.md into openspec/changes/<id>/ with /opsx:propose or by hand -- lesson 3, step 3",
-    "build": "build impl/ test-first, one test per '#### Scenario:' -- lesson 3, step 4",
+    "prd": "interrogate ticket.md (the product owner's answers are in stakeholder-answers.md) and write prd.md -- lesson 3, steps 1-2",
+    "spec": "turn prd.md into openspec/changes/<id>/ -- lesson 3, step 3",
+    "build": "build impl/ test-first, one unittest test per '#### Scenario:' -- lesson 3, step 4",
 }
 
 
 def grade(answer: Path) -> tuple[bool, str, str]:
     """``(ok, message, hint)`` for tutorials/check.py.
 
-    Returns plain values rather than an ``exercise_api.Result`` so this file
-    stays runnable on its own, outside the tutorial runner.
+    Skips are allowed here, and only here: CI has no LangChain, and the
+    reference chatbot's chain scenarios must not fail the build for it. The
+    note says so every time. The CLI -- what a learner and HARNESS.md run --
+    does not allow them.
     """
-    results = judge(answer)
+    results = judge(answer, allow_skips=True)
     if all(r.ok for r in results):
         notes = "".join(f" ({n})" for r in results for n in r.notes)
         return True, f"prd, spec and build all faithful{notes} -- now run the agent-backed half (lesson 3, step 5)", ""
@@ -510,7 +861,7 @@ def grade(answer: Path) -> tuple[bool, str, str]:
     shown = "; ".join(str(f) for f in failed.findings[:3])
     more = len(failed.findings) - 3
     suffix = f" (+{more} more)" if more > 0 else ""
-    shown_path = rel(answer, Path(__file__).resolve().parents[2])
+    shown_path = rel(answer, TRACK.parents[1])
     command = f"python tutorials/50-spec-fidelity/spec_fidelity.py {shown_path}"
     return False, f"[{failed.name}] {shown}{suffix}", f"{HINTS[failed.name]}; full report: {command}"
 
@@ -538,16 +889,18 @@ def report(results: list[StageResult]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("target", type=Path, help="an exercise folder, or its solution/ folder")
+    parser.add_argument("target", type=Path, help="an exercise folder, a workspace, or a solution/ folder")
     parser.add_argument("--stage", choices=(*STAGES, "all"), default="all")
     parser.add_argument("--no-tests", action="store_true", help="skip running impl/tests")
+    parser.add_argument("--allow-skips", action="store_true",
+                        help="accept skipped scenario tests (reported as a note, not a finding)")
     # Claude Code aborts a slash command whose `!` shell line exits non-zero,
     # so a command that runs the judge in order to explain its failures would
     # never see them. Same escape hatch linters use.
     parser.add_argument("--exit-zero", action="store_true", help="exit 0 even when a stage fails")
     args = parser.parse_args(argv)
     stages = STAGES if args.stage == "all" else (args.stage,)
-    results = judge(args.target.resolve(), stages, run_tests=not args.no_tests)
+    results = judge(args.target.resolve(), stages, run_tests=not args.no_tests, allow_skips=args.allow_skips)
     sys.stdout.reconfigure(encoding="utf-8")
     print(report(results))
     return 0 if args.exit_zero or all(r.ok for r in results) else 1

@@ -8,9 +8,9 @@
 
 ## 2. Error contract
 
-- [x] 2.1 400 `invalid_amount` for missing, non-decimal, non-finite, negative
+- [x] 2.1 400 `invalid_amount` for missing, non-decimal, non-finite, negative, over a trillion
 - [x] 2.2 404 `unknown_currency` naming the offending code
-- [x] 2.3 404 `not_found` and 405 `method_not_allowed`
+- [x] 2.3 404 `not_found`, and 405 `method_not_allowed` for every non-GET method
 
 ## 3. Operations
 
@@ -21,4 +21,3 @@
 ## 4. Verification
 
 - [x] 4.1 One test per scenario, each naming its scenario
-- [x] 4.2 `spec_fidelity.py` passes all three stages

@@ -1,30 +1,36 @@
 # Harness — OPS-1432 FX conversion function
 
 <!-- Read by the ai-literacy-superpowers harness-enforcer agent
-     (/harness-audit, or "use the harness-enforcer to verify the pr-scoped
-     constraints in <this file>"). Deterministic constraints run the Tool
-     line; agent constraints are judged by the enforcer reading the Rule.
+     (/harness-audit, or /fidelity:enforce in a start.py workspace).
+     Deterministic constraints run the Tool line; agent constraints are
+     judged by the enforcer reading the Rule.
 
-     Tool paths are relative to the repository root. Replace EXERCISE with
-     `tutorials/50-spec-fidelity/exercises/01-docker-rest` to judge your own
-     work, or append `/solution` to judge the reference answer. -->
+     This file is given to the developer, so it states how the work is
+     judged and never what the product owner decided: those answers have to
+     be asked for. The exercise-specific rules live in rubric.json, which
+     the judge reads from the repo and the workspace never contains.
+
+     Tool paths are relative to the repository root; start.py rewrites
+     them for a workspace. EXERCISE is this exercise's folder, or its
+     solution/ folder to judge the reference answer. -->
 
 ## Context
 
 ### Stack
 
-- **Primary languages**: Python 3.12, stdlib only
-- **Build system**: Docker (`impl/Dockerfile`, `python:3.12-slim`)
-- **Test framework**: `unittest`, run from `impl/`
-- **Container strategy**: one image, one process, non-root
+- **Primary languages**: Python 3.12
+- **Build system**: Docker (`impl/Dockerfile`)
+- **Test framework**: `unittest`, run from `impl/` with
+  `python -m unittest discover -s tests -t .`
 
 ### Conventions
 
 - **Spec first**: `prd.md` → `openspec/changes/<id>/` → `impl/`, in that
   order. Code that no scenario asks for is a finding, not a bonus.
 - **Traceability**: every spec requirement carries `Trace: PRD-<n>`; every
-  test names its scenario with `Scenario: <exact scenario name>`.
-- **Money**: `decimal.Decimal` in memory, JSON strings on the wire.
+  test's docstring starts `Scenario: <exact scenario name>`.
+- **The interview is the source**: `interview.md` records what the product
+  owner said. A decision that is not in it has not been made.
 
 ---
 
@@ -32,9 +38,10 @@
 
 ### PRD is OpenSpec-ready
 
-- **Rule**: Every requirement in `prd.md` has a `PRD-<n>` ID, a SHALL or
-  MUST, a WHEN/THEN acceptance, none of the ticket's vague words, and every
-  fact from `stakeholder-answers.md` is pinned down.
+- **Rule**: Every requirement in `prd.md` is `### PRD-<n>: <title>` with a
+  SHALL or MUST, a WHEN/THEN acceptance line, and none of the ticket's
+  vague words; every decision the product owner made is written down, and
+  none is contradicted.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage prd`
 - **Scope**: commit
@@ -43,43 +50,52 @@
 
 - **Rule**: Exactly one active change; `proposal.md` has `## Why` (50–1000
   chars) and `## What Changes`; every requirement sits in a delta section,
-  has SHALL/MUST in its body and at least one WHEN/THEN scenario; every
-  PRD ID is traced by a requirement and every requirement traces to a PRD ID.
+  has SHALL/MUST in its body and at least one WHEN/THEN scenario; scenario
+  names are unique; every requirement has a `Trace: PRD-<n>` line naming
+  real PRD ids, and every PRD id has a requirement of its own.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage spec`
-  (and, if the OpenSpec CLI is installed, `openspec validate --strict` from
-  the exercise folder)
+  (and, if the OpenSpec CLI is installed, `openspec validate --strict`)
 - **Scope**: pr
 
 ### Every scenario is tested, and tests pass
 
-- **Rule**: Each `#### Scenario:` is named by exactly-matching
-  `Scenario: <name>` in a test; no test names a scenario the spec lacks;
-  every task in `tasks.md` is ticked; `impl/` tests pass; the Dockerfile
-  builds from `python:3.12-slim`, runs as non-root, exposes 8080 and runs
-  no `pip install`; `app.py` makes no network calls and uses no `float(`.
+- **Rule**: Each `#### Scenario:` has a `unittest.TestCase` test whose
+  docstring's first line is `Scenario: <exact name>`, which asserts
+  something, runs, and passes (a skipped test does not count); no test
+  names a scenario the spec lacks; every task in `tasks.md` is ticked; the
+  exercise's implementation rules hold.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage build`
 - **Scope**: pr
 
 ### Spec captures intent
 
-- **Rule**: The OpenSpec change states the **problem** (why billing needs
-  this), the **approach** (design.md) and the **outcome** (scenarios). The
-  code in `impl/` delivers what the spec describes — compare each
-  requirement to the code that implements it and flag significant
-  divergence. A test that names a scenario but asserts something weaker
-  than its THEN clause is divergence.
+- **Rule**: The OpenSpec change states the **problem**, the **approach**
+  (design.md) and the **outcome** (scenarios), and `impl/` delivers what
+  the spec describes. Compare each requirement to the code that implements
+  it and flag significant divergence. For every test that cites a
+  scenario, compare its assertions with the scenario's THEN clause: a test
+  that asserts less than the THEN says is divergence.
 - **Enforcement**: agent
 - **Tool**: harness-enforcer
 - **Scope**: pr
 
 ### No gold-plating
 
-- **Rule**: `impl/` adds no endpoint, parameter, dependency, environment
-  variable or behaviour that no spec requirement asks for. Non-goals in
-  `prd.md` (auth, live rates, POST, batch, list-currencies) are absent from
-  the code.
+- **Rule**: `impl/` adds no endpoint, command, tool, argument, dependency,
+  environment variable, file or behaviour that no spec requirement asks
+  for, and nothing the PRD lists under Non-goals.
+- **Enforcement**: agent
+- **Tool**: harness-enforcer
+- **Scope**: pr
+
+### Requirements are enforced in code, not in comments
+
+- **Rule**: Every numeric, rounding and error-handling requirement in the
+  spec is implemented by code a test exercises. Pay particular attention
+  to arithmetic on money: find every place a value is converted, rounded or
+  formatted, and check it against the spec's rounding scenarios.
 - **Enforcement**: agent
 - **Tool**: harness-enforcer
 - **Scope**: pr
@@ -87,20 +103,8 @@
 ### Image actually runs
 
 - **Rule**: `docker build` succeeds and the running container answers the
-  Convert USD to EUR and Health check scenarios over real HTTP.
+  spec's scenarios over real HTTP, for every HTTP method the spec names.
 - **Enforcement**: unverified
-- **Tool**: none yet — needs a Docker daemon; the manual smoke test is in
-  the exercise README. Promote with `/harness-constrain` once CI has Docker.
+- **Tool**: none yet — needs a Docker daemon; promote with
+  `/harness-constrain` once CI has one.
 - **Scope**: manual
-
----
-
-## Garbage Collection
-
-### Stale rates file
-
-- **What it checks**: `impl/rates.json` was changed within the last 31 days.
-- **Frequency**: monthly
-- **Enforcement**: unverified
-- **Tool**: none yet
-- **Auto-fix**: false

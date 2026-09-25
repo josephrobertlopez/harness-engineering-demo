@@ -61,8 +61,9 @@ Trace: PRD-3
 ### Requirement: Sensitive data refusal
 
 A message containing a card number (13 to 19 digits, optionally separated by
-spaces or dashes) or a shared password SHALL be refused, before any model
-call, with exactly
+spaces or dashes, that passes the Luhn check) or a shared password ("password
+is", "password:" or "pwd=" followed by one word containing a digit or symbol)
+SHALL be refused, before any model call, with exactly
 `I can't help with passwords or card numbers here. Please contact support@example.com.`
 The refused message MUST NOT be stored in the session's history.
 
@@ -80,7 +81,12 @@ Trace: PRD-4
 
 #### Scenario: Asking about passwords is not refused
 
-- **WHEN** a message says "I forgot my password"
+- **WHEN** a message says "I forgot my password", "my password is not working" or "my password is expired"
+- **THEN** it is not refused
+
+#### Scenario: Order number is not refused
+
+- **WHEN** a message quotes order number `1234-5678-9012-3456`, which fails the Luhn check
 - **THEN** it is not refused
 
 #### Scenario: Refused message is not remembered

@@ -37,6 +37,11 @@ Trace: PRD-2
 - **WHEN** a client converts `0.135` USD to USD
 - **THEN** the result is `"0.14"`
 
+#### Scenario: Tie a float cannot represent
+
+- **WHEN** a client converts `2.675` USD to USD
+- **THEN** the result is `"2.68"`, where binary floating point gives `"2.67"`
+
 ### Requirement: Rates loaded once at startup
 
 The service SHALL read `rates.json` once at startup and MUST NOT read it, or
@@ -53,7 +58,8 @@ Trace: PRD-3
 ### Requirement: Invalid amount rejected
 
 The service SHALL respond 400 `{"error": "invalid_amount"}` when `amount` is
-missing, not a decimal, not finite, or negative.
+missing, not a decimal, not finite, negative, or larger than
+1,000,000,000,000.
 
 Trace: PRD-4
 
@@ -72,6 +78,11 @@ Trace: PRD-4
 - **WHEN** `amount` is `ten` or `NaN`
 - **THEN** the status is 400 and the error is `invalid_amount`
 
+#### Scenario: Amount too large
+
+- **WHEN** `amount` is `1e30`, or `1000000000000.01`
+- **THEN** the status is 400 and the error is `invalid_amount`
+
 ### Requirement: Unknown currency rejected
 
 The service SHALL respond 404 `{"error": "unknown_currency", "currency": "<code>"}`
@@ -88,7 +99,7 @@ Trace: PRD-5
 
 The service SHALL respond 404 `{"error": "not_found"}` to any path other than
 `/convert` and `/healthz`, and 405 `{"error": "method_not_allowed"}` to any
-method other than GET.
+method other than GET, whichever HTTP method it is.
 
 Trace: PRD-6
 
@@ -101,6 +112,11 @@ Trace: PRD-6
 
 - **WHEN** a client sends `POST /convert`
 - **THEN** the status is 405 and the error is `method_not_allowed`
+
+#### Scenario: Every other method is refused
+
+- **WHEN** a client sends `HEAD`, `OPTIONS`, `PUT`, `PATCH`, `DELETE`, `TRACE` or `CONNECT`
+- **THEN** the HTTP server answers 405, never 501
 
 ### Requirement: Health check
 

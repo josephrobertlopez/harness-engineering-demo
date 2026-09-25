@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app import RATES_PATH, FxApp, resolve_port
+from app import HTTP_METHODS, RATES_PATH, FxApp, make_handler, resolve_port
 
 HERE = Path(__file__).resolve().parents[1]
 
@@ -45,6 +45,15 @@ class Conversion(unittest.TestCase):
         # Truncation would give 0.13. Paired with the test above, only
         # half-even passes both.
         self.assertEqual(body["result"], "0.14")
+
+    def test_tie_a_float_cannot_represent(self):
+        """Scenario: Tie a float cannot represent"""
+        # 2.675 and 0.165 are the values where a float and half-even
+        # disagree (2.67 vs 2.68, 0.17 vs 0.16). The two ties above round the
+        # same either way, so on their own they would pass a float version.
+        for amount, expected in (("2.675", "2.68"), ("0.165", "0.16")):
+            _, body = self.app.handle("GET", f"/convert?amount={amount}&from=USD&to=USD")
+            self.assertEqual(body["result"], expected, amount)
 
     def test_rates_file_removed_after_startup(self):
         """Scenario: Rates file removed after startup"""
@@ -82,6 +91,13 @@ class Errors(unittest.TestCase):
         for raw in ("ten", "NaN", "Infinity", ""):
             self.assertError(f"/convert?amount={raw}&from=USD&to=EUR", 400, "invalid_amount")
 
+    def test_amount_too_large(self):
+        """Scenario: Amount too large"""
+        for raw in ("1e30", "1000000000000.01"):
+            self.assertError(f"/convert?amount={raw}&from=USD&to=JPY", 400, "invalid_amount")
+        status, _ = self.app.handle("GET", "/convert?amount=1000000000000&from=USD&to=JPY")
+        self.assertEqual(status, 200)
+
     def test_unknown_currency(self):
         """Scenario: Unknown target currency"""
         body = self.assertError("/convert?amount=1&from=USD&to=XYZ", 404, "unknown_currency")
@@ -94,6 +110,16 @@ class Errors(unittest.TestCase):
     def test_wrong_method(self):
         """Scenario: Wrong method"""
         self.assertError("/convert?amount=1&from=USD&to=EUR", 405, "method_not_allowed", method="POST")
+
+
+    def test_every_other_method(self):
+        """Scenario: Every other method is refused"""
+        handler = make_handler(FxApp.from_file())
+        for method in HTTP_METHODS[1:]:
+            # The HTTP layer must route it (else http.server sends 501) ...
+            self.assertTrue(hasattr(handler, f"do_{method}"), method)
+            # ... and the app must refuse it.
+            self.assertError("/convert?amount=1&from=USD&to=EUR", 405, "method_not_allowed", method=method)
 
 
 class Operations(unittest.TestCase):

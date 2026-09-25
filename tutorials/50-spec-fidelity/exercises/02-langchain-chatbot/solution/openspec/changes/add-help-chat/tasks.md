@@ -4,7 +4,7 @@
 
 - [x] 1.1 Parse `faq.md` into entries with keywords
 - [x] 1.2 Keyword retrieval, most hits wins, ties to the first entry
-- [x] 1.3 Card-number and shared-password detection
+- [x] 1.3 Card-number (Luhn) and shared-password (digit or symbol) detection
 - [x] 1.4 Six-message window
 - [x] 1.5 Model parameters: `claude-sonnet-5`, `max_tokens=512`, no temperature
 
@@ -22,4 +22,3 @@
 ## 4. Verification
 
 - [x] 4.1 One test per scenario, each naming its scenario
-- [x] 4.2 `spec_fidelity.py` passes all three stages

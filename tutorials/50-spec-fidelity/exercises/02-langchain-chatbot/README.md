@@ -25,9 +25,11 @@ python tutorials/50-spec-fidelity/start.py 02 ~/fidelity/backwards-02 --with-sol
 python tutorials/50-spec-fidelity/spec_fidelity.py ~/fidelity/backwards-02
 ```
 
-The report ends with a note like `9 test(s) skipped` unless LangChain is
-installed. Read that note as "these scenarios are tagged but were not
-exercised". Install LangChain (below) and run it again until the note is gone.
+Without LangChain installed, the build stage fails with `not exercised
+(skipped): 9 scenario(s) ...` -- every chain scenario, including all the
+safety ones, was skipped. That is the judge being honest: a skipped test
+has proved nothing. Install LangChain (below) and run it again, or pass
+`--allow-skips` to see the rest of the report while you do.
 
 Now walk these threads backwards, test → scenario → requirement → PRD →
 answer → ticket:
@@ -118,17 +120,22 @@ asks the enforcer to look for exactly this.
 history, the next ordinary question sends it to the model anyway. Two
 requirements, two tests.
 
-**Refusing too much.** "I forgot my password" is the most common help
-question there is, and it contains the word *password*. The spec has a
-scenario for it (`Asking about passwords is not refused`) because the
-obvious regex fails it.
+**Refusing too much.** "I forgot my password" and "my password is not
+working" are the most common help questions there are. The first
+reference solution refused the second one, and every 16-digit order
+number too -- an adversarial review caught both. The product owner's rule
+is now exact (a card number must pass the Luhn check; a shared password is
+one word containing a digit or symbol), and each false alarm is a
+scenario of its own.
 
 **Model id with a date suffix.** The id is complete as written:
 `claude-sonnet-5`. `rubric.json` rejects `claude-sonnet-5-<date>`.
 
 **Treating skipped tests as passed.** On a machine without LangChain, 9 of
-17 tests skip and the judge still goes green. It prints the skip count
-every time so this cannot happen quietly. Run with LangChain installed
+18 tests skip. The judge reports every skipped scenario by name and fails
+the build stage unless you pass `--allow-skips`. The repo's own CI passes
+it, because CI has no LangChain -- which means CI proves the chain
+scenarios are *tagged*, not that they pass. Run with LangChain installed
 before you call it done.
 
 ## Resources

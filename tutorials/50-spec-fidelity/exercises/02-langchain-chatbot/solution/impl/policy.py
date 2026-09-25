@@ -32,7 +32,11 @@ SYSTEM_TEMPLATE = (
 # 13-19 digits, each optionally followed by one space or dash. Bounded by
 # non-digits so an order number glued to other digits is not a match.
 _CARD = re.compile(r"(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)")
-_SHARED_PASSWORD = re.compile(r"\b(password|passcode|pwd)\s*(is|:|=)\s*\S+", re.IGNORECASE)
+# One word after "password is" that contains a digit or a symbol: "hunter22"
+# is a password, "expired" is a complaint.
+_SHARED_PASSWORD = re.compile(
+    r"\b(password|passcode|pwd)\s*(is|:|=)\s*(?=\w)(?=\S*(\d|[^\w\s]\S))\S+", re.IGNORECASE
+)
 _WORD = re.compile(r"[a-z][a-z-]*")
 
 
@@ -74,8 +78,21 @@ def retrieve(question: str, faq: list[FaqEntry]) -> FaqEntry | None:
     return best
 
 
+def luhn(digits: str) -> bool:
+    total = 0
+    for i, ch in enumerate(reversed(digits)):
+        d = int(ch)
+        if i % 2:
+            d = d * 2 - 9 if d > 4 else d * 2
+        total += d
+    return total % 10 == 0
+
+
 def is_sensitive(message: str) -> bool:
-    return bool(_CARD.search(message) or _SHARED_PASSWORD.search(message))
+    # Luhn separates card numbers from the 16-digit order numbers customers
+    # quote constantly; refusing those would refuse half the refund questions.
+    cards = (re.sub(r"[ -]", "", m.group(0)) for m in _CARD.finditer(message))
+    return any(luhn(c) for c in cards) or bool(_SHARED_PASSWORD.search(message))
 
 
 def window(messages: list, limit: int = HISTORY_LIMIT) -> list:

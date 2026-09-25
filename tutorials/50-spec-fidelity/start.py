@@ -12,8 +12,8 @@ only what a developer handed this ticket would actually have.
 What lands in the workspace:
 
     ticket.md          the vague ticket -- your only brief
-    rubric.json        what the deterministic judge checks
-    HARNESS.md         constraints for the harness-enforcer, paths rewritten
+    .fidelity.json     names the exercise, so the judge can find its rubric
+    HARNESS.md         how the work is judged, paths rewritten
     openspec/config.yaml   teaches /opsx:propose the PRD trace convention
     .claude/commands/fidelity/   the lesson-3 prompts as slash commands:
                        /fidelity:interrogate, :prd, :review-prd, :propose,
@@ -24,6 +24,8 @@ What lands in the workspace:
 What deliberately does not:
 
     solution/                   the reference answer
+    rubric.json                 its facts *are* the product owner's answers;
+                                the judge reads it from the repo instead
     stakeholder-answers.md      written next to the workspace, not inside it:
                                 you are the product owner; Claude has to ask
 """
@@ -31,6 +33,7 @@ What deliberately does not:
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -38,7 +41,7 @@ from pathlib import Path
 TRACK = Path(__file__).resolve().parent
 REPO = TRACK.parents[1]
 EXERCISES = TRACK / "exercises"
-GIVEN = ("ticket.md", "rubric.json", "faq.md")
+GIVEN = ("ticket.md", "faq.md")
 PERSONAS = ("spec-interrogator", "spec-adversary", "spec-implementer")
 JUDGE_IN_HARNESS = "python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE"
 
@@ -59,9 +62,13 @@ def start(exercise: str, dest: Path, with_solution: bool = False) -> list[str]:
             shutil.copyfile(source / name, dest / name)
             made.append(name)
 
+    (dest / ".fidelity.json").write_text(json.dumps({"exercise": source.name}) + "\n", encoding="utf-8", newline="\n")
+    made.append(".fidelity.json")
+
+    python = Path(sys.executable).as_posix()
     judge = (TRACK / "spec_fidelity.py").as_posix()
     harness = (source / "HARNESS.md").read_text(encoding="utf-8")
-    harness = harness.replace(JUDGE_IN_HARNESS, f"python {judge} .")
+    harness = harness.replace(JUDGE_IN_HARNESS, f"{python} {judge} .")
     (dest / "HARNESS.md").write_text(harness, encoding="utf-8", newline="\n")
     made.append("HARNESS.md")
 
@@ -69,13 +76,17 @@ def start(exercise: str, dest: Path, with_solution: bool = False) -> list[str]:
     shutil.copyfile(TRACK / "openspec-config.yaml", dest / "openspec" / "config.yaml")
     made.append("openspec/config.yaml")
 
+    rubric = json.loads((source / "rubric.json").read_text(encoding="utf-8"))
+    # The ticket's own vague words: telling the model which words to avoid
+    # reveals nothing the ticket does not already say.
+    vague = ", ".join(f'"{w}"' for w in rubric["vague_terms"])
     # Filled in with this interpreter and this judge, so the commands work
     # whether the machine calls Python `python`, `python3` or a venv path.
     commands = dest / ".claude" / "commands" / "fidelity"
     commands.mkdir(parents=True)
     for prompt in sorted((TRACK / "prompts").glob("*.md")):
         text = prompt.read_text(encoding="utf-8")
-        text = text.replace("{{PYTHON}}", Path(sys.executable).as_posix()).replace("{{JUDGE}}", judge)
+        text = text.replace("{{PYTHON}}", python).replace("{{JUDGE}}", judge).replace("{{VAGUE_TERMS}}", vague)
         (commands / prompt.name).write_text(text, encoding="utf-8", newline="\n")
     made.append(".claude/commands/fidelity/  (/fidelity:interrogate ... /fidelity:enforce)")
 
@@ -109,6 +120,11 @@ def main(argv: list[str] | None = None) -> int:
     dest = args.dest.expanduser().resolve()
     if dest == REPO or REPO in dest.parents:
         raise SystemExit("put the workspace outside this repo, or Claude can read solution/")
+    if " " in sys.executable or " " in str(TRACK):
+        # The slash commands embed both paths unquoted in `!` lines and in
+        # allowed-tools patterns, where a space splits the command.
+        print("warning: the Python or repo path contains a space; the /fidelity:* commands "
+              "that run the judge may fail. Use a path without spaces if they do.")
     for line in start(args.exercise, dest, with_solution=args.with_solution):
         print(f"  {line}")
     print(f"\ncd {dest} && claude")

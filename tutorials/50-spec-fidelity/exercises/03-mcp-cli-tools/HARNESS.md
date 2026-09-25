@@ -1,31 +1,37 @@
-# Harness — DEVX-311 MCP server for git and rg
+# Harness — DEVX-311 MCP server for CLIs
 
 <!-- Read by the ai-literacy-superpowers harness-enforcer agent
-     (/harness-audit, or "use the harness-enforcer to verify the pr-scoped
-     constraints in <this file>"). Deterministic constraints run the Tool
-     line; agent constraints are judged by the enforcer reading the Rule.
+     (/harness-audit, or /fidelity:enforce in a start.py workspace).
+     Deterministic constraints run the Tool line; agent constraints are
+     judged by the enforcer reading the Rule.
 
-     Tool paths are relative to the repository root. Replace EXERCISE with
-     `tutorials/50-spec-fidelity/exercises/03-mcp-cli-tools` to judge your
-     own work, or append `/solution` to judge the reference answer. -->
+     This file is given to the developer, so it states how the work is
+     judged and never what the product owner decided: those answers have to
+     be asked for. The exercise-specific rules live in rubric.json, which
+     the judge reads from the repo and the workspace never contains.
+
+     Tool paths are relative to the repository root; start.py rewrites
+     them for a workspace. EXERCISE is this exercise's folder, or its
+     solution/ folder to judge the reference answer. -->
 
 ## Context
 
 ### Stack
 
-- **Primary languages**: Python 3.12, stdlib only (the MCP SDK is allowed
-  if you choose it; the reference does not use it)
-- **Protocol**: MCP `2025-06-18` over stdio, newline-delimited JSON-RPC 2.0
-- **External binaries**: `git`, `rg` — and nothing else
-- **Test framework**: `unittest`, run from `impl/`, with a fake runner
+- **Primary languages**: Python 3.12
+- **Protocol**: MCP over the transport the spec names
+- **Test framework**: `unittest`, run from `impl/` with
+  `python -m unittest discover -s tests -t .`; fake the command runner so
+  tests do not depend on which CLIs are installed
 
 ### Conventions
 
-- **Spec first**: `prd.md` → `openspec/changes/<id>/` → `impl/`.
+- **Spec first**: `prd.md` → `openspec/changes/<id>/` → `impl/`, in that
+  order. Code that no scenario asks for is a finding, not a bonus.
 - **Traceability**: every spec requirement carries `Trace: PRD-<n>`; every
-  test names its scenario with `Scenario: <exact scenario name>`.
-- **stdout is the protocol channel**: nothing but JSON-RPC is ever written
-  to it; diagnostics go to stderr.
+  test's docstring starts `Scenario: <exact scenario name>`.
+- **The interview is the source**: `interview.md` records what the product
+  owner said. A decision that is not in it has not been made.
 
 ---
 
@@ -33,68 +39,72 @@
 
 ### PRD is OpenSpec-ready
 
-- **Rule**: Every requirement in `prd.md` has a `PRD-<n>` ID, a SHALL or
-  MUST, a WHEN/THEN acceptance, none of the ticket's vague words, and every
-  fact from `stakeholder-answers.md` is pinned down.
+- **Rule**: Every requirement in `prd.md` is `### PRD-<n>: <title>` with a
+  SHALL or MUST, a WHEN/THEN acceptance line, and none of the ticket's
+  vague words; every decision the product owner made is written down, and
+  none is contradicted.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage prd`
 - **Scope**: commit
 
 ### OpenSpec change is valid and traced
 
-- **Rule**: One active change; valid proposal; every requirement in a delta
-  section with SHALL/MUST and a WHEN/THEN scenario; PRD ↔ spec tracing
-  complete in both directions.
+- **Rule**: Exactly one active change; `proposal.md` has `## Why` (50–1000
+  chars) and `## What Changes`; every requirement sits in a delta section,
+  has SHALL/MUST in its body and at least one WHEN/THEN scenario; scenario
+  names are unique; every requirement has a `Trace: PRD-<n>` line naming
+  real PRD ids, and every PRD id has a requirement of its own.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage spec`
-  (and `openspec validate --strict` if the OpenSpec CLI is installed)
+  (and, if the OpenSpec CLI is installed, `openspec validate --strict`)
 - **Scope**: pr
 
 ### Every scenario is tested, and tests pass
 
-- **Rule**: Scenario ↔ test tagging complete in both directions; every task
-  ticked; tests pass; `server.py` contains no `shell=True`, `os.system`,
-  `os.popen`, `exec(` or `eval(`; declares protocol `2025-06-18`, the 8000
-  cap and the 10 s timeout; `.mcp.json` registers the server with `--root`.
+- **Rule**: Each `#### Scenario:` has a `unittest.TestCase` test whose
+  docstring's first line is `Scenario: <exact name>`, which asserts
+  something, runs, and passes (a skipped test does not count); no test
+  names a scenario the spec lacks; every task in `tasks.md` is ticked; the
+  exercise's implementation rules hold.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage build`
 - **Scope**: pr
 
 ### Spec captures intent
 
-- **Rule**: The change states the **problem** (the old any-shell server),
-  the **approach** (design.md) and the **outcome** (scenarios), and
-  `impl/` delivers it. Compare each requirement to the code: every tool's
-  argv is a fixed list with user input only after `-e` or `--`; the path
-  check runs before the runner; tool failures are `isError` results while
-  only unknown tools and methods are JSON-RPC errors.
-- **Enforcement**: agent
-- **Tool**: harness-enforcer
-- **Scope**: pr
-
-### Read-only surface
-
-- **Rule**: No tool can cause a write: no git subcommand other than
-  `status`, `log` and `diff`; no rg flag that writes or executes (`--pre`,
-  `--replace` to a file); no argument that lets the caller choose the
-  subcommand or the binary.
+- **Rule**: The OpenSpec change states the **problem**, the **approach**
+  (design.md) and the **outcome** (scenarios), and `impl/` delivers what
+  the spec describes. Compare each requirement to the code that implements
+  it and flag significant divergence. For every test that cites a
+  scenario, compare its assertions with the scenario's THEN clause: a test
+  that asserts less than the THEN says is divergence.
 - **Enforcement**: agent
 - **Tool**: harness-enforcer
 - **Scope**: pr
 
 ### No gold-plating
 
-- **Rule**: No tool, CLI, transport, MCP capability (resources, prompts) or
-  argument beyond the four tools the PRD lists.
+- **Rule**: `impl/` adds no endpoint, command, tool, argument, dependency,
+  environment variable, file or behaviour that no spec requirement asks
+  for, and nothing the PRD lists under Non-goals.
+- **Enforcement**: agent
+- **Tool**: harness-enforcer
+- **Scope**: pr
+
+### The command surface is exactly the spec's
+
+- **Rule**: List every argument vector the server can build. Each must be
+  one the spec names, with caller input only in the positions the spec
+  allows. No caller-controlled binary, subcommand or flag; no way to run a
+  command outside the directory the spec confines it to.
 - **Enforcement**: agent
 - **Tool**: harness-enforcer
 - **Scope**: pr
 
 ### Connects in Claude Code
 
-- **Rule**: `claude mcp list` shows `cli-tools` as connected after
-  registering it with the command in the exercise README.
+- **Rule**: `claude mcp list` shows the server as connected after
+  registering it the way the spec says.
 - **Enforcement**: unverified
-- **Tool**: none yet — needs a signed-in Claude Code. Promote with
-  `/harness-constrain` if your CI has one.
+- **Tool**: none yet — needs a signed-in Claude Code.
 - **Scope**: manual

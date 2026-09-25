@@ -4,6 +4,9 @@ allowed-tools: Bash({{PYTHON}}:*), Bash({{PYTHON}} {{JUDGE}}:*), Read, Write, Ed
 ---
 
 Read `personas/spec-implementer.persona.md` and act as that persona.
+Where the persona and this prompt disagree -- test naming, file layout,
+test framework, what to do when the spec looks wrong -- **this prompt
+wins**.
 
 Implement the single change under `openspec/changes/` in `impl/`.
 
@@ -20,17 +23,18 @@ Tests run from `impl/` with `{{PYTHON}} -m unittest discover -s tests -t .`
 
 Test first, one scenario at a time:
 
-1. For each `#### Scenario: <name>` in the spec, write one test method whose
-   docstring's first line is exactly `Scenario: <name>` — same spelling,
-   same case. The test must assert the scenario's THEN clause, not a weaker
-   stand-in.
+1. For each `#### Scenario: <name>` in the spec, write one test **method on
+   a `unittest.TestCase` class** whose docstring's first line is exactly
+   `Scenario: <name>` — same spelling, same case. Module-level pytest-style
+   functions are not collected and do not count. The test must assert the
+   scenario's THEN clause, not a weaker stand-in; a tagged test that
+   asserts nothing, or is skipped, does not count either.
 2. Run it and see it fail. Then write the code that makes it pass.
 3. Tick the matching box in `tasks.md` (`- [x]`).
 
 Rules:
-- Read `HARNESS.md` and `rubric.json` (`impl_rules`) before writing code:
-  they state constraints the code is judged against.
-- Standard library only, unless the PRD names a dependency.
+- Read `HARNESS.md` before writing code: it says how the code is judged.
+- Use no dependency the PRD does not name.
 - Implement nothing the spec does not ask for. If the spec seems to be
   missing something, stop and tell me instead of adding it.
 - Do not edit `prd.md` or the spec to match the code. If they are wrong,

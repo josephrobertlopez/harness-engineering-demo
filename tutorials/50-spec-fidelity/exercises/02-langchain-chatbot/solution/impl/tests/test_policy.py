@@ -26,16 +26,28 @@ class Retrieval(unittest.TestCase):
 
 class Sensitive(unittest.TestCase):
     def test_card_number(self):
-        for text in ("4111 1111 1111 1111", "card 4111-1111-1111-1111 pls", "4111111111111111"):
+        for text in ("4111 1111 1111 1111", "card 4111-1111-1111-1111 pls", "5555555555554444"):
             self.assertTrue(policy.is_sensitive(text), text)
 
     def test_shared_password(self):
-        for text in ("my password is hunter22", "password: hunter22", "PWD=abc123"):
+        for text in ("my password is hunter22", "password: hunter22", "PWD=abc123", "my password is p@ss"):
             self.assertTrue(policy.is_sensitive(text), text)
 
     def test_asking_about_passwords_is_not_refused(self):
         """Scenario: Asking about passwords is not refused"""
-        for text in ("I forgot my password", "how do I reset my password?", "order 12345"):
+        for text in (
+            "I forgot my password",
+            "how do I reset my password?",
+            "my password is not working",
+            "My password is expired, how do I reset it?",
+            "password: ?",
+        ):
+            self.assertFalse(policy.is_sensitive(text), text)
+
+    def test_order_number_is_not_refused(self):
+        """Scenario: Order number is not refused"""
+        self.assertFalse(policy.luhn("1234567890123456"))
+        for text in ("refund for order 1234-5678-9012-3456 please", "order 1234567812345678"):
             self.assertFalse(policy.is_sensitive(text), text)
 
 

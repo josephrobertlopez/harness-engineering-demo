@@ -24,4 +24,3 @@ rules:
     - 'Put SHALL or MUST in the requirement body, not only in its header'
   tasks:
     - 'Include a task to write one test per scenario whose docstring is "Scenario: <exact scenario name>"'
-    - 'Include a final task to run spec_fidelity.py and get all three stages green'

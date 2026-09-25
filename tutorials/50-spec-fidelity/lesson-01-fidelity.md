@@ -85,6 +85,12 @@ scenario names − test tags       = untested behaviour
 test tags     − scenario names   = stale or invented tests
 ```
 
+(The first subtraction has a loophole: fold PRD-7 into another
+requirement's `Trace: PRD-1, PRD-7` and delete PRD-7's own requirement, and
+the set difference is empty. The judge closes it by requiring every PRD id
+to have a requirement of its own. An adversarial review found it; lesson 4
+lets you try it.)
+
 Four subtractions, each one a class of drift that otherwise shows up months
 later as "why does it do that?". OpenSpec itself does not ask for
 `Trace:` lines; that convention is this track's, layered on top.

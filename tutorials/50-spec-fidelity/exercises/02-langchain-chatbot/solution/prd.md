@@ -57,8 +57,9 @@ Source: stakeholder-answers.md Q3.
 ### PRD-4: Refuse card numbers and passwords
 
 A message containing a card number (13–19 digits, spaces or dashes
-allowed) or a shared password ("my password is …") SHALL be refused before
-any model call with exactly
+allowed, passing the Luhn check) or a shared password ("password is",
+"password:" or "pwd=" followed by one word containing a digit or symbol)
+SHALL be refused before any model call with exactly
 `I can't help with passwords or card numbers here. Please contact support@example.com.`
 The refused message MUST NOT be kept in memory.
 
@@ -68,6 +69,9 @@ The refused message MUST NOT be kept in memory.
   refusal.
 - WHEN the next question is asked THEN the refused message is not in the
   history sent to the model.
+- WHEN a message quotes order number `1234-5678-9012-3456` (fails Luhn)
+  THEN it is not refused.
+- WHEN a message says "my password is not working" THEN it is not refused.
 
 Source: stakeholder-answers.md Q4.
 

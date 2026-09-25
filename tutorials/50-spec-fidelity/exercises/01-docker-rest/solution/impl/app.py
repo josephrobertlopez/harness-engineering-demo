@@ -17,6 +17,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 CENT = Decimal("0.01")
+MAX_AMOUNT = Decimal("1000000000000")
 RATE_PLACES = Decimal("0.000001")
 DEFAULT_PORT = 8080
 RATES_PATH = Path(__file__).with_name("rates.json")
@@ -58,7 +59,10 @@ class FxApp:
             amount = Decimal(params.get("amount", [""])[0])
         except InvalidOperation:
             return 400, {"error": "invalid_amount"}
-        if not amount.is_finite() or amount < 0:
+        # The ceiling is the product owner's, and it also keeps every result
+        # inside Decimal's default 28-digit precision -- above it, quantize
+        # raises instead of rounding.
+        if not amount.is_finite() or amount < 0 or amount > MAX_AMOUNT:
             return 400, {"error": "invalid_amount"}
 
         codes = [params.get(k, [""])[0] for k in ("from", "to")]
@@ -84,6 +88,9 @@ def resolve_port(env: dict[str, str]) -> int:
     return int(env.get("PORT") or DEFAULT_PORT)
 
 
+HTTP_METHODS = ("GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE", "CONNECT")
+
+
 def make_handler(app: FxApp) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def _respond(self) -> None:
@@ -93,10 +100,13 @@ def make_handler(app: FxApp) -> type[BaseHTTPRequestHandler]:
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
-            self.wfile.write(payload)
+            if self.command != "HEAD":  # HEAD responses carry headers only
+                self.wfile.write(payload)
 
-        do_GET = do_POST = do_PUT = do_PATCH = do_DELETE = _respond
-
+    # BaseHTTPRequestHandler answers 501 to any method without a do_<METHOD>;
+    # the spec says every non-GET method is a 405, so route them all.
+    for method in HTTP_METHODS:
+        setattr(Handler, f"do_{method}", Handler._respond)
     return Handler
 
 

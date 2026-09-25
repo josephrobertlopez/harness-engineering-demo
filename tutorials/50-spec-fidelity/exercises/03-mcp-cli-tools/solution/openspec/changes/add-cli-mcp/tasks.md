@@ -27,4 +27,3 @@
 ## 5. Verification
 
 - [x] 5.1 One test per scenario, each naming its scenario
-- [x] 5.2 `spec_fidelity.py` passes all three stages

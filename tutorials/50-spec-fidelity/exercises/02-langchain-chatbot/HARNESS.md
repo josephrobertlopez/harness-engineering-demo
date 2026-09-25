@@ -1,32 +1,37 @@
 # Harness — SUP-88 help centre chatbot
 
 <!-- Read by the ai-literacy-superpowers harness-enforcer agent
-     (/harness-audit, or "use the harness-enforcer to verify the pr-scoped
-     constraints in <this file>"). Deterministic constraints run the Tool
-     line; agent constraints are judged by the enforcer reading the Rule.
+     (/harness-audit, or /fidelity:enforce in a start.py workspace).
+     Deterministic constraints run the Tool line; agent constraints are
+     judged by the enforcer reading the Rule.
 
-     Tool paths are relative to the repository root. Replace EXERCISE with
-     `tutorials/50-spec-fidelity/exercises/02-langchain-chatbot` to judge
-     your own work, or append `/solution` to judge the reference answer. -->
+     This file is given to the developer, so it states how the work is
+     judged and never what the product owner decided: those answers have to
+     be asked for. The exercise-specific rules live in rubric.json, which
+     the judge reads from the repo and the workspace never contains.
+
+     Tool paths are relative to the repository root; start.py rewrites
+     them for a workspace. EXERCISE is this exercise's folder, or its
+     solution/ folder to judge the reference answer. -->
 
 ## Context
 
 ### Stack
 
 - **Primary languages**: Python 3.12
-- **Frameworks**: `langchain-core`, `langchain-anthropic` (`ChatAnthropic`)
-- **Test framework**: `unittest`, run from `impl/`; chain tests use
-  `FakeListChatModel` and skip when LangChain is not installed
-- **Container strategy**: none
+- **Frameworks**: LangChain (`langchain-core`, `langchain-anthropic`)
+- **Test framework**: `unittest`, run from `impl/` with
+  `python -m unittest discover -s tests -t .`; chain tests use a fake chat
+  model, so they need LangChain installed but no API key
 
 ### Conventions
 
-- **Spec first**: `prd.md` → `openspec/changes/<id>/` → `impl/`.
+- **Spec first**: `prd.md` → `openspec/changes/<id>/` → `impl/`, in that
+  order. Code that no scenario asks for is a finding, not a bonus.
 - **Traceability**: every spec requirement carries `Trace: PRD-<n>`; every
-  test names its scenario with `Scenario: <exact scenario name>`.
-- **Policy is stdlib**: every rule the PRD states lives in `policy.py`,
-  which imports nothing from LangChain; `chatbot.py` only wires it.
-- **Model ids are complete as written** — never a date suffix.
+  test's docstring starts `Scenario: <exact scenario name>`.
+- **The interview is the source**: `interview.md` records what the product
+  owner said. A decision that is not in it has not been made.
 
 ---
 
@@ -34,71 +39,74 @@
 
 ### PRD is OpenSpec-ready
 
-- **Rule**: Every requirement in `prd.md` has a `PRD-<n>` ID, a SHALL or
-  MUST, a WHEN/THEN acceptance, none of the ticket's vague words, and every
-  fact from `stakeholder-answers.md` is pinned down.
+- **Rule**: Every requirement in `prd.md` is `### PRD-<n>: <title>` with a
+  SHALL or MUST, a WHEN/THEN acceptance line, and none of the ticket's
+  vague words; every decision the product owner made is written down, and
+  none is contradicted.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage prd`
 - **Scope**: commit
 
 ### OpenSpec change is valid and traced
 
-- **Rule**: One active change; valid proposal; every requirement in a delta
-  section with SHALL/MUST and a WHEN/THEN scenario; PRD ↔ spec tracing
-  complete in both directions.
+- **Rule**: Exactly one active change; `proposal.md` has `## Why` (50–1000
+  chars) and `## What Changes`; every requirement sits in a delta section,
+  has SHALL/MUST in its body and at least one WHEN/THEN scenario; scenario
+  names are unique; every requirement has a `Trace: PRD-<n>` line naming
+  real PRD ids, and every PRD id has a requirement of its own.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage spec`
-  (and `openspec validate --strict` if the OpenSpec CLI is installed)
+  (and, if the OpenSpec CLI is installed, `openspec validate --strict`)
 - **Scope**: pr
 
 ### Every scenario is tested, and tests pass
 
-- **Rule**: Scenario ↔ test tagging complete in both directions; every task
-  ticked; tests pass; `chatbot.py` imports `langchain_core`; the model id
-  is exactly `claude-sonnet-5`; no `temperature=` anywhere; no API key in
-  source. The judge prints how many tests were skipped — run once with
-  LangChain installed before you call it done.
+- **Rule**: Each `#### Scenario:` has a `unittest.TestCase` test whose
+  docstring's first line is `Scenario: <exact name>`, which asserts
+  something, runs, and passes (a skipped test does not count); no test
+  names a scenario the spec lacks; every task in `tasks.md` is ticked; the
+  exercise's implementation rules hold.
 - **Enforcement**: deterministic
 - **Tool**: `python tutorials/50-spec-fidelity/spec_fidelity.py EXERCISE --stage build`
 - **Scope**: pr
 
 ### Spec captures intent
 
-- **Rule**: The change states the **problem** (tier-1 deflection), the
-  **approach** (design.md) and the **outcome** (scenarios), and `impl/`
-  delivers it. In particular: the sensitive-data check runs *before* the
-  chain is invoked, not as a prompt instruction; a refused message never
-  reaches the history object; an unmatched question never invokes the
-  model. A test that names a scenario but asserts less than its THEN
-  clause is divergence.
-- **Enforcement**: agent
-- **Tool**: harness-enforcer
-- **Scope**: pr
-
-### Grounding is structural, not hopeful
-
-- **Rule**: The prompt sent to the model contains exactly one FAQ entry —
-  the retrieved one — and the system prompt forbids answering beyond it.
-  No code path sends the whole FAQ, or no entry, to the model.
+- **Rule**: The OpenSpec change states the **problem**, the **approach**
+  (design.md) and the **outcome** (scenarios), and `impl/` delivers what
+  the spec describes. Compare each requirement to the code that implements
+  it and flag significant divergence. For every test that cites a
+  scenario, compare its assertions with the scenario's THEN clause: a test
+  that asserts less than the THEN says is divergence.
 - **Enforcement**: agent
 - **Tool**: harness-enforcer
 - **Scope**: pr
 
 ### No gold-plating
 
-- **Rule**: `impl/` adds no web UI, streaming, persistence, embeddings,
-  vector store, or other feature the PRD lists as a non-goal, and no
-  dependency beyond `langchain-core` and `langchain-anthropic`.
+- **Rule**: `impl/` adds no endpoint, command, tool, argument, dependency,
+  environment variable, file or behaviour that no spec requirement asks
+  for, and nothing the PRD lists under Non-goals.
+- **Enforcement**: agent
+- **Tool**: harness-enforcer
+- **Scope**: pr
+
+### Safety is structural, not a prompt line
+
+- **Rule**: Every requirement about what the model may receive, and what the
+  conversation may keep, is enforced by code that runs before the model is
+  invoked or before the conversation is recorded, and a test proves it by
+  capturing exactly what the model would have received. A system-prompt instruction alone
+  does not satisfy such a requirement.
 - **Enforcement**: agent
 - **Tool**: harness-enforcer
 - **Scope**: pr
 
 ### Answers are actually grounded
 
-- **Rule**: Against the real model, each of the five FAQ questions gets an
-  answer consistent with its entry, and none invents a time limit or price.
+- **Rule**: Against the real model, each FAQ question gets an answer
+  consistent with its entry, and none invents a time limit or price.
 - **Enforcement**: unverified
-- **Tool**: none yet — needs `ANTHROPIC_API_KEY` and costs money. Run
-  `python chatbot.py` by hand; promote with `/harness-constrain` when you
-  have an eval set.
+- **Tool**: none yet — needs an API key and costs money; promote with
+  `/harness-constrain` when there is an eval set.
 - **Scope**: manual

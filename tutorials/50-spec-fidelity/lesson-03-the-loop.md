@@ -69,16 +69,24 @@ Write prd.md from the ticket and my answers. Sections: Problem, Users,
 Requirements, Non-goals, Open questions. Each requirement is
 "### PRD-<n>: <title>", states behaviour with SHALL or MUST, has at least
 one "WHEN ... THEN ..." acceptance line, and ends with
-"Source: <which answer it came from>". Do not use any of the vague words in
-rubric.json's vague_terms inside a requirement. Anything I did not decide
-goes in Non-goals or Open questions, not in a requirement.
+"Source: <which answer it came from>". Do not use the ticket's vague words
+("should", "fast", ... -- list them) inside a requirement. Anything I did
+not decide goes in Non-goals or Open questions, not in a requirement.
 ```
 
-Then judge it, and ask for an adversarial review in the same breath:
+Then judge it, and ask for an adversarial review in the same breath. The
+judge command is the one `start.py` printed (`python <path-to-repo>/tutorials/50-spec-fidelity/spec_fidelity.py <workspace>`);
+from inside the workspace:
 
 ```bash
-python <repo>/tutorials/50-spec-fidelity/spec_fidelity.py . --stage prd
+python /path/to/harness-engineering-demo/tutorials/50-spec-fidelity/spec_fidelity.py . --stage prd
 ```
+
+`/fidelity:prd` runs it for you and fixes what it can. When a finding says
+the PRD "does not pin down" something, that is a question nobody asked:
+the command is told to stop and hand it back to you, not to guess. When it
+says the PRD "contradicts the product owner", the wording states the
+opposite of an answer.
 
 ```text
 Read personas/spec-adversary.persona.md and act as that persona. Review
@@ -104,7 +112,7 @@ questions, resolved, or in Non-goals — never silently into a requirement.
 With OpenSpec installed:
 
 ```text
-/opsx:propose add-fx-convert
+/opsx:propose <change-id>
 
 Derive it from prd.md. One capability. Every requirement traces to a PRD
 id; every PRD id is traced. Nothing from Non-goals.
@@ -114,8 +122,12 @@ Without it, the same instruction plus "write openspec/changes/<id>/ with
 proposal.md, design.md, tasks.md and specs/<capability>/spec.md in
 OpenSpec's delta format" works — lesson 2 has the format.
 
+Pick a kebab-case, verb-first id: `add-fx-convert`, `add-help-chat`,
+`add-cli-mcp`. `/fidelity:propose <change-id>` does the same without
+OpenSpec installed.
+
 ```bash
-python <repo>/tutorials/50-spec-fidelity/spec_fidelity.py . --stage spec
+python /path/to/harness-engineering-demo/tutorials/50-spec-fidelity/spec_fidelity.py . --stage spec
 openspec validate --strict       # if installed
 ```
 
@@ -128,14 +140,22 @@ agent judge compares the code against.
 ```text
 Read personas/spec-implementer.persona.md and act as that persona.
 
-Implement openspec/changes/<id>/ in impl/. Test first: for each
-"#### Scenario:" write one unittest test whose docstring is exactly
-"Scenario: <scenario name>", run it and watch it fail, then implement.
-Tests live in impl/tests/ and run with
+Implement openspec/changes/<id>/ in impl/. Where the persona and this
+prompt disagree, this prompt wins. Test first: for each "#### Scenario:"
+write one test method on a unittest.TestCase class whose docstring's first
+line is exactly "Scenario: <scenario name>", run it and watch it fail,
+then implement. Tests live in impl/tests/test_*.py, with an empty
+impl/tests/__init__.py, and run with
 "python -m unittest discover -s tests -t ." from impl/. Tick each task in
 tasks.md as it is done. Implement nothing the spec does not ask for; if
 you think the spec is missing something, stop and tell me instead.
 ```
+
+What counts as a tested scenario is strict, because the first version of
+the judge was easy to fool: the test must be a `TestCase` method (pytest
+functions are not collected), must assert something, and must actually
+run and pass. A skipped test is "not exercised" — a finding, unless you
+pass `--allow-skips` knowingly.
 
 (`/opsx:apply` does the same job; add the test-first and scenario-tag
 instructions to it.)
@@ -145,7 +165,7 @@ something is the gold-plating the agent judge will flag, and the time to
 catch it is before it is written.
 
 ```bash
-python <repo>/tutorials/50-spec-fidelity/spec_fidelity.py .          # all three stages
+python /path/to/harness-engineering-demo/tutorials/50-spec-fidelity/spec_fidelity.py .   # all three stages
 ```
 
 ## Step 5 — The agent half of the judge
@@ -159,7 +179,7 @@ claude plugin marketplace add Habitat-Thinking/ai-literacy-superpowers
 claude plugin install ai-literacy-superpowers
 ```
 
-Then, in Claude Code in the workspace:
+Then, in Claude Code in the workspace, run `/fidelity:enforce`, or:
 
 ```text
 Use the harness-enforcer agent to verify every pr-scoped constraint in
@@ -173,7 +193,8 @@ direct prompt is enough.
 
 You are done when:
 
-- `spec_fidelity.py` reports `3 passed, 0 failed, 0 unchecked`, and
+- `spec_fidelity.py` reports `3 passed, 0 failed, 0 unchecked` **without**
+  `--allow-skips`, and
 - the enforcer reports no findings on the agent constraints, or you have
   written down why each remaining one is acceptable.
 

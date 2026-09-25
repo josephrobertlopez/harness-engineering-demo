@@ -15,6 +15,12 @@ Money values must round-trip exactly and round half-to-even. Floats cannot
 represent 0.135, so a float implementation passes most tests and fails
 finance's audit on ties. The response carries strings for the same reason.
 
+### Decision: an explicit `do_<METHOD>` for every HTTP method
+
+`BaseHTTPRequestHandler` answers 501 to any method it has no `do_` method
+for. The PRD says every non-GET method is a 405, so the handler defines all
+of them rather than the handful a quick test would try.
+
 ### Decision: stdlib `http.server`, no framework
 
 The PRD forbids third-party packages (PRD-8). `ThreadingHTTPServer` is

@@ -44,8 +44,9 @@ Rules:
 - Every PRD `WHEN … THEN …` line becomes at least one `#### Scenario:`.
   Scenario names are unique across the change: tests will cite them
   verbatim.
-- `tasks.md` includes one task to write a test per scenario, and a last
-  task to get the judge green. Leave all boxes unticked.
+- `tasks.md` includes one task to write a test per scenario. Do not add a
+  task for running the judge -- a task that can only be ticked before it
+  is true teaches the wrong habit. Leave all boxes unticked.
 - Write no implementation code.
 
 Then run `{{PYTHON}} {{JUDGE}} . --stage spec` (and `openspec validate

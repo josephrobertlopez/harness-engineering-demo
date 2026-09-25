@@ -114,7 +114,11 @@ on meaning. A green deterministic report is a floor, not a verdict.
 **1. Letting Claude read the stakeholder answers.** Then it is not
 interrogating the ticket, it is transcribing a file, and you learn nothing
 about which questions you would have forgotten to ask. `start.py` keeps them
-out of the workspace for this reason.
+out of the workspace for this reason — and keeps out `rubric.json` too,
+because its facts are the same answers in regex form. The first version of
+this track copied it in, and told Claude to read it; an adversarial review
+caught that, and a test now fails if any stakeholder fact is readable in a
+fresh workspace.
 
 **2. Resolving a vague word by deleting it.** "Should be fast" does not
 become an acceptable PRD by removing the sentence. It becomes one when
@@ -122,7 +126,8 @@ someone says what fast *means* — in exercise 1 it turns out to be a startup
 behaviour, not a latency number, which you only find out by asking.
 
 **3. Tagging a test with a scenario it does not test.** The judge checks
-that the tag exists; it cannot check the assertion. That is exactly what the
+that a `TestCase` method with that docstring exists, asserts *something*,
+runs and passes; it cannot check that it asserts the right thing. That is exactly what the
 `Spec captures intent` agent constraint is for.
 
 **4. Fixing the spec to match the code.** When the build diverges, the

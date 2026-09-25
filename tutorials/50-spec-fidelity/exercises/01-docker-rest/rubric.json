@@ -1,24 +1,277 @@
 {
-  "vague_terms": ["should", "fast", "properly", "anywhere", "usual", "secure", "works", "bad input", "handle errors"],
+  "vague_terms": [
+    "should",
+    "fast",
+    "properly",
+    "anywhere",
+    "usual",
+    "secure",
+    "works",
+    "bad input",
+    "handle errors"
+  ],
   "prd_facts": [
-    {"label": "the endpoint and its query parameters", "source": "stakeholder-answers.md Q1", "any_of": ["GET /convert\\?amount="]},
-    {"label": "that money values are strings, not floats", "source": "stakeholder-answers.md Q1", "any_of": ["string"]},
-    {"label": "where rates come from", "source": "stakeholder-answers.md Q2", "any_of": ["rates\\.json"]},
-    {"label": "the rounding rule", "source": "stakeholder-answers.md Q3", "any_of": ["half[- _]to[- _]even", "ROUND_HALF_EVEN", "banker"]},
-    {"label": "what 'fast' means", "source": "stakeholder-answers.md Q4", "any_of": ["once at startup", "at startup"]},
-    {"label": "the invalid-amount response", "source": "stakeholder-answers.md Q5", "any_of": ["400[^\\n]*invalid_amount", "invalid_amount[^\\n]*400"]},
-    {"label": "the unknown-currency response", "source": "stakeholder-answers.md Q5", "any_of": ["404[^\\n]*unknown_currency", "unknown_currency[^\\n]*404"]},
-    {"label": "the method-not-allowed response", "source": "stakeholder-answers.md Q5", "any_of": ["405"]},
-    {"label": "the health check", "source": "stakeholder-answers.md Q6", "any_of": ["/healthz"]},
-    {"label": "the port and its override", "source": "stakeholder-answers.md Q7", "any_of": ["8080[^\\n]*PORT", "PORT[^\\n]*8080"]},
-    {"label": "the non-root container user", "source": "stakeholder-answers.md Q7", "any_of": ["non-root", "unprivileged"]}
+    {
+      "label": "the endpoint and its query parameters",
+      "source": "stakeholder-answers.md Q1",
+      "any_of": [
+        "GET /convert\\?amount="
+      ],
+      "examples": [
+        "The service SHALL answer `GET /convert?amount=<decimal>&from=<code>&to=<code>`"
+      ]
+    },
+    {
+      "label": "that money values are JSON strings, not numbers",
+      "source": "stakeholder-answers.md Q1",
+      "any_of": [
+        "(MUST|SHALL) be (represented |encoded |returned |seriali[sz]ed )?(as )?(JSON )?strings",
+        "as (JSON )?strings",
+        "strings?,? (never|not) (as )?(JSON )?(numbers|floats)"
+      ],
+      "none_of": [
+        "(MUST|SHALL) be (represented |encoded |returned |seriali[sz]ed )?(as )?(JSON )?(numbers|floats)\\b",
+        "as (JSON )?(numbers|floats)\\b"
+      ],
+      "examples": [
+        "Money values and the rate MUST be JSON strings, never numbers.",
+        "All money-related values (`amount`, `rate`, `result`) **MUST** be represented as strings, never as JSON floating-point numbers.\n- WHEN response is serialized as JSON THEN no money values appear as JSON floats"
+      ],
+      "counterexamples": [
+        "Money values MUST be JSON numbers, parsed from the query string."
+      ]
+    },
+    {
+      "label": "where rates come from",
+      "source": "stakeholder-answers.md Q2",
+      "any_of": [
+        "rates\\.json"
+      ]
+    },
+    {
+      "label": "that no network call is ever made",
+      "source": "stakeholder-answers.md Q2",
+      "any_of": [
+        "(MUST NOT|SHALL NOT|never|no)\\b[^\\n]*network"
+      ],
+      "examples": [
+        "and MUST NOT read the file or make any network call while serving a request."
+      ],
+      "counterexamples": [
+        "The service SHALL fetch live rates from the network at startup."
+      ]
+    },
+    {
+      "label": "that cross rates go through USD",
+      "source": "stakeholder-answers.md Q2",
+      "any_of": [
+        "(through|via) USD"
+      ]
+    },
+    {
+      "label": "the rounding rule",
+      "source": "stakeholder-answers.md Q3",
+      "any_of": [
+        "half[- _]to[- _]even",
+        "ROUND_HALF_EVEN",
+        "banker"
+      ],
+      "none_of": [
+        "half[- _]up\\b",
+        "ROUND_HALF_UP"
+      ],
+      "counterexamples": [
+        "The result SHALL be rounded to 2 decimal places with ROUND_HALF_UP."
+      ],
+      "examples": [
+        "The result SHALL use banker's rounding, not half-up."
+      ]
+    },
+    {
+      "label": "the rate's precision",
+      "source": "stakeholder-answers.md Q3",
+      "any_of": [
+        "\\b(6|six) decimal places"
+      ]
+    },
+    {
+      "label": "that the result uses the unrounded rate",
+      "source": "stakeholder-answers.md Q3",
+      "any_of": [
+        "unrounded rate",
+        "from the (full|exact)[- ]precision rate"
+      ]
+    },
+    {
+      "label": "what 'fast' means",
+      "source": "stakeholder-answers.md Q4",
+      "any_of": [
+        "once at startup"
+      ],
+      "none_of": [
+        "(read|load)\\w*\\b[^\\n]*\\b(on|per|for) (every|each) request",
+        "\\b(on|per|for) (every|each) request[^\\n]*\\b(read|load)"
+      ],
+      "examples": [
+        "The service SHALL load rates from `rates.json` once at startup and MUST NOT read the file while serving a request."
+      ],
+      "counterexamples": [
+        "The service SHALL read rates.json on every request (not at startup)."
+      ]
+    },
+    {
+      "label": "the invalid-amount response",
+      "source": "stakeholder-answers.md Q5",
+      "any_of": [
+        "400[^\\n]*invalid_amount",
+        "invalid_amount[^\\n]*400"
+      ],
+      "examples": [
+        "The service SHALL respond 400\n`{\"error\": \"invalid_amount\"}` when `amount` is missing."
+      ]
+    },
+    {
+      "label": "the largest accepted amount",
+      "source": "stakeholder-answers.md Q5",
+      "any_of": [
+        "1,000,000,000,000",
+        "1000000000000",
+        "10\\^12",
+        "\\b1e12\\b",
+        "trillion"
+      ]
+    },
+    {
+      "label": "the unknown-currency response",
+      "source": "stakeholder-answers.md Q5",
+      "any_of": [
+        "404[^\\n]*unknown_currency",
+        "unknown_currency[^\\n]*404"
+      ]
+    },
+    {
+      "label": "the unknown-path response",
+      "source": "stakeholder-answers.md Q5",
+      "any_of": [
+        "404[^\\n]*not_found",
+        "not_found[^\\n]*404"
+      ]
+    },
+    {
+      "label": "the method-not-allowed response",
+      "source": "stakeholder-answers.md Q5",
+      "any_of": [
+        "405[^\\n]*method_not_allowed",
+        "method_not_allowed[^\\n]*405"
+      ],
+      "none_of": [
+        "(MUST NOT|SHALL NOT|never)\\s+(return|respond|answer)\\w*\\s+(with\\s+)?405"
+      ],
+      "counterexamples": [
+        "The service MUST NOT return 405 `method_not_allowed`; unknown methods get 501."
+      ]
+    },
+    {
+      "label": "the health check",
+      "source": "stakeholder-answers.md Q6",
+      "any_of": [
+        "/healthz"
+      ]
+    },
+    {
+      "label": "the base image",
+      "source": "stakeholder-answers.md Q7",
+      "any_of": [
+        "python:3\\.12-slim"
+      ]
+    },
+    {
+      "label": "the port and its override",
+      "source": "stakeholder-answers.md Q7",
+      "any_of": [
+        "8080[^\\n]*PORT",
+        "PORT[^\\n]*8080"
+      ]
+    },
+    {
+      "label": "the non-root container user",
+      "source": "stakeholder-answers.md Q7",
+      "any_of": [
+        "non-root",
+        "unprivileged"
+      ],
+      "none_of": [
+        "\\bruns? as (the )?root\\b"
+      ]
+    },
+    {
+      "label": "that no third-party packages are installed",
+      "source": "stakeholder-answers.md Q7",
+      "any_of": [
+        "no third-party (packages|dependencies)",
+        "(stdlib|standard library) only"
+      ]
+    }
   ],
   "impl_rules": [
-    {"label": "base image is the one ops approved", "glob": "Dockerfile", "must_match": ["^FROM python:3\\.12-slim\\b"]},
-    {"label": "container runs as non-root", "glob": "Dockerfile", "must_match": ["^USER (?!root\\b|0\\b)\\S+"]},
-    {"label": "container exposes the agreed port", "glob": "Dockerfile", "must_match": ["^EXPOSE 8080\\b"]},
-    {"label": "no third-party packages", "glob": "Dockerfile", "must_not_match": ["^\\s*RUN\\b[^\\n]*pip install"]},
-    {"label": "no network calls from the function", "glob": "app.py", "must_not_match": ["urlopen", "^\\s*import requests", "http\\.client"]},
-    {"label": "money is never a float", "glob": "app.py", "must_not_match": ["float\\("]}
+    {
+      "label": "the final image is built from the one ops approved",
+      "glob": "Dockerfile",
+      "last": "^FROM\\b",
+      "must_match": [
+        "^FROM python:3\\.12-slim\\b"
+      ]
+    },
+    {
+      "label": "the container runs as non-root",
+      "glob": "Dockerfile",
+      "last": "^USER\\b",
+      "must_match": [
+        "^USER (?!root\\b|0\\b)\\S+"
+      ]
+    },
+    {
+      "label": "the container exposes the agreed port",
+      "glob": "Dockerfile",
+      "must_match": [
+        "^EXPOSE 8080\\b"
+      ]
+    },
+    {
+      "label": "no third-party packages",
+      "glob": "Dockerfile",
+      "must_not_match": [
+        "\\bpip3?(\\.\\d+)?\\s+install\\b",
+        "-m\\s+pip\\b",
+        "\\b(uv|poetry|pipenv)\\s+(add|install|sync)\\b"
+      ]
+    },
+    {
+      "label": "no network calls from the function",
+      "glob": "app.py",
+      "must_not_match": [
+        "\\burlopen\\b",
+        "^\\s*import requests\\b",
+        "^\\s*from requests\\b",
+        "\\bhttp\\.client\\b",
+        "\\bsocket\\.create_connection\\b"
+      ]
+    },
+    {
+      "label": "money is never a float",
+      "glob": "app.py",
+      "must_not_match": [
+        "\\bfloat\\s*\\(",
+        ":\\s*\\.\\d+f\\}",
+        "\\bround\\s*\\("
+      ]
+    },
+    {
+      "label": "rates are strings in the file, so they reach Decimal unrounded",
+      "glob": "rates.json",
+      "must_not_match": [
+        "\"[A-Z]{3}\"\\s*:\\s*-?\\d"
+      ]
+    }
   ]
 }

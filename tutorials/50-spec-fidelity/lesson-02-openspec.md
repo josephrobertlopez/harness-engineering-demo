@@ -78,8 +78,8 @@ run in CI with no Node, then adds the tracing OpenSpec does not know about.
 
 | rule | OpenSpec | judge `--stage spec` |
 |---|---|---|
-| `## Why` is 50–1000 characters | ✓ | ✓ |
-| `## What Changes` is present and non-empty | ✓ | ✓ |
+| `proposal.md` exists, `## Why` is 50–1000 characters | — ¹ | ✓ |
+| `## What Changes` is present and non-empty | — ¹ | ✓ |
 | at least one delta section | ✓ | ✓ |
 | requirement body has SHALL or MUST (not only the header) | ✓ (`--strict`) | ✓ |
 | every requirement has a `#### Scenario:` | ✓ | ✓ |
@@ -87,7 +87,15 @@ run in CI with no Node, then adds the tracing OpenSpec does not know about.
 | scenario has WHEN and THEN | — | ✓ |
 | `tasks.md` has checkbox tasks | warns | ✓ |
 | exactly one active change | — | ✓ |
+| scenario names unique across the change | — | ✓ |
 | every `PRD-n` is traced; every requirement traces to a real `PRD-n` | — | ✓ |
+| every `PRD-n` has a requirement of its own (not only a shared `Trace:`) | — | ✓ |
+
+¹ OpenSpec's source defines these limits, but on 1.13.2
+`openspec validate --strict` passes a change with a 17-character Why, and
+one with no `proposal.md` at all (checked; the adversarial review of this
+track caught an earlier version of this table claiming otherwise). The
+judge enforces them; do not rely on OpenSpec to.
 
 All three reference solutions pass `openspec validate --strict` on
 OpenSpec 1.13.2 as well as the judge. If the two ever disagree, OpenSpec is
@@ -125,13 +133,21 @@ spend a `/opsx:propose` on it:
 | each requirement is `### PRD-<n>: <title>` | the trace target |
 | each has SHALL or MUST | it becomes a requirement body |
 | each has a WHEN … THEN | it becomes a `#### Scenario:` |
-| none of the ticket's vague words (`rubric.json`) | a vague word in the PRD is a guess in the code |
+| none of the ticket's vague words (quoted text and `code` exempt) | a vague word in the PRD is a guess in the code |
 | no `TBD` left in Open questions | an open question is a requirement nobody owns |
-| every stakeholder fact pinned down (`rubric.json`) | you asked, you got an answer, it must be written down |
+| every stakeholder fact pinned down | you asked, you got an answer, it must be written down |
+| no stakeholder fact contradicted | "SHALL set temperature to 0.7" mentions temperature too |
 
-The last row is the one that teaches. The findings name the stakeholder
-answer you missed (`stakeholder-answers.md Q4`), so you can see which
-question you did not think to ask.
+The last two rows are the ones that teach. The findings name the answer
+you missed in the product owner's own numbering (`PO notes Q4`), so you
+can see which question you did not think to ask.
+
+The facts live in each exercise's `rubric.json`, which the judge reads from
+the repo and `start.py` never copies into your workspace: the facts *are*
+the product owner's answers, and a Claude that can read them is not
+interrogating anyone. Each fact carries `examples` it must accept and
+`counterexamples` it must reject, and the test suite checks both, so a
+pattern that accepts its own negation fails CI.
 
 ---
 

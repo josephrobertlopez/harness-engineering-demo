@@ -22,12 +22,21 @@ each new question; older ones are dropped. Sessions are isolated from each
 other. Nothing is written to disk — a restart forgets, and that is fine.
 
 **Q4. "Not say anything bad" — what are you actually worried about?**
-Customers paste **card numbers** (13–19 digits, spaces or dashes allowed)
-and **passwords** ("my password is …") into chat. A message containing
-either is refused **before any model call** with exactly
+Customers paste **card numbers** and **passwords** into chat. A message
+containing either is refused **before any model call** with exactly
 `I can't help with passwords or card numbers here. Please contact support@example.com.`
 and the refused message is **not kept in memory** — otherwise it would be
 sent to the model on the next turn anyway.
+
+But do not refuse the most common question we get. Concretely:
+
+- a **card number** is 13–19 digits (spaces or dashes allowed between them)
+  that **passes the Luhn check**. Order numbers are 16 digits too, and they
+  fail Luhn; customers quote them all the time.
+- a **shared password** is "password is", "password:" or "pwd=" followed by
+  a single word containing a **digit or a symbol** — "my password is
+  hunter22". "My password is not working" and "my password is expired" are
+  questions, not passwords.
 
 **Q5. "Use Claude" — which model, which settings?**
 `ChatAnthropic` from `langchain-anthropic`, model **`claude-sonnet-5`**

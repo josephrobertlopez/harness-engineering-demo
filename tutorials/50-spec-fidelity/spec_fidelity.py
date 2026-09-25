@@ -794,9 +794,22 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
 
     entry = impl / rule["mcp_smoke"]
     if not entry.is_file():
-        return [f"no {rule['mcp_smoke']} to start"]
+        return [f"no {rule['mcp_smoke']} to start"], []
+    import shutil as _shutil
+
+    # A real repository as the root, so a valid call succeeds and a refused
+    # one is refused for the right reason -- not because git found no repo.
+    root_holder = tempfile.TemporaryDirectory(prefix="fidelity-root-")
+    root = Path(root_holder.name)
+    if _shutil.which("git"):
+        subprocess.run(["git", "init", "-q", str(root)], capture_output=True)
+        (root / "README.md").write_text("fixture\n", encoding="utf-8")
+        subprocess.run(["git", "-C", str(root), "add", "."], capture_output=True)
+        subprocess.run(["git", "-C", str(root), "-c", "user.name=judge", "-c", "user.email=judge@example.com",
+                        "commit", "-q", "-m", "fixture"], capture_output=True)
+    notes: list[str] = []
     proc = subprocess.Popen(
-        [sys.executable, str(entry), "--root", str(impl)], cwd=str(impl),
+        [sys.executable, str(entry), "--root", str(root)], cwd=str(impl),
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
         text=True, encoding="utf-8", errors="replace",
     )
@@ -908,19 +921,53 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
                                         f"{{type: text, text}} items (got {json.dumps(called)[:100]})")
                     elif not isinstance(result.get("isError", False), bool):
                         problems.append(f"tools/call {rule['call']}: isError must be a boolean")
+                # Calls the product owner said must fail. A fourth Haiku server
+                # passed everything above and accepted limit=99: its spec said
+                # "1-50" in prose, no scenario pinned the boundary, so no test
+                # ever tried it. The judge tries it.
+                # Each tool's control call must succeed first; otherwise a
+                # refusal proves nothing (git or rg missing, root unreadable).
+                next_id = iter(range(10, 1000))
+                usable: dict[str, bool] = {}
+                for tool, args in rule.get("controls", {}).items():
+                    n = next(next_id)
+                    send({"jsonrpc": "2.0", "id": n, "method": "tools/call",
+                          "params": {"name": tool, "arguments": args}})
+                    got = reply(n)
+                    ok = got is not None and "error" not in got and (got.get("result") or {}).get("isError") is not True
+                    usable[tool] = ok
+                    if not ok:
+                        notes.append(f"{tool} {json.dumps(args)} failed on this machine, so its must-refuse "
+                                     "probes were skipped -- install the CLI to run them")
+                for probe in rule.get("must_refuse", []):
+                    if not usable.get(probe["tool"], False):
+                        continue
+                    n = next(next_id)
+                    send({"jsonrpc": "2.0", "id": n, "method": "tools/call",
+                          "params": {"name": probe["tool"], "arguments": probe["arguments"]}})
+                    got = reply(n)
+                    if got is None:
+                        continue
+                    refused = (got.get("result") or {}).get("isError") is True or "error" in got
+                    if not refused:
+                        problems.append(f"{probe['tool']} {json.dumps(probe['arguments'])} was accepted; "
+                                        f"{probe['why']}")
     finally:
         try:
             proc.stdin.close()
             proc.wait(timeout=5)
         except Exception:
             proc.kill()
-    return problems
+        root_holder.cleanup()
+    return problems, notes
 
 
 def judge_rule(res: StageResult, impl: Path, rule: dict) -> None:
     if "mcp_smoke" in rule:
-        for problem in mcp_smoke(impl, rule):
+        problems, notes = mcp_smoke(impl, rule)
+        for problem in problems:
             res.add(f"impl/{rule['mcp_smoke']}", f"{rule['label']}: {problem}")
+        res.notes.extend(notes)
         return
     files = sorted(impl.glob(rule["glob"]))
     where = f"impl/{rule['glob']}"

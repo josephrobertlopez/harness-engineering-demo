@@ -237,7 +237,61 @@
         "rg_search"
       ],
       "unknown_tool_code": -32602,
-      "call": "git_status"
+      "call": "git_status",
+      "must_refuse": [
+        {
+          "tool": "git_log",
+          "arguments": {
+            "limit": 51
+          },
+          "why": "the product owner set limit to 1-50"
+        },
+        {
+          "tool": "git_log",
+          "arguments": {
+            "limit": 0
+          },
+          "why": "the product owner set limit to 1-50"
+        },
+        {
+          "tool": "git_log",
+          "arguments": {
+            "limit": true
+          },
+          "why": "a boolean is not an integer limit"
+        },
+        {
+          "tool": "rg_search",
+          "arguments": {
+            "pattern": "x",
+            "path": "../.."
+          },
+          "why": "paths outside the root must be rejected"
+        },
+        {
+          "tool": "rg_search",
+          "arguments": {
+            "pattern": ""
+          },
+          "why": "pattern must be a non-empty string"
+        },
+        {
+          "tool": "git_status",
+          "arguments": {
+            "args": "--all"
+          },
+          "why": "arguments the product owner did not list must be rejected"
+        }
+      ],
+      "controls": {
+        "git_log": {
+          "limit": 2
+        },
+        "rg_search": {
+          "pattern": "fixture"
+        },
+        "git_status": {}
+      }
     }
   ]
 }

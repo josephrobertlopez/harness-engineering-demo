@@ -336,7 +336,7 @@ class TestMcpSmoke(unittest.TestCase):
 
     def test_reference_server_passes(self):
         impl = TRACK / "exercises" / "03-mcp-cli-tools" / "solution" / "impl"
-        self.assertEqual(fidelity.mcp_smoke(impl, self.RULE), [])
+        self.assertEqual(fidelity.mcp_smoke(impl, self.RULE), ([], []))
 
     def test_reply_without_id_is_caught(self):
         tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
@@ -348,7 +348,7 @@ class TestMcpSmoke(unittest.TestCase):
                 "    print(json.dumps({'protocolVersion': '2025-06-18', 'capabilities': {}}), flush=True)\n",
                 encoding="utf-8",
             )
-            problems = fidelity.mcp_smoke(tmp, self.RULE)
+            problems, _ = fidelity.mcp_smoke(tmp, self.RULE)
             self.assertTrue(any("no id" in p for p in problems), problems)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -367,9 +367,40 @@ class TestMcpSmoke(unittest.TestCase):
                 "    print(json.dumps({'jsonrpc': '2.0', 'id': m['id'], 'result': r}), flush=True)\n",
                 encoding="utf-8",
             )
-            problems = fidelity.mcp_smoke(tmp, self.RULE)
+            problems, _ = fidelity.mcp_smoke(tmp, self.RULE)
             self.assertTrue(any("capabilities" in p for p in problems), problems)
             self.assertTrue(any("result.content must be a list" in p for p in problems), problems)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    @unittest.skipUnless(shutil.which("git"), "git not installed")
+    def test_unvalidated_limit_is_caught(self):
+        """The fourth Haiku server spoke perfect MCP and accepted limit=99."""
+        tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
+        try:
+            (tmp / "server.py").write_text(
+                "import json, subprocess, sys\n"
+                "root = sys.argv[sys.argv.index('--root') + 1]\n"
+                "TOOLS = [{'name': n, 'inputSchema': {'type': 'object'}} for n in ('git_status', 'git_log', 'git_diff_stat', 'rg_search')]\n"
+                "def ok(t): return {'content': [{'type': 'text', 'text': t}], 'isError': False}\n"
+                "for line in sys.stdin:\n"
+                "    m = json.loads(line)\n"
+                "    if 'id' not in m: continue\n"
+                "    if m['method'] == 'initialize':\n"
+                "        r = {'protocolVersion': '2025-06-18', 'capabilities': {'tools': {}}, 'serverInfo': {'name': 'x', 'version': '1'}}\n"
+                "    elif m['method'] == 'tools/list': r = {'tools': TOOLS}\n"
+                "    else:\n"
+                "        name, args = m['params']['name'], m['params'].get('arguments', {})\n"
+                "        if name == 'git_log':\n"
+                "            p = subprocess.run(['git', 'log', '--oneline', '-n', str(args.get('limit', 10))], cwd=root, capture_output=True, text=True)\n"
+                "            r = ok(p.stdout)\n"
+                "        elif name in ('git_status', 'git_diff_stat'): r = ok('')\n"
+                "        else: r = {'content': [{'type': 'text', 'text': 'nope'}], 'isError': True}\n"
+                "    print(json.dumps({'jsonrpc': '2.0', 'id': m['id'], 'result': r}), flush=True)\n",
+                encoding="utf-8",
+            )
+            problems, _ = fidelity.mcp_smoke(tmp, self.RULE)
+            self.assertTrue(any('git_log {"limit": 51} was accepted' in p for p in problems), problems)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -388,7 +419,7 @@ class TestMcpSmoke(unittest.TestCase):
                 "    print(json.dumps(out), flush=True)\n",
                 encoding="utf-8",
             )
-            problems = fidelity.mcp_smoke(tmp, self.RULE)
+            problems, _ = fidelity.mcp_smoke(tmp, self.RULE)
             self.assertTrue(any("answered a notification" in p for p in problems), problems)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)

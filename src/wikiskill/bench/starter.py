@@ -213,7 +213,7 @@ def _equal(got: Any, want: Any) -> bool:
 
 
 def summarize(traces: list[Trace]) -> str:
-    """Per-family pass counts, handed to the Wiki Maintainer as an overview."""
+    """Per-family pass counts, handed to the Skill Proposer as ``outcome_summary``."""
     rows: dict[str, list[int]] = {}
     for t in traces:
         bucket = rows.setdefault(t.family, [0, 0])

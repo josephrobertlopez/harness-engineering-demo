@@ -31,7 +31,7 @@ python --version
 python -m unittest discover -s tests -t .
 ```
 
-Expect **119 tests, all passing, in under a minute**. If they pass, everything
+Expect **159 tests, all passing, in under a minute**. If they pass, everything
 in this repo works on your machine. If they don't, something is wrong with
 the zip or your Python — nothing here depends on your environment beyond the
 interpreter.

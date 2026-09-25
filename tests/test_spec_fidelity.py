@@ -578,6 +578,8 @@ class TestStart(unittest.TestCase):
             with self.subTest(command=cmd.name):
                 self.assertNotIn("{{", cmd.read_text(encoding="utf-8"))
         self.assertIn('"has memory"', (ws / ".claude" / "commands" / "fidelity" / "prd.md").read_text(encoding="utf-8"))
+        self.assertFalse((ws / ".claude" / "commands" / "fidelity" / "README.md").exists(),
+                         "the prompts README must not become a /fidelity:README command")
 
     def test_commands_that_run_the_judge_exit_zero(self):
         """Claude Code aborts a slash command whose `!` line exits non-zero."""

@@ -412,7 +412,8 @@ class TestMcpSmoke(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("git"), "git not installed")
     def test_unvalidated_limit_is_caught(self):
-        """The fourth Haiku server spoke perfect MCP and accepted limit=99."""
+        """The fourth Haiku server spoke perfect MCP, accepted limit=99, let a
+        string limit become a git flag that writes files, and swallowed bad JSON."""
         tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
         try:
             (tmp / "server.py").write_text(
@@ -421,7 +422,8 @@ class TestMcpSmoke(unittest.TestCase):
                 "TOOLS = [{'name': n, 'inputSchema': {'type': 'object'}} for n in ('git_status', 'git_log', 'git_diff_stat', 'rg_search')]\n"
                 "def ok(t): return {'content': [{'type': 'text', 'text': t}], 'isError': False}\n"
                 "for line in sys.stdin:\n"
-                "    m = json.loads(line)\n"
+                "    try: m = json.loads(line)\n"
+                "    except ValueError: continue\n"
                 "    if 'id' not in m: continue\n"
                 "    if m['method'] == 'initialize':\n"
                 "        r = {'protocolVersion': '2025-06-18', 'capabilities': {'tools': {}}, 'serverInfo': {'name': 'x', 'version': '1'}}\n"
@@ -429,7 +431,7 @@ class TestMcpSmoke(unittest.TestCase):
                 "    else:\n"
                 "        name, args = m['params']['name'], m['params'].get('arguments', {})\n"
                 "        if name == 'git_log':\n"
-                "            p = subprocess.run(['git', 'log', '--oneline', '-n', str(args.get('limit', 10))], cwd=root, capture_output=True, text=True)\n"
+                "            p = subprocess.run(['git', 'log', '--oneline', f\"-{args.get('limit', 10)}\"], cwd=root, capture_output=True, text=True)\n"
                 "            r = ok(p.stdout)\n"
                 "        elif name in ('git_status', 'git_diff_stat'): r = ok('')\n"
                 "        else: r = {'content': [{'type': 'text', 'text': 'nope'}], 'isError': True}\n"
@@ -438,6 +440,10 @@ class TestMcpSmoke(unittest.TestCase):
             )
             problems, _ = fidelity.mcp_smoke(tmp, self.RULE)
             self.assertTrue(any('git_log {"limit": 51} was accepted' in p for p in problems), problems)
+            # Haiku's exact bug, found by the real harness-enforcer: f"-{limit}"
+            # turns the string "-output=FILE" into git log --output=FILE.
+            self.assertTrue(any("created 'INJECTED' in the root" in p for p in problems), problems)
+            self.assertTrue(any("must get error -32700 with id null" in p for p in problems), problems)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

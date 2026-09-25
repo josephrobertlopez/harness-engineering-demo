@@ -261,6 +261,16 @@
           "why": "a boolean is not an integer limit"
         },
         {
+          "tool": "git_log",
+          "arguments": {
+            "limit": "-output=INJECTED"
+          },
+          "why": "limit is an integer; a string must never reach git's command line",
+          "must_not_create": [
+            "INJECTED"
+          ]
+        },
+        {
           "tool": "rg_search",
           "arguments": {
             "pattern": "x",
@@ -291,7 +301,8 @@
           "pattern": "fixture"
         },
         "git_status": {}
-      }
+      },
+      "parse_error_code": -32700
     }
   ]
 }

@@ -140,6 +140,32 @@ read the stakeholder answers, a rubric, or a `solution/` folder.
 | 03 attempt 3 | green, **broken** | $1.33 | Echoed ids; Claude Code still refused it (no `capabilities` in `initialize`). The stdio check now validates result shapes, not just ids. |
 | 03 attempt 4 | green, connects, **unfaithful** | $1.76 | Worked in Claude Code and with the SDK client — and accepted `limit: 99`. Its spec said "1–50" in prose and had no scenario for the boundary, so nothing tested it. The judge now sends calls the product owner said must fail, each after a control call proving the tool works. |
 
+### Then the real `harness-enforcer`
+
+The runs above used a stand-in for the agent half of the judge. Afterwards
+the ai-literacy-superpowers plugin (0.92.0) was installed and its own
+`harness-enforcer` agent was run, on `claude-sonnet-5`, against three
+workspaces:
+
+| workspace | enforcer verdict | cost |
+|---|---|---|
+| exercise 1 reference solution | 5/5 pass — no false alarms on correct work | $0.62 |
+| the same, plus lesson 4's `/currencies` endpoint | **No gold-plating: FAIL** at `impl/app.py:53-54`, citing the PRD's Non-goals line | $0.55 |
+| Haiku's exercise 3, attempt 4 | 3 of 6 fail — see below | $0.79 |
+
+On the Haiku server it found what the deterministic probes found, and
+more. The worst was a **flag injection**: `limit` was pasted into the
+command line as `f"-{limit}"`, so a caller sending the string
+`"-output=FILE"` made `git log` write a file of their choosing. That was
+confirmed by hand, and both it and a second finding (malformed JSON got no
+reply at all) are now deterministic probes, so the cheap judge catches
+them too. It also flagged tests that assert less than their scenario's
+THEN — the finding the deterministic judge cannot make.
+
+This is the division of labour the track argues for, observed rather than
+asserted: the agent reads for meaning and finds what nobody thought to
+check; each finding it makes that a script *can* check becomes a script.
+
 Two lessons that generalise beyond this track:
 
 - **Tests written by the same model that wrote the code share its

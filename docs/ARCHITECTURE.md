@@ -37,7 +37,7 @@ Inference Agent. That isolation is the paper's central ablation.
 | `patching.py` | Pure validation + application of wiki patches over an in-memory page map. All-or-nothing. |
 | `gating.py` | The accept/reject decision (the paper's Eq. 4) and the skill byte-budget check. |
 | `loop.py` | `Workspace`, `Journal`, `Evaluator` (parallel), and `EvolutionLoop` — the seven-phase orchestrator. |
-| `report.py` / `cli.py` | Command line surface. |
+| `cli.py` | Command line surface, including the `report` command. |
 
 ### `layers/` — the only code allowed to write `workspace/`
 

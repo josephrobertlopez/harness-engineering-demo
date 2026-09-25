@@ -8,3 +8,6 @@ __pycache__/
 workspace/.state/
 workspace/raw/iter-*/
 workspace/raw/eval-*/
+
+# ai-literacy-superpowers hook log; carries the session id
+observability/affordance-invocations.json

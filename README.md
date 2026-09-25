@@ -1,5 +1,8 @@
 # harness-engineering-demo
 
+[![Harness](https://img.shields.io/badge/Harness-15%2F17_enforced-brightgreen?style=flat-square)](HARNESS.md)
+[![Harness Health](https://img.shields.io/badge/Harness_Health-Attention-DAA520?style=flat-square)](observability/snapshots/2026-09-25-snapshot.md)
+
 **A small harness for a context-engineering question: does the thing you
 just put in the model's context actually pay for itself?**
 
@@ -53,7 +56,7 @@ Measured here, with real models: a held-out test split went from **0.400 to
 that matter are in [docs/RESULTS.md](docs/RESULTS.md).
 
 ```
-python -m unittest discover -s tests -t .     # 119 tests, ~1 min
+python -m unittest discover -s tests -t .     # 159 tests, ~1 min
 ```
 
 No install, no API key, no network. Python 3.12+ and nothing else.

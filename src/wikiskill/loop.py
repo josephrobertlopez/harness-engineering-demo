@@ -382,12 +382,14 @@ class EvolutionLoop:
         learned this iteration, which is the point: the knowledge survives
         even when the skill built on it did not.
         """
-        self.ws.skills.set_head(parent_sha, iteration, r_best)
         # Rejections reached from the gate have already journaled their
         # decision; those short-circuited earlier (invalid proposal, budget)
-        # have not. Record it once either way.
+        # have not. Record it once either way -- and before HEAD.json is
+        # rewritten, the same order as the accept path: decide, journal,
+        # then act. The sha does not change here, but iter and r_best do.
         if self.ws.journal.done(iteration, "gate_decision") is None:
             self.ws.journal.record(iteration, "gate_decision", {"accepted": False, "r_best": r_best})
+        self.ws.skills.set_head(parent_sha, iteration, r_best)
         self.ws.journal.record(iteration, "commit", {"head": parent_sha})
         self.ws.wiki.append_skill_impact(
             iteration=iteration,

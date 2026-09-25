@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-28 commit(s), oldest first.
+30 commit(s), oldest first.
 
 
 ---
@@ -851,3 +851,45 @@ through the venv interpreter the workspace commands embed.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `dae263f` — Run the real harness-enforcer, and make its findings deterministic
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `dae263f3752162c2a74135f40461f86993e7e359`
+
+Until now the agent half of the judge had only been tried through a
+stand-in prompt. The ai-literacy-superpowers plugin (0.92.0) was
+installed and its own harness-enforcer agent run against three
+workspaces: exercise 1's reference (5/5 pass, no false alarms), the same
+with lesson 4's /currencies endpoint (No gold-plating FAIL, citing the
+line and the PRD Non-goal), and Haiku's fourth exercise 3 server.
+
+On that server it found a flag injection: limit was pasted into argv as
+f"-{limit}", so the string "-output=FILE" became git log --output=FILE
+and wrote a file the caller chose. Confirmed by hand. It also found that
+a line of malformed JSON got no reply at all. Both are now stdio probes:
+a string limit must be refused and must not create a file in the root
+(checked by effect, not just by the reply), and a non-JSON line must get
+-32700 with a null id. The leak guard caught the first draft of the
+HARNESS.md wording stating -32700 to the developer; it now says "the
+parse error the spec names".
+
+The track README records what the enforcer found and cost.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `05876c1` — Merge: one-command setup, and the real harness-enforcer's findings (#3)
+
+- **date:** 2026-09-25
+- **author:** josephrobertlopez
+- **sha:** `05876c1f5e45a43ec8d400bf041ae9fa3dcdb59e`
+
+Track 50: one-command setup, and the real harness-enforcer's findings

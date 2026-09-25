@@ -85,6 +85,8 @@ def start(exercise: str, dest: Path, with_solution: bool = False) -> list[str]:
     commands = dest / ".claude" / "commands" / "fidelity"
     commands.mkdir(parents=True)
     for prompt in sorted((TRACK / "prompts").glob("*.md")):
+        if prompt.name == "README.md":
+            continue  # documentation for maintainers; as a command it would be /fidelity:README
         text = prompt.read_text(encoding="utf-8")
         text = text.replace("{{PYTHON}}", python).replace("{{JUDGE}}", judge).replace("{{VAGUE_TERMS}}", vague)
         (commands / prompt.name).write_text(text, encoding="utf-8", newline="\n")

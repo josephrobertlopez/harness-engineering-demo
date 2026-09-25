@@ -849,9 +849,20 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
                          "clientInfo": {"name": "spec_fidelity", "version": "1"}}})
         init = reply(1)
         if init is not None:
-            version = (init.get("result") or {}).get("protocolVersion")
+            # The fields a client validates. A second Haiku trial server
+            # passed the id check and still failed in Claude Code, because
+            # its initialize result had no capabilities object.
+            result = init.get("result") if isinstance(init.get("result"), dict) else {}
+            version = result.get("protocolVersion")
             if version != rule["protocol"]:
                 problems.append(f"initialize: protocolVersion {version!r}, expected {rule['protocol']!r}")
+            caps = result.get("capabilities")
+            if not isinstance(caps, dict) or not isinstance(caps.get("tools"), dict):
+                problems.append("initialize: result.capabilities must be an object with a \"tools\" object "
+                                f"(got {json.dumps(caps)[:80]})")
+            info = result.get("serverInfo")
+            if not (isinstance(info, dict) and isinstance(info.get("name"), str) and isinstance(info.get("version"), str)):
+                problems.append("initialize: result.serverInfo must be an object with string name and version")
             send({"jsonrpc": "2.0", "method": "notifications/initialized"})
             send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
             listed = reply(2)
@@ -865,8 +876,9 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
                     names = sorted(t.get("name", "") for t in tools if isinstance(t, dict))
                     if names != sorted(rule["tools"]):
                         problems.append(f"tools/list: tools {names}, expected {sorted(rule['tools'])}")
-                    if any("inputSchema" not in t for t in tools if isinstance(t, dict)):
-                        problems.append("tools/list: every tool needs an inputSchema")
+                    if any(not isinstance(t.get("inputSchema"), dict) or t["inputSchema"].get("type") != "object"
+                           for t in tools if isinstance(t, dict)):
+                        problems.append("tools/list: every tool needs an inputSchema object with \"type\": \"object\"")
                 send({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                       "params": {"name": "no_such_tool", "arguments": {}}})
                 unknown = reply(3)
@@ -881,6 +893,21 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
                     if code != rule["unknown_tool_code"] and not is_error:
                         problems.append(f"tools/call of an unknown tool: expected error {rule['unknown_tool_code']} "
                                         f"or an isError result, got {json.dumps(unknown)[:100]}")
+                # A call to a real tool: whatever it finds (no repository, no
+                # binary), the answer must be a result a client can render.
+                send({"jsonrpc": "2.0", "id": 4, "method": "tools/call",
+                      "params": {"name": rule["call"], "arguments": {}}})
+                called = reply(4)
+                if called is not None:
+                    result = called.get("result")
+                    content = result.get("content") if isinstance(result, dict) else None
+                    if not (isinstance(content, list) and content
+                            and all(isinstance(c, dict) and c.get("type") == "text" and isinstance(c.get("text"), str)
+                                    for c in content)):
+                        problems.append(f"tools/call {rule['call']}: result.content must be a list of "
+                                        f"{{type: text, text}} items (got {json.dumps(called)[:100]})")
+                    elif not isinstance(result.get("isError", False), bool):
+                        problems.append(f"tools/call {rule['call']}: isError must be a boolean")
     finally:
         try:
             proc.stdin.close()

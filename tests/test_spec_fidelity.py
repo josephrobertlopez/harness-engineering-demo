@@ -353,6 +353,26 @@ class TestMcpSmoke(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_initialize_without_capabilities_is_caught(self):
+        """The second Haiku server echoed ids and still failed in Claude Code."""
+        tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
+        try:
+            (tmp / "server.py").write_text(
+                "import json, sys\n"
+                "for line in sys.stdin:\n"
+                "    m = json.loads(line)\n"
+                "    if 'id' not in m: continue\n"
+                "    r = {'protocolVersion': '2025-06-18', 'serverInfo': {'name': 'x', 'version': '1'}}\n"
+                "    if m['method'] == 'tools/call': r = {'isError': True, 'reason': 'no repo'}\n"
+                "    print(json.dumps({'jsonrpc': '2.0', 'id': m['id'], 'result': r}), flush=True)\n",
+                encoding="utf-8",
+            )
+            problems = fidelity.mcp_smoke(tmp, self.RULE)
+            self.assertTrue(any("capabilities" in p for p in problems), problems)
+            self.assertTrue(any("result.content must be a list" in p for p in problems), problems)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_answering_a_notification_is_caught(self):
         tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
         try:

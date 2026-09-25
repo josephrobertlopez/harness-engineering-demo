@@ -236,7 +236,8 @@
         "git_status",
         "rg_search"
       ],
-      "unknown_tool_code": -32602
+      "unknown_tool_code": -32602,
+      "call": "git_status"
     }
   ]
 }

@@ -958,6 +958,10 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
             proc.wait(timeout=5)
         except Exception:
             proc.kill()
+        # The reader thread has seen EOF by now; an open pipe here is a
+        # ResourceWarning on every call, and on Windows it can also hold
+        # the temporary root open past cleanup.
+        proc.stdout.close()
         root_holder.cleanup()
     return problems, notes
 

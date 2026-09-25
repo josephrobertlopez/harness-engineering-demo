@@ -336,7 +336,15 @@ class TestMcpSmoke(unittest.TestCase):
 
     def test_reference_server_passes(self):
         impl = TRACK / "exercises" / "03-mcp-cli-tools" / "solution" / "impl"
-        self.assertEqual(fidelity.mcp_smoke(impl, self.RULE), ([], []))
+        problems, notes = fidelity.mcp_smoke(impl, self.RULE)
+        self.assertEqual(problems, [])
+        # A note is only acceptable for a CLI this machine lacks -- CI
+        # runners have git but not rg, and a test that assumed otherwise
+        # passed locally and failed every CI job.
+        for note in notes:
+            binary = "rg" if note.startswith("rg_") else "git"
+            with self.subTest(note=note):
+                self.assertIsNone(shutil.which(binary), note)
 
     def test_reply_without_id_is_caught(self):
         tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))

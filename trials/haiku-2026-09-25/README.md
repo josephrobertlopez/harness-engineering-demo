@@ -37,3 +37,18 @@ of the run), `steps.json` (every command and reply) and `tool-calls.md`.
 The judge reports are from the judge *as it was when the run happened*.
 Attempts 2, 3 and 4 are green there and fail the current judge — that is the
 point of keeping them.
+
+## The real harness-enforcer
+
+After the Haiku runs, the ai-literacy-superpowers plugin (0.92.0) was
+installed and its own `harness-enforcer` agent run on `claude-sonnet-5`
+with the prompt from lesson 3, step 5. Its verdicts, verbatim:
+
+| file | workspace | verdict | cost |
+|---|---|---|---|
+| [`enforcer/A.md`](enforcer/A.md) | exercise 1 reference solution | 5/5 pass | $0.62 |
+| [`enforcer/B.md`](enforcer/B.md) | the same, plus a `/currencies` endpoint (lesson 4, step f) | No gold-plating: FAIL | $0.55 |
+| [`enforcer/C.md`](enforcer/C.md) | `workspace/devx-311-attempt-4` | 3 of 6 fail, including a flag injection that writes files | $0.79 |
+
+The flag injection in C was confirmed by hand and is now a deterministic
+probe in the judge.

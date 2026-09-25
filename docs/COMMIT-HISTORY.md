@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-16 commit(s), oldest first.
+22 commit(s), oldest first.
 
 
 ---
@@ -548,3 +548,191 @@ session that generated prose has survived a review unchanged.
 94 tests pass.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+
+
+---
+
+## `f1cca91` — Add track 50: three builds from a vague ticket, judged for fidelity
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `f1cca91eae2648f46ea49ee73acaa9b248a5fe64`
+
+Three hands-on exercises with Claude, each starting from a deliberately
+vague Jira ticket: a Dockerised REST function (OPS-1432), a LangChain
+help-centre chatbot (SUP-88), and a stdio MCP server exposing four
+read-only git/rg tools (DEVX-311). The learner interrogates the ticket,
+writes a PRD, reviews it for OpenSpec readiness, derives an OpenSpec
+change, builds test-first, and has the result judged for fidelity.
+
+Judging comes in two halves, the split the ai-literacy-superpowers plugin
+uses. spec_fidelity.py is the deterministic half: stdlib, offline,
+reporting in the harness-enforcer's format because it is the Tool line of
+each exercise's HARNESS.md. It checks the PRD against the stakeholder
+answers, the change against OpenSpec's rules and against the PRD in both
+directions, and scenarios against tests in both directions. The agent
+half is the plugin's harness-enforcer reading the same HARNESS.md, for
+what a script cannot see -- a test that names a scenario and asserts less,
+or a feature nobody asked for.
+
+Work-backwards is built in: start.py sets up a workspace outside the repo
+(so Claude cannot read solution/ or the stakeholder answers), and
+--with-solution copies the finished chain in to read backwards and break.
+Lesson 4 quotes the judge's output for six breakages; the tests assert
+those quotes, including the one that stays green on purpose.
+
+Verified beyond the unit tests: all three solutions pass
+`openspec validate --strict` (1.13.2); the Docker image builds and runs as
+uid 10001; the chatbot's chain tests pass with langchain-core 1.6 and its
+ChatAnthropic payload carries no temperature; the MCP server works with
+the MCP Python SDK 2.2 client and shows Connected in `claude mcp list`.
+
+The rubric tests caught a non-discriminating fact on the way in (the
+ticket already named faq.md), in the spirit of the round_even scar.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `5d9cfb4` — Ship the lesson-3 prompts as /fidelity:* slash commands
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `5d9cfb46020edd2ddacb7f9d7ae9d9bff000f442`
+
+start.py now installs prompts/*.md into the workspace as
+.claude/commands/fidelity/, with this interpreter and this judge filled
+in, so a learner types /fidelity:prd instead of pasting a prompt. The
+interrogate command keeps an append-only interview.md, which becomes the
+only source the PRD step may use.
+
+Found by running them headless: Claude Code aborts a slash command whose
+`!` shell line exits non-zero, so /fidelity:judge never reached the model
+exactly when there were findings to explain. The judge gains --exit-zero,
+the same escape hatch linters use, and the prompts use it.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `c637941` — Close the holes an adversarial review found in track 50's judge
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `c6379415a780a62a158b41baab27ed7fae8067ec`
+
+A reviewer agent attacked the judge, rubrics and prompts and found three
+critical problems, each reproduced against a solution copy:
+
+- The workspace leaked the answers. rubric.json (copied in, and named in
+  the prompts) and HARNESS.md restated the stakeholder's decisions, so
+  "interrogate the ticket" could be done by reading a file. start.py now
+  writes a .fidelity.json marker instead and the judge loads the rubric
+  from the repo; HARNESS.md says how work is judged, not what was
+  decided. A test fails if any fact is readable in a fresh workspace.
+- A scenario counted as tested if its tag appeared anywhere: in a comment,
+  a skipped test, a pytest function unittest never collects, or a test
+  that asserts nothing. The judge now runs the tests itself and a
+  scenario counts only if a TestCase method with that docstring asserts
+  something, ran, and passed. Skips are findings unless --allow-skips.
+- A dropped requirement could hide in another requirement's Trace line.
+  Only Trace: lines count now, anywhere in the block, and every PRD id
+  needs a requirement of its own.
+
+And the majors: facts matched words, not meaning ("SHALL set temperature
+to 0.7" satisfied "temperature is not set"), so facts gain none_of with a
+negation-aware check, plus examples/counterexamples the suite verifies;
+facts broke on hard-wrapped prose; rules fired on comments and missed
+`float (`, dict-style temperature, a second USER line, pip across a line
+continuation. The reference solutions had real bugs too: HEAD returned
+501, 1e30 crashed quantize, the chatbot refused "my password is not
+working" and 16-digit order numbers, and the tie tests could not tell a
+float implementation from a Decimal one, which made a README claim false.
+Each is fixed with a product-owner rule and a scenario.
+
+Lesson 2 claimed OpenSpec enforces the Why length and a proposal's
+existence; on 1.13.2 it does not (checked), and the table says so.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `6adcec7` — Tighten two rubric rules a Haiku trial got past
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `6adcec709166ee26e6f9fd2d95f5619d80c6eba2`
+
+Running the track end to end with Claude Haiku as the developer (and a
+second Haiku as the product owner) produced two green runs whose output
+still had problems the deterministic judge could not see:
+
+- Exercise 1's image answered HEAD and OPTIONS with 501. The product
+  owner's notes say every non-GET method is a 405, "HEAD, OPTIONS and
+  DELETE included", but the rubric only checked for 405 itself, so a PRD
+  saying "POST, PUT, DELETE, etc." passed and the gap was never asked
+  about. The rubric now requires HEAD and OPTIONS to be pinned down,
+  with Haiku's own sentence as a counterexample.
+- Exercise 2's "this is a LangChain example" rule was satisfied by an
+  unused langchain_core import. It now requires ChatAnthropic to be
+  imported from langchain_anthropic and called.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `a4faef9` — Check that a real MCP client can talk to exercise 3's server
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `a4faef9a257fd090a9d950ef054a0a2ee8bb54b7`
+
+A Haiku trial produced an MCP server that passed the deterministic judge
+and its own agent review, and that no MCP client could use: replies had
+no jsonrpc or id, the initialized notification got an error reply, and
+tools/list did not exist -- the SDK client simply hung. Its tests were
+written by the same model with the same misunderstanding.
+
+HARNESS.md had this as an `unverified` constraint. It is now
+deterministic: the build stage starts the server over stdio and checks
+the handshake, id echoing, silence on notifications, the tool list, and
+that an unknown tool is refused. Messages go one at a time with stdin
+held open, so SDK-based servers are not cut off mid-reply. Either a
+-32602 error or an isError result counts as refusing an unknown tool --
+MCP SDK 2.x does the latter, which conflicts with the product owner's
+-32602, and the README now tells the learner to take that conflict back
+to the product owner rather than weaken the test.
+
+The PRD stage also now requires the MCP methods the server answers,
+which the trial PRD never mentioned.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `ccb791a` — Validate MCP result shapes, not just ids, in the stdio smoke check
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `ccb791adcb31342cf1f18343ddf39b332b871e1f`
+
+A second Haiku trial server echoed request ids and passed the first
+version of the check, and Claude Code still refused it: its initialize
+result had no capabilities object, and its tool results carried a
+made-up 'reason' field instead of content. The check now validates the
+fields a client validates: capabilities.tools and serverInfo on
+initialize, an object inputSchema on each tool, and text content from a
+real tool call.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4

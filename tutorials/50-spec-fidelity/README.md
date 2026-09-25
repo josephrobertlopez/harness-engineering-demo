@@ -109,6 +109,37 @@ scenario, the `temperature=` that will 400 in production — so that the
 expensive reviewer (the `harness-enforcer`, or a human) spends its attention
 on meaning. A green deterministic report is a floor, not a verdict.
 
+## Tested with Haiku
+
+Every exercise was run end to end with **Claude Haiku 4.5 as the
+developer**, driven only through the `/fidelity:*` commands, and a second
+Haiku as the product owner, answering only what was asked from
+`stakeholder-answers.md`. Every tool call was logged and audited: no run
+read the stakeholder answers, a rubric, or a `solution/` folder.
+
+| exercise | result | cost | what it taught the track |
+|---|---|---|---|
+| 01 Docker REST | green | $1.94 | 17 questions; when the judge said a fact was not pinned down, Haiku stopped and asked instead of guessing. The image built and ran as non-root — but answered `HEAD` with 501. The PO had said HEAD is a 405; nobody asked. The rubric now requires it. |
+| 02 LangChain chatbot | green | $1.69 | Refusal rules (Luhn, "my password is not working") came through the interview intact. The "is this LangChain?" rule passed on an unused import; it now requires `ChatAnthropic` to be called. |
+| 03 MCP server, attempt 1 | blocked | $1.56 | Haiku asked exactly the right question and refused to invent the answer. The trial harness never routed it to the PO — a harness bug, fixed. |
+| 03 attempt 2 | green, **broken** | $1.83 | Passed the judge and its own review; no MCP client could use it (replies had no `id`). Its tests shared its misunderstanding. The judge now talks to the server over stdio. |
+| 03 attempt 3 | green, **broken** | $1.33 | Echoed ids; Claude Code still refused it (no `capabilities` in `initialize`). The stdio check now validates result shapes, not just ids. |
+
+Two lessons that generalise beyond this track:
+
+- **Tests written by the same model that wrote the code share its
+  misunderstandings.** Exercise 3 passed its own suite twice while
+  unusable. What caught it was an external check — a real client, or a
+  script that behaves like one. That is the promotion ladder in
+  `HARNESS.md` doing its job: "Connects in Claude Code" started as
+  `unverified` and became deterministic because a trial showed it had to.
+- **A weaker model follows "stop and ask" well when the prompt says so
+  explicitly** and the judge's finding names what is missing. Haiku never
+  once invented a product-owner answer to make the judge pass.
+
+The full record (interviews, PRDs, specs, code, tool-call logs, judge
+reports) is on the `claude/haiku-trial-pb8jhh` branch, under `trials/`.
+
 ## Traps
 
 **1. Letting Claude read the stakeholder answers.** Then it is not

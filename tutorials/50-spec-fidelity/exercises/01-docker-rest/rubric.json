@@ -172,6 +172,20 @@
       ]
     },
     {
+      "label": "that HEAD and OPTIONS are refused too",
+      "source": "stakeholder-answers.md Q5",
+      "any_of": [
+        "\\bHEAD\\b[^\\n]*\\bOPTIONS\\b",
+        "\\bOPTIONS\\b[^\\n]*\\bHEAD\\b"
+      ],
+      "examples": [
+        "for any method other than GET, HEAD and OPTIONS included."
+      ],
+      "counterexamples": [
+        "- WHEN a non-GET method (POST, PUT, DELETE, etc.) is used THEN the response is 405"
+      ]
+    },
+    {
       "label": "the health check",
       "source": "stakeholder-answers.md Q6",
       "any_of": [

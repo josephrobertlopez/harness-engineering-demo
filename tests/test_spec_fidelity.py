@@ -42,6 +42,7 @@ def _load(name: str):
 
 fidelity = _load("spec_fidelity")
 starter = _load("start")
+setup = _load("setup")
 
 
 def findings(results) -> list[str]:
@@ -326,6 +327,34 @@ class TestJudgeRules(Workspace):
         (self.ws / "prd.md").unlink()
         self.assertEqual(fidelity.main([str(self.ws), "--no-tests", "--exit-zero"]), 0)
         self.assertEqual(fidelity.main([str(self.ws), "--no-tests"]), 1)
+
+
+class TestSetup(unittest.TestCase):
+    """setup.py without --install: checks the machine, makes the workspaces,
+    installs nothing -- so it is safe to run offline, here and in CI."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="track50-setup-"))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_makes_three_workspaces_and_is_rerunnable(self):
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(setup.main(["--root", str(self.tmp)]), 0)
+            self.assertEqual(setup.main(["--root", str(self.tmp)]), 0)
+        for name in setup.EXERCISES.values():
+            with self.subTest(workspace=name):
+                self.assertTrue((self.tmp / name / "ticket.md").is_file())
+                self.assertTrue((self.tmp / f"{name}.stakeholder-answers.md").is_file())
+        self.assertFalse((self.tmp / ".venv").exists(), "installed something without --install")
+
+    def test_refuses_a_root_inside_the_repo(self):
+        with self.assertRaises(SystemExit):
+            setup.main(["--root", str(TRACK / "exercises")])
 
 
 class TestMcpSmoke(unittest.TestCase):

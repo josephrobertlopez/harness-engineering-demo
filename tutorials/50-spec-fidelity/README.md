@@ -80,6 +80,20 @@ is for.
 | exercise 2, to run the chain tests | `pip install langchain-core langchain-anthropic` |
 | exercise 3, to use it in Claude Code | `git` and `rg` on your PATH |
 
+## Setting up
+
+```bash
+python tutorials/50-spec-fidelity/setup.py             # check this machine, make ~/fidelity/{ops-1432,sup-88,devx-311}
+python tutorials/50-spec-fidelity/setup.py --install   # also: a venv with LangChain + MCP SDK, the OpenSpec CLI, the plugin
+```
+
+Without `--install` it installs nothing and only writes under `--root`
+(default `~/fidelity`). With it, Python packages go into `<root>/.venv` —
+never the system Python — and the workspaces are built with that venv's
+interpreter, so exercise 2's chain tests run instead of skipping. Each
+install step is printed before it runs, and one failing does not stop the
+others.
+
 ## Checking your work
 
 ```bash

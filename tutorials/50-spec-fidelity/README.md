@@ -124,6 +124,7 @@ read the stakeholder answers, a rubric, or a `solution/` folder.
 | 03 MCP server, attempt 1 | blocked | $1.56 | Haiku asked exactly the right question and refused to invent the answer. The trial harness never routed it to the PO — a harness bug, fixed. |
 | 03 attempt 2 | green, **broken** | $1.83 | Passed the judge and its own review; no MCP client could use it (replies had no `id`). Its tests shared its misunderstanding. The judge now talks to the server over stdio. |
 | 03 attempt 3 | green, **broken** | $1.33 | Echoed ids; Claude Code still refused it (no `capabilities` in `initialize`). The stdio check now validates result shapes, not just ids. |
+| 03 attempt 4 | green, connects, **unfaithful** | $1.76 | Worked in Claude Code and with the SDK client — and accepted `limit: 99`. Its spec said "1–50" in prose and had no scenario for the boundary, so nothing tested it. The judge now sends calls the product owner said must fail, each after a control call proving the tool works. |
 
 Two lessons that generalise beyond this track:
 
@@ -133,6 +134,9 @@ Two lessons that generalise beyond this track:
   script that behaves like one. That is the promotion ladder in
   `HARNESS.md` doing its job: "Connects in Claude Code" started as
   `unverified` and became deterministic because a trial showed it had to.
+- **Prose is not a test.** A requirement that states a range, a limit or
+  an exact command without a scenario for its boundary is a requirement
+  nothing checks. Attempt 4's spec said "1–50"; its code accepted 99.
 - **A weaker model follows "stop and ask" well when the prompt says so
   explicitly** and the judge's finding names what is missing. Haiku never
   once invented a product-owner answer to make the judge pass.

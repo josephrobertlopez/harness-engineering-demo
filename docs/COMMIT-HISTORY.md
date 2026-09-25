@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-22 commit(s), oldest first.
+24 commit(s), oldest first.
 
 
 ---
@@ -736,3 +736,31 @@ real tool call.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `825a481` — Record what running track 50 with Haiku found
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `825a481857e793b148c42399ae9e5adacd467af9`
+
+Lesson 3 already linked to this section. It records the trial: three
+exercises driven only through the /fidelity:* commands with Haiku as
+developer and product owner, what each run cost, and the four judge
+gaps the runs exposed and closed.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `3ad3550` — Merge track 50: from a vague ticket to a faithful build (#1)
+
+- **date:** 2026-09-25
+- **author:** josephrobertlopez
+- **sha:** `3ad3550815f9f3a1707683ec8ad55d68f47044fa`
+
+Add track 50: from a vague ticket to a faithful build, judged for fidelity

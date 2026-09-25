@@ -25,7 +25,7 @@
 | prd | Read | `file_path='<ws>/interview.md'` |
 | prd | Write | `file_path='<ws>/prd.md'` |
 | prd | Bash | `command='python python -c "import sys; sys'` |
-| prd | Bash | `command='find /tmp/claude-0 -name "spec_fidelity.py" -type f 2>/dev/null \| head -5'` |
+| prd | Bash | `command='find <scratch> -name "spec_fidelity.py" -type f 2>/dev/null \| head -5'` |
 | prd | Bash | `command='python <repo>/tutorials/50-spec-fidelity/sp'` |
 | prd | Edit | `file_path='<ws>/prd.md'` |
 | prd | Bash | `command='python <repo>/tutorials/50-spec-fidelity/sp'` |

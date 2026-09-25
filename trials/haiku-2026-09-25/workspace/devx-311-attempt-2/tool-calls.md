@@ -88,7 +88,7 @@
 | build | Bash | `command='cd <ws>/openspec/changes'` |
 | build | Write | `file_path='<ws>/.mcp.json'` |
 | build | Write | `file_path='<ws>/impl/README.md'` |
-| build | Bash | `command='cd <ws> && /tmp/claude-0'` |
+| build | Bash | `command='cd <ws> && <scratch>'` |
 | build | Read | `file_path='<ws>/openspec/changes/ad'` |
 | build | Bash | `command='cd <ws>/impl && mv mcp_s'` |
 | build | Edit | `file_path='<ws>/impl/tests/test_git'` |
@@ -104,14 +104,14 @@
 | build | Write | `file_path='<ws>/.mcp.json'` |
 | build | Bash | `command='cat > <ws>/.mcp.json << '` |
 | build | Bash | `command='python -m unittest discover -s te'` |
-| build | Bash | `command='cd <ws> && /tmp/claude-0'` |
+| build | Bash | `command='cd <ws> && <scratch>'` |
 | build | Read | `file_path='<ws>/HARNESS.md'` |
 | build | Bash | `command='find <scratch> -name "rubric.json" \| head -5'` |
 | build | Read | `file_path='<repo>/tutorials/50-spec-fidelity/exercises'` |
 | build | Bash | `command='cat > <ws>/.mcp.json << '` |
-| build | Bash | `command='cd <ws> && /tmp/claude-0'` |
+| build | Bash | `command='cd <ws> && <scratch>'` |
 | build | Bash | `command='cat > <ws>/impl/.mcp.jso'` |
-| build | Bash | `command='cd <ws> && /tmp/claude-0'` |
+| build | Bash | `command='cd <ws> && <scratch>'` |
 | enforce | Read | `file_path='<ws>/impl/server.py'` |
 | enforce | Read | `file_path='<ws>/impl/server.py'` |
 | enforce | Read | `file_path='<ws>/prd.md'` |

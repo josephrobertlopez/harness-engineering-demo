@@ -15,7 +15,7 @@
 | prd | Read | `file_path='<ws>/ticket.md'` |
 | prd | Read | `file_path='<ws>/interview.md'` |
 | prd | Write | `file_path='<ws>/prd.md'` |
-| prd | Bash | `command='python python /tmp/claude-0/-home'` |
+| prd | Bash | `command='python python <scratch>'` |
 | prd | Bash | `command='python <repo>/tutorials/50-spec-fidelity/sp'` |
 | prd | Edit | `file_path='<ws>/interview.md'` |
 | prd | Skill | `{"skill": "fidelity:interrogate"}` |
@@ -107,7 +107,7 @@
 | build | Edit | `file_path='<ws>/impl/tests/test_conv'` |
 | build | Bash | `command='python -m unittest discover -s te'` |
 | build | Bash | `command='cd <ws> && python3 /tmp/c'` |
-| build | Bash | `command="mv impl/service.py impl/app.py && sed -i 's/from service import/from app import/g' impl/tests/*.py && cd impl && /tmp/claude-0/-home-user-ha"` |
+| build | Bash | `command="mv impl/service.py impl/app.py && sed -i 's/from service import/from app import/g' impl/tests/*.py && cd impl && <scratch>"` |
 | build | Bash | `command='python -m unittest discover -s te'` |
 | build | Edit | `file_path='<ws>/impl/tests/test_conv'` |
 | build | Bash | `command='python -m unittest discover -s te'` |

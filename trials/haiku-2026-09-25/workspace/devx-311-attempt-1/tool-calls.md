@@ -30,7 +30,7 @@
 | prd | Skill | `{"skill": "fidelity:prd"}` |
 | prd | Read | `file_path='<ws>/interview.md'` |
 | prd | Write | `file_path='<ws>/prd.md'` |
-| prd | Bash | `command='python python /tmp/claude-0/-home'` |
+| prd | Bash | `command='python python <scratch>'` |
 | prd | Bash | `command='find /tmp -name "spec_fidelity.py" 2>/dev/null \| head -5'` |
 | prd | Bash | `command='python <repo>/tutorials/50-spec-fidelity/sp'` |
 | prd | Edit | `file_path='<ws>/prd.md'` |
@@ -83,9 +83,9 @@
 | build | Read | `file_path='<ws>/prd.md'` |
 | build | Edit | `file_path='<ws>/prd.md'` |
 | build | Bash | `command='cd <ws> && python /tmp/cl'` |
-| enforce | Bash | `command='echo "=== DETERMINISTIC CHECKS ===" && echo && echo "1. PRD is OpenSpec-ready:" && python /tmp/claude-0/-home-user-harness-engineering-demo/'` |
-| enforce | Bash | `command='echo "2. OpenSpec change is valid:" && python /tmp/claude-0/-home-user-harness-engineering-demo/c1c8aa19-33c1-5600-b044-80ddd8b5dd33/scratch'` |
-| enforce | Bash | `command='echo "3. Every scenario is tested:" && python /tmp/claude-0/-home-user-harness-engineering-demo/c1c8aa19-33c1-5600-b044-80ddd8b5dd33/scratch'` |
+| enforce | Bash | `command='echo "=== DETERMINISTIC CHECKS ===" && echo && echo "1. PRD is OpenSpec-ready:" && python <scratch>'` |
+| enforce | Bash | `command='echo "2. OpenSpec change is valid:" && python <scratch>'` |
+| enforce | Bash | `command='echo "3. Every scenario is tested:" && python <scratch>'` |
 | enforce | Bash | `command='grep "#### Scenario:" openspec/changes/add-cli-mcp/specs/cli-mcp/spec.md \| head -20'` |
 | enforce | Write | `file_path='<ws>/impl/tests/test_spec'` |
 | enforce | Glob | `pattern='HARNESS.md'` |
@@ -110,7 +110,7 @@
 | enforce | Bash | `command='grep -A 10 "Requirement: Root directory constrains" openspec/changes/add-cli-mcp/specs/cli-mcp/spec.md'` |
 | enforce | Bash | `command='grep "Paths within root" openspec/changes/add-cli-mcp/specs/cli-mcp/spec.md'` |
 | enforce | Bash | `command='grep \'Scenario:\' impl/tests/test_scenarios.py \| sed \'s/.*Scenario: //\' \| sed \'s/".*//\' \| sort'` |
-| enforce | Bash | `command='cat > /tmp/claude-0/-tmp-claude-0--home-user-harness-engineering-demo-c1c8aa19-33c1-5600-b044-80ddd8b5dd33-scratchpad-trial-run-03-devx-311/'` |
+| enforce | Bash | `command='cat > <scratch>'` |
 
 ## Permission denials
 

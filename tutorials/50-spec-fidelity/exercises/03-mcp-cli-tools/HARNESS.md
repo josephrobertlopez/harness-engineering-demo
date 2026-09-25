@@ -101,6 +101,17 @@
 - **Tool**: harness-enforcer
 - **Scope**: pr
 
+### A real MCP client can talk to it
+
+- **Rule**: Started over the spec's transport, the server answers the
+  handshake with the agreed protocol version, echoes each request's id,
+  never answers a notification, lists exactly the spec's tools, and
+  refuses an unknown tool. (Promoted from `unverified`: a trial server
+  passed its own tests and could not talk to any client.)
+- **Enforcement**: deterministic
+- **Tool**: part of `--stage build` (the `mcp_smoke` rule)
+- **Scope**: pr
+
 ### Connects in Claude Code
 
 - **Rule**: `claude mcp list` shows the server as connected after

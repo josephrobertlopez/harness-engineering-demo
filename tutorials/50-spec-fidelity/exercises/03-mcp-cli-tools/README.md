@@ -104,6 +104,14 @@ if __name__ == "__main__":
     mcp.run()  # stdio by default
 ```
 
+**A spec-versus-library conflict to raise, not paper over.** The product
+owner wants an unknown tool to be JSON-RPC error `-32602` (as in the
+2025-06-18 spec's own example). SDK 2.x instead returns a normal result
+with `isError: true`. Your scenario test for the unknown tool will fail on
+the SDK route. That is the process working: take it back to the product
+owner (`/fidelity:interrogate`), and change the PRD if they accept the
+SDK's behaviour -- never the test alone.
+
 Raise the SDK's `ToolError`, not `ValueError`. A plain exception reaches the
 model as *"Error executing tool git_log"*, with the reason lost. Either
 implementation is judged the same way: the judge reads your tests and

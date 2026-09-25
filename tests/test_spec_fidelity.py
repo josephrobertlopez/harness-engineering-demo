@@ -328,6 +328,52 @@ class TestJudgeRules(Workspace):
         self.assertEqual(fidelity.main([str(self.ws), "--no-tests"]), 1)
 
 
+class TestMcpSmoke(unittest.TestCase):
+    """Found by a Haiku trial: a server whose own tests passed and which no
+    MCP client could use. The judge now talks to it over stdio."""
+
+    RULE = next(r for r in rubric(TRACK / "exercises" / "03-mcp-cli-tools")["impl_rules"] if "mcp_smoke" in r)
+
+    def test_reference_server_passes(self):
+        impl = TRACK / "exercises" / "03-mcp-cli-tools" / "solution" / "impl"
+        self.assertEqual(fidelity.mcp_smoke(impl, self.RULE), [])
+
+    def test_reply_without_id_is_caught(self):
+        tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
+        try:
+            (tmp / "server.py").write_text(
+                "import json, sys\n"
+                "for line in sys.stdin:\n"
+                "    msg = json.loads(line)\n"
+                "    print(json.dumps({'protocolVersion': '2025-06-18', 'capabilities': {}}), flush=True)\n",
+                encoding="utf-8",
+            )
+            problems = fidelity.mcp_smoke(tmp, self.RULE)
+            self.assertTrue(any("no id" in p for p in problems), problems)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_answering_a_notification_is_caught(self):
+        tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
+        try:
+            (tmp / "server.py").write_text(
+                "import json, sys\n"
+                "TOOLS = [{'name': n, 'inputSchema': {}} for n in ('git_status', 'git_log', 'git_diff_stat', 'rg_search')]\n"
+                "for line in sys.stdin:\n"
+                "    m = json.loads(line)\n"
+                "    r = {'protocolVersion': '2025-06-18'} if m['method'] == 'initialize' else {'tools': TOOLS}\n"
+                "    out = {'jsonrpc': '2.0', 'id': m.get('id', 99), 'result': r}\n"
+                "    if m['method'] == 'tools/call':\n"
+                "        out = {'jsonrpc': '2.0', 'id': m['id'], 'error': {'code': -32602, 'message': 'x'}}\n"
+                "    print(json.dumps(out), flush=True)\n",
+                encoding="utf-8",
+            )
+            problems = fidelity.mcp_smoke(tmp, self.RULE)
+            self.assertTrue(any("answered a notification" in p for p in problems), problems)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 class TestRubricsDiscriminate(unittest.TestCase):
     def test_three_exercises(self):
         self.assertEqual([d.name[:2] for d in EXERCISES], ["01", "02", "03"])

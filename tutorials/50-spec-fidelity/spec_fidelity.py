@@ -779,7 +779,122 @@ def judge_outcomes(res: StageResult, records: list[dict], scenarios: dict[str, s
                                   "or pass --allow-skips to accept that knowingly")
 
 
+def mcp_smoke(impl: Path, rule: dict) -> list[str]:
+    """Talk to the server the way a real MCP client does, over stdio.
+
+    Added after a Haiku trial produced a server whose own tests all passed
+    and which no MCP client could use: replies had no id, notifications got
+    answers, tools/list did not exist. Tests written by the same model that
+    wrote the server share its misunderstanding; a protocol check does not.
+    Messages go one at a time with stdin held open, because an SDK-based
+    server may cancel in-flight work when stdin closes.
+    """
+    import queue
+    import threading
+
+    entry = impl / rule["mcp_smoke"]
+    if not entry.is_file():
+        return [f"no {rule['mcp_smoke']} to start"]
+    proc = subprocess.Popen(
+        [sys.executable, str(entry), "--root", str(impl)], cwd=str(impl),
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        text=True, encoding="utf-8", errors="replace",
+    )
+    lines: "queue.Queue[str | None]" = queue.Queue()
+
+    def pump() -> None:
+        for line in proc.stdout:
+            lines.put(line)
+        lines.put(None)
+
+    threading.Thread(target=pump, daemon=True).start()
+    problems: list[str] = []
+    stray: list[str] = []
+
+    def send(msg: dict) -> None:
+        proc.stdin.write(json.dumps(msg) + "\n")
+        proc.stdin.flush()
+
+    def reply(mid: int) -> dict | None:
+        """The next message; anything else that arrives first is stray."""
+        deadline = 10.0
+        while True:
+            try:
+                line = lines.get(timeout=deadline)
+            except queue.Empty:
+                problems.append(f"no reply to request id {mid} within 10 s")
+                return None
+            if line is None:
+                problems.append(f"server exited before replying to id {mid}")
+                return None
+            if not line.strip():
+                continue
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                problems.append(f"wrote a non-JSON line to stdout: {line.strip()[:80]!r}")
+                continue
+            if msg.get("id") == mid:
+                if msg.get("jsonrpc") != "2.0":
+                    problems.append(f"reply to id {mid} lacks \"jsonrpc\": \"2.0\"")
+                return msg
+            stray.append(line.strip()[:100])
+            if msg.get("id") is None:
+                problems.append(f"sent a message with no id (a reply must echo the request id): {line.strip()[:100]!r}")
+                return None
+
+    try:
+        send({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+              "params": {"protocolVersion": rule["protocol"], "capabilities": {},
+                         "clientInfo": {"name": "spec_fidelity", "version": "1"}}})
+        init = reply(1)
+        if init is not None:
+            version = (init.get("result") or {}).get("protocolVersion")
+            if version != rule["protocol"]:
+                problems.append(f"initialize: protocolVersion {version!r}, expected {rule['protocol']!r}")
+            send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+            send({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+            listed = reply(2)
+            if listed is not None:
+                if stray:
+                    problems.append(f"answered a notification (JSON-RPC forbids it): {stray[0]!r}")
+                tools = ((listed.get("result") or {}).get("tools")) if isinstance(listed.get("result"), dict) else None
+                if not isinstance(tools, list):
+                    problems.append(f"tools/list: no result.tools list (got {json.dumps(listed)[:100]})")
+                else:
+                    names = sorted(t.get("name", "") for t in tools if isinstance(t, dict))
+                    if names != sorted(rule["tools"]):
+                        problems.append(f"tools/list: tools {names}, expected {sorted(rule['tools'])}")
+                    if any("inputSchema" not in t for t in tools if isinstance(t, dict)):
+                        problems.append("tools/list: every tool needs an inputSchema")
+                send({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                      "params": {"name": "no_such_tool", "arguments": {}}})
+                unknown = reply(3)
+                # Either form is valid protocol: the 2025-06-18 spec shows a
+                # -32602 error, the MCP Python SDK 2.x returns an isError
+                # result. Which one the product owner wants is the learner's
+                # own scenario test's business; this check is only "can a
+                # client talk to it".
+                if unknown is not None:
+                    code = (unknown.get("error") or {}).get("code")
+                    is_error = (unknown.get("result") or {}).get("isError") is True
+                    if code != rule["unknown_tool_code"] and not is_error:
+                        problems.append(f"tools/call of an unknown tool: expected error {rule['unknown_tool_code']} "
+                                        f"or an isError result, got {json.dumps(unknown)[:100]}")
+    finally:
+        try:
+            proc.stdin.close()
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
+    return problems
+
+
 def judge_rule(res: StageResult, impl: Path, rule: dict) -> None:
+    if "mcp_smoke" in rule:
+        for problem in mcp_smoke(impl, rule):
+            res.add(f"impl/{rule['mcp_smoke']}", f"{rule['label']}: {problem}")
+        return
     files = sorted(impl.glob(rule["glob"]))
     where = f"impl/{rule['glob']}"
     if not files:

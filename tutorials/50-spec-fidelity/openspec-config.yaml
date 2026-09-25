@@ -1,0 +1,26 @@
+schema: spec-driven
+
+# Copied to <workspace>/openspec/config.yaml by start.py. `openspec init`
+# keeps an existing config, so this survives it. OpenSpec shows `context`
+# and the per-artifact `rules` to the AI when /opsx:propose writes each
+# artifact -- which is how the track's trace convention gets into the spec
+# without you asking for it every time.
+#
+# Quote any rule that contains ": " -- unquoted, YAML reads it as a mapping,
+# and OpenSpec ignores the whole artifact's rules with only a warning.
+
+context: |
+  Requirements come from prd.md in the project root. Every PRD requirement
+  has an ID (PRD-1, PRD-2, ...). Do not add behaviour prd.md does not ask
+  for; its Non-goals section is binding. HARNESS.md lists the constraints
+  the finished work is judged against.
+
+rules:
+  proposal:
+    - 'Name the ticket and prd.md in the Why section'
+  specs:
+    - 'End every requirement body with a line "Trace: PRD-<n>" naming the prd.md requirement(s) it implements'
+    - 'Every prd.md requirement must be traced by at least one spec requirement'
+    - 'Put SHALL or MUST in the requirement body, not only in its header'
+  tasks:
+    - 'Include a task to write one test per scenario whose docstring is "Scenario: <exact scenario name>"'

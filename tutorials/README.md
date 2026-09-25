@@ -1,12 +1,12 @@
 # Tutorials
 
-Five tracks, grouped by their role in the argument the repo makes: that
+Six tracks, grouped by their role in the argument the repo makes: that
 knowledge compounds when **the thing you edit and the thing you read are
 different objects** (see [the README](../README.md#the-same-shape-three-times)).
 
-Two are **graded** — you write something and the harness scores it, offline.
-Three are **guided**: real lessons, but they need a live agent, so there is
-nothing honest to check without one.
+Three are **graded** — you write something and the harness scores it,
+offline. Three are **guided**: real lessons, but they need a live agent, so
+there is nothing honest to check without one.
 
 They are independent. Start wherever your problem is.
 
@@ -33,6 +33,7 @@ not their documentation.
 |---|---|---|---|
 | [00 — Prompting, measured](00-prompting/README.md) | What prompting can and cannot fix; a five-dimension rubric; seven recurring failure patterns | **yes** | ~50 min |
 | [30 — Skill authoring](30-skill-authoring/README.md) | Write a skill, measure whether it helped, avoid memorising the answer | **yes** | ~45 min |
+| [50 — Ticket to faithful build](50-spec-fidelity/README.md) | Three hands-on builds with Claude — a Docker REST function, a LangChain chatbot, an MCP server for CLIs — each from a vague Jira ticket through a PRD reviewed for OpenSpec compliance, judged for fidelity by a deterministic checker plus the ai-literacy-superpowers `harness-enforcer` | **yes** | ~3 h |
 
 ## If you only have an hour
 
@@ -61,6 +62,12 @@ key. It cannot tell a well-written skill from a merely correct one.
 Treat a passing score as a floor, not a ceiling: failing means the
 instruction is definitely unclear; passing does not mean it is good.
 
+Track 50 is graded differently. There is no simulated agent: a stdlib
+checker compares your PRD, OpenSpec change and implementation against each
+other and runs your tests. It checks shape and tracing, not meaning, which
+is why each exercise also ships a `HARNESS.md` for an agent reviewer. Same
+rule applies: a pass is a floor.
+
 ## Prerequisites by track
 
 | Track | Needs |
@@ -69,3 +76,4 @@ instruction is definitely unclear; passing does not mean it is good.
 | 10 | BMAD skills installed, `uv`, and `bmad setup` run in a project |
 | 20 | LLM Wiki installed, plus `WebFetch`/`WebSearch` allowed in settings |
 | 40 | Python 3.12+; read [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) first |
+| 50 | Python 3.12+ to judge; Claude Code to do the work; optionally the ai-literacy-superpowers plugin, the OpenSpec CLI, Docker, LangChain — see [its prerequisites](50-spec-fidelity/README.md#prerequisites) |

@@ -8,7 +8,7 @@ at the right document for whatever you actually came to do.
 Extract somewhere **short** — `C:\dev\` is ideal, your Desktop is fine, a
 nested OneDrive-redirected Documents folder may not be.
 
-The longest path inside the archive is about 120 characters, and Windows
+The longest path inside the archive is about 150 characters, and Windows
 refuses paths over 260 unless long-path support is enabled. If you extract
 into a deep folder you will get a `WinError 206: The filename or extension
 is too long` partway through, naming a directory rather than the actual
@@ -31,7 +31,7 @@ python --version
 python -m unittest discover -s tests -t .
 ```
 
-Expect **83 tests, all passing, in under a minute**. If they pass, everything
+Expect **119 tests, all passing, in under a minute**. If they pass, everything
 in this repo works on your machine. If they don't, something is wrong with
 the zip or your Python — nothing here depends on your environment beyond the
 interpreter.
@@ -70,7 +70,7 @@ python -m wikiskill.cli --workspace ws --backend mock show impact
 
 ## 4. Learn something
 
-Five tutorial tracks. Two are **graded** — you write something and the
+Six tutorial tracks. Three are **graded** — you write something and the
 harness scores it, offline. Full index: [tutorials/README.md](tutorials/README.md).
 
 | Track | What you learn | Graded |
@@ -80,6 +80,7 @@ harness scores it, offline. Full index: [tutorials/README.md](tutorials/README.m
 | [20 — Compounding knowledge](tutorials/20-knowledge/README.md) | LLM Wiki: parallel research, credibility review, the edit rules | no |
 | [30 — Skill authoring](tutorials/30-skill-authoring/README.md) | Write a skill, then measure whether it actually helped | **yes** |
 | [40 — Harness engineering](tutorials/40-harness/README.md) | Three layers, the gate, rollback, resume | no |
+| [50 — Ticket to faithful build](tutorials/50-spec-fidelity/README.md) | Vague Jira ticket → PRD → OpenSpec → Docker / LangChain / MCP build, judged for fidelity | **yes** |
 
 Short on time? Do **00** then **30** — about 90 minutes, and they are the
 two that end in a number rather than an opinion.

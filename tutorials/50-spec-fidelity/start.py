@@ -15,6 +15,9 @@ What lands in the workspace:
     rubric.json        what the deterministic judge checks
     HARNESS.md         constraints for the harness-enforcer, paths rewritten
     openspec/config.yaml   teaches /opsx:propose the PRD trace convention
+    .claude/commands/fidelity/   the lesson-3 prompts as slash commands:
+                       /fidelity:interrogate, :prd, :review-prd, :propose,
+                       :build, :judge, :enforce
     faq.md             (exercise 2 only) the ticket's attachment
     personas/          Interrogator, Adversary, Implementer, for Claude to read
 
@@ -65,6 +68,16 @@ def start(exercise: str, dest: Path, with_solution: bool = False) -> list[str]:
     (dest / "openspec").mkdir()
     shutil.copyfile(TRACK / "openspec-config.yaml", dest / "openspec" / "config.yaml")
     made.append("openspec/config.yaml")
+
+    # Filled in with this interpreter and this judge, so the commands work
+    # whether the machine calls Python `python`, `python3` or a venv path.
+    commands = dest / ".claude" / "commands" / "fidelity"
+    commands.mkdir(parents=True)
+    for prompt in sorted((TRACK / "prompts").glob("*.md")):
+        text = prompt.read_text(encoding="utf-8")
+        text = text.replace("{{PYTHON}}", Path(sys.executable).as_posix()).replace("{{JUDGE}}", judge)
+        (commands / prompt.name).write_text(text, encoding="utf-8", newline="\n")
+    made.append(".claude/commands/fidelity/  (/fidelity:interrogate ... /fidelity:enforce)")
 
     (dest / "personas").mkdir()
     for persona in PERSONAS:

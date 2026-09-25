@@ -541,12 +541,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("target", type=Path, help="an exercise folder, or its solution/ folder")
     parser.add_argument("--stage", choices=(*STAGES, "all"), default="all")
     parser.add_argument("--no-tests", action="store_true", help="skip running impl/tests")
+    # Claude Code aborts a slash command whose `!` shell line exits non-zero,
+    # so a command that runs the judge in order to explain its failures would
+    # never see them. Same escape hatch linters use.
+    parser.add_argument("--exit-zero", action="store_true", help="exit 0 even when a stage fails")
     args = parser.parse_args(argv)
     stages = STAGES if args.stage == "all" else (args.stage,)
     results = judge(args.target.resolve(), stages, run_tests=not args.no_tests)
     sys.stdout.reconfigure(encoding="utf-8")
     print(report(results))
-    return 0 if all(r.ok for r in results) else 1
+    return 0 if args.exit_zero or all(r.ok for r in results) else 1
 
 
 if __name__ == "__main__":

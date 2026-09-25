@@ -1,8 +1,27 @@
 # Lesson 3 — The loop with Claude: prompts for every arrow
 
 Five steps. Each ends with the judge, so you find a problem at the step
-that caused it, not three steps later. The prompts are starting points —
-copy them, then change them when they do not fit.
+that caused it, not three steps later.
+
+Every prompt in this lesson is also installed as a **slash command** in the
+workspace `start.py` creates, so you can type the command instead of
+pasting. The commands live in `.claude/commands/fidelity/` — read them,
+and change them when they do not fit. They are this lesson in executable
+form; the source is [`prompts/`](prompts/).
+
+| step | command | writes |
+|---|---|---|
+| 1 | `/fidelity:interrogate [your answers]` | `interview.md` (append-only Q&A) |
+| 2 | `/fidelity:prd` | `prd.md`, then runs the judge on it |
+| 2b | `/fidelity:review-prd` | nothing — an adversarial review |
+| 3 | `/fidelity:propose <change-id>` | `openspec/changes/<id>/` |
+| 4 | `/fidelity:build` | `impl/`, test-first |
+| any | `/fidelity:judge` | nothing — runs the judge and explains each finding |
+| 5 | `/fidelity:enforce` | nothing — the agent half, via the plugin if installed |
+
+The commands were exercised end to end with Claude Haiku as the developer
+and a second Haiku playing the product owner; see
+[the trial notes](README.md#tested-with-haiku).
 
 ## Step 0 — Set up a workspace Claude cannot cheat in
 
@@ -28,6 +47,12 @@ the questions that would resolve them -- success criteria first, then
 constraints, then edge cases. Ask in batches of at most five. I am the
 product owner; answer nothing yourself.
 ```
+
+With the command: `/fidelity:interrogate` asks the first batch and starts
+`interview.md`; answer with `/fidelity:interrogate 1. ... 2. ...`, and it
+records your answers and asks the next batch, until it says
+`INTERVIEW COMPLETE`. The interview file is the only source the PRD step is
+allowed to use, which is what makes "you never asked" visible later.
 
 Answer from the stakeholder file, **only what was asked**, in your own
 words. When Claude asks something the file does not cover, say "no

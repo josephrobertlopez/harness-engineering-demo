@@ -108,9 +108,12 @@
   object and a `serverInfo`; echoes each request's id; never answers a
   notification; lists exactly the spec's tools, each with an object
   `inputSchema`; returns `content` a client can render from a tool call;
-  refuses an unknown tool; and refuses arguments outside what the product
-  owner allowed, checked against a throwaway git repository after a valid
-  call to the same tool succeeds. (Promoted from `unverified`: a trial server
+  refuses an unknown tool; answers a line that is not JSON with the parse
+  error the spec names;
+  and refuses arguments outside what the product owner allowed -- including
+  a string where an integer belongs, checked by its effect (no file
+  created) as well as its reply -- against a throwaway git repository,
+  after a valid call to the same tool succeeds. (Promoted from `unverified`: a trial server
   passed its own tests and could not talk to any client.)
 - **Enforcement**: deterministic
 - **Tool**: part of `--stage build` (the `mcp_smoke` rule)

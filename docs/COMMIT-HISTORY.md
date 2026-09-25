@@ -12,7 +12,7 @@ most recent commit by one. That is unavoidable for a file that documents its
 own history, and harmless.
 
 
-24 commit(s), oldest first.
+28 commit(s), oldest first.
 
 
 ---
@@ -764,3 +764,90 @@ Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
 - **sha:** `3ad3550815f9f3a1707683ec8ad55d68f47044fa`
 
 Add track 50: from a vague ticket to a faithful build, judged for fidelity
+
+
+---
+
+## `ade57f5` — Probe exercise 3's server with calls the product owner said must fail
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `ade57f59f3ae6af5820b53525f47bc27fdb39630`
+
+A fourth Haiku trial server passed every check, connected in Claude Code,
+and accepted limit=99. Its spec said "1-50" in prose with no scenario for
+the boundary, so its own tests never tried one. The stdio check now sends
+calls that must be refused -- limit 0 and 51, a boolean limit, an empty
+pattern, a path outside the root, an unlisted argument.
+
+A refusal only counts if a valid call to the same tool succeeds first:
+the root is a throwaway git repository with one commit, and a tool whose
+control call fails (git or rg not installed) has its probes skipped with
+a note rather than passed. The first version of this check passed the
+trial server because git failed for want of a repository, which looked
+exactly like a refusal.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `bb236aa` — Stop the MCP smoke test assuming rg is installed
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `bb236aa49a314bb5a65697733ab848b134d85b3b`
+
+CI runners have git but not rg. The judge handled that correctly -- it
+skipped the rg_search probes with a note -- but the reference-server test
+asserted there would be no notes at all, so it passed here and failed
+every CI job. It now requires no problems, and accepts a note only for a
+CLI the machine really lacks. Reproduced and verified with rg removed
+from PATH.
+
+Also close the server's stdout pipe after the smoke run: every call left
+it open, a ResourceWarning on Windows that could also hold the temporary
+root open past cleanup.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4
+
+
+---
+
+## `3b4fc71` — Merge: probe the MCP server with calls that must be refused (#2)
+
+- **date:** 2026-09-25
+- **author:** josephrobertlopez
+- **sha:** `3b4fc71cc6386fc0adf11531ca5bade4c499d55f`
+
+Track 50: probe the MCP server with calls that must be refused
+
+
+---
+
+## `ac7c727` — Add a one-command setup for track 50
+
+- **date:** 2026-09-25
+- **author:** Claude
+- **sha:** `ac7c727c78edad8b93795f77af358710e7bca412`
+
+setup.py checks the machine (Python, claude, git, rg, docker, npm,
+openspec -- each missing one reported with what it costs you) and makes
+one workspace per exercise under ~/fidelity with start.py. It installs
+nothing unless asked.
+
+With --install it also creates <root>/.venv with langchain-core,
+langchain-anthropic and mcp and builds the workspaces with that
+interpreter, so the /fidelity:* commands run exercise 2's chain tests
+instead of skipping them; installs the OpenSpec CLI if npm exists; and
+adds the ai-literacy-superpowers plugin if claude exists. Each step is
+printed first and a failure skips only itself.
+
+Verified both modes end to end: without --install nothing lands outside
+the root; with it, the chatbot solution judges green in strict mode
+through the venv interpreter the workspace commands embed.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Qgtyc5jvRKJKeaErRoo3V4

@@ -42,6 +42,7 @@ def _load(name: str):
 
 fidelity = _load("spec_fidelity")
 starter = _load("start")
+setup = _load("setup")
 
 
 def findings(results) -> list[str]:
@@ -328,6 +329,34 @@ class TestJudgeRules(Workspace):
         self.assertEqual(fidelity.main([str(self.ws), "--no-tests"]), 1)
 
 
+class TestSetup(unittest.TestCase):
+    """setup.py without --install: checks the machine, makes the workspaces,
+    installs nothing -- so it is safe to run offline, here and in CI."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="track50-setup-"))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_makes_three_workspaces_and_is_rerunnable(self):
+        import contextlib
+        import io
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(setup.main(["--root", str(self.tmp)]), 0)
+            self.assertEqual(setup.main(["--root", str(self.tmp)]), 0)
+        for name in setup.EXERCISES.values():
+            with self.subTest(workspace=name):
+                self.assertTrue((self.tmp / name / "ticket.md").is_file())
+                self.assertTrue((self.tmp / f"{name}.stakeholder-answers.md").is_file())
+        self.assertFalse((self.tmp / ".venv").exists(), "installed something without --install")
+
+    def test_refuses_a_root_inside_the_repo(self):
+        with self.assertRaises(SystemExit):
+            setup.main(["--root", str(TRACK / "exercises")])
+
+
 class TestMcpSmoke(unittest.TestCase):
     """Found by a Haiku trial: a server whose own tests passed and which no
     MCP client could use. The judge now talks to it over stdio."""
@@ -383,7 +412,8 @@ class TestMcpSmoke(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("git"), "git not installed")
     def test_unvalidated_limit_is_caught(self):
-        """The fourth Haiku server spoke perfect MCP and accepted limit=99."""
+        """The fourth Haiku server spoke perfect MCP, accepted limit=99, let a
+        string limit become a git flag that writes files, and swallowed bad JSON."""
         tmp = Path(tempfile.mkdtemp(prefix="track50-mcp-"))
         try:
             (tmp / "server.py").write_text(
@@ -392,7 +422,8 @@ class TestMcpSmoke(unittest.TestCase):
                 "TOOLS = [{'name': n, 'inputSchema': {'type': 'object'}} for n in ('git_status', 'git_log', 'git_diff_stat', 'rg_search')]\n"
                 "def ok(t): return {'content': [{'type': 'text', 'text': t}], 'isError': False}\n"
                 "for line in sys.stdin:\n"
-                "    m = json.loads(line)\n"
+                "    try: m = json.loads(line)\n"
+                "    except ValueError: continue\n"
                 "    if 'id' not in m: continue\n"
                 "    if m['method'] == 'initialize':\n"
                 "        r = {'protocolVersion': '2025-06-18', 'capabilities': {'tools': {}}, 'serverInfo': {'name': 'x', 'version': '1'}}\n"
@@ -400,7 +431,7 @@ class TestMcpSmoke(unittest.TestCase):
                 "    else:\n"
                 "        name, args = m['params']['name'], m['params'].get('arguments', {})\n"
                 "        if name == 'git_log':\n"
-                "            p = subprocess.run(['git', 'log', '--oneline', '-n', str(args.get('limit', 10))], cwd=root, capture_output=True, text=True)\n"
+                "            p = subprocess.run(['git', 'log', '--oneline', f\"-{args.get('limit', 10)}\"], cwd=root, capture_output=True, text=True)\n"
                 "            r = ok(p.stdout)\n"
                 "        elif name in ('git_status', 'git_diff_stat'): r = ok('')\n"
                 "        else: r = {'content': [{'type': 'text', 'text': 'nope'}], 'isError': True}\n"
@@ -409,6 +440,10 @@ class TestMcpSmoke(unittest.TestCase):
             )
             problems, _ = fidelity.mcp_smoke(tmp, self.RULE)
             self.assertTrue(any('git_log {"limit": 51} was accepted' in p for p in problems), problems)
+            # Haiku's exact bug, found by the real harness-enforcer: f"-{limit}"
+            # turns the string "-output=FILE" into git log --output=FILE.
+            self.assertTrue(any("created 'INJECTED' in the root" in p for p in problems), problems)
+            self.assertTrue(any("must get error -32700 with id null" in p for p in problems), problems)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

@@ -952,6 +952,34 @@ def mcp_smoke(impl: Path, rule: dict) -> list[str]:
                     if not refused:
                         problems.append(f"{probe['tool']} {json.dumps(probe['arguments'])} was accepted; "
                                         f"{probe['why']}")
+                    for written in probe.get("must_not_create", []):
+                        # The real harness-enforcer found this one: limit was
+                        # pasted into argv as f"-{limit}", so the string
+                        # "-output=FILE" became git's --output and wrote a
+                        # file the caller named. Check the effect, not the reply.
+                        if (root / written).exists():
+                            problems.append(f"{probe['tool']} {json.dumps(probe['arguments'])} created "
+                                            f"{written!r} in the root -- caller input reached the command line as a flag")
+                if "parse_error_code" in rule:
+                    # A line that is not JSON gets an error with a null id --
+                    # a server that swallows it leaves the client waiting forever.
+                    proc.stdin.write("{not json\n")
+                    proc.stdin.flush()
+                    try:
+                        line = lines.get(timeout=10)
+                    except queue.Empty:
+                        line = None
+                    msg = None
+                    if line:
+                        try:
+                            msg = json.loads(line)
+                        except json.JSONDecodeError:
+                            msg = None
+                    code = ((msg or {}).get("error") or {}).get("code")
+                    if not (isinstance(msg, dict) and code == rule["parse_error_code"] and msg.get("id") is None):
+                        got_text = line.strip()[:80] if line else "no reply within 10 s"
+                        problems.append(f"a line that is not JSON must get error {rule['parse_error_code']} "
+                                        f"with id null (got {got_text!r})")
     finally:
         try:
             proc.stdin.close()

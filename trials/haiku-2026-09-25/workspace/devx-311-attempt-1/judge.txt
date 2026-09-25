@@ -1,0 +1,20 @@
+## Constraint Results
+
+### PRD is OpenSpec-ready — FAIL
+Enforcement: deterministic
+Tool: spec_fidelity.py --stage prd
+Findings:
+- prd.md -- does not pin down the unknown-method error code -- ask the product owner (PO notes Q5)
+
+### OpenSpec change is valid and traces to the PRD — UNCHECKED
+Enforcement: deterministic
+Tool: spec_fidelity.py --stage spec
+Skipped: blocked by prd
+
+### Implementation is faithful to the spec — UNCHECKED
+Enforcement: deterministic
+Tool: spec_fidelity.py --stage build
+Skipped: blocked by prd
+
+---
+Summary: 0 passed, 1 failed, 2 unchecked

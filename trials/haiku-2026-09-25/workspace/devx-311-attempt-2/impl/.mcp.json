@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "cli-tools": {
+      "command": "python",
+      "args": ["<ws>/impl/server.py", "--root", "<ws>"]
+    }
+  }
+}

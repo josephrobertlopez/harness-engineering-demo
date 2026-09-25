@@ -28,11 +28,12 @@ This branch is a record, not something to merge.
 | `workspace/devx-311-attempt-1` | 03 MCP | 0/3 | $1.56 | Haiku's correct question never reached the PO — harness bug |
 | `workspace/devx-311-attempt-2` | 03 MCP | 3/3 | $1.83 | unusable by any MCP client: replies had no `id` |
 | `workspace/devx-311-attempt-3` | 03 MCP | 3/3 | $1.33 | Claude Code refused it: no `capabilities` in `initialize` |
+| `workspace/devx-311-attempt-4` | 03 MCP | 3/3 | $1.76 | connects in Claude Code and the SDK client; accepts `limit: 99` and an unlisted argument |
 
 Each folder has `interview.md` (the append-only Q&A), `prd.md`, the
 OpenSpec change, `impl/`, `judge.txt` (the deterministic judge at the time
 of the run), `steps.json` (every command and reply) and `tool-calls.md`.
 
 The judge reports are from the judge *as it was when the run happened*.
-Attempts 2 and 3 are green there and fail the current judge — that is the
+Attempts 2, 3 and 4 are green there and fail the current judge — that is the
 point of keeping them.

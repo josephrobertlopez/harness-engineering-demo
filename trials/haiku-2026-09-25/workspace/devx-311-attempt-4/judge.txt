@@ -1,0 +1,16 @@
+## Constraint Results
+
+### PRD is OpenSpec-ready — PASS
+Enforcement: deterministic
+Tool: spec_fidelity.py --stage prd
+
+### OpenSpec change is valid and traces to the PRD — PASS
+Enforcement: deterministic
+Tool: spec_fidelity.py --stage spec
+
+### Implementation is faithful to the spec — PASS
+Enforcement: deterministic
+Tool: spec_fidelity.py --stage build
+
+---
+Summary: 3 passed, 0 failed, 0 unchecked

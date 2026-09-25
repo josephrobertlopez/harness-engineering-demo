@@ -1,0 +1,23 @@
+{
+  "vague_terms": ["should", "stuff", "smart", "bad", "easy", "safe", "has memory"],
+  "prd_facts": [
+    {"label": "that answers come only from the matched FAQ entry", "source": "stakeholder-answers.md Q1", "any_of": ["entry (alone|only)\\b", "only (from|on) (the|that)[^\\n]*(entry|faq)"]},
+    {"label": "the exact escalation reply", "source": "stakeholder-answers.md Q2", "any_of": ["I don't know that one yet"]},
+    {"label": "that an uncovered question makes no model call", "source": "stakeholder-answers.md Q2", "any_of": ["(no|not|never|without)[^\\n]*(model call|call the model|calling the model)"]},
+    {"label": "the memory window", "source": "stakeholder-answers.md Q3", "any_of": ["\\b(6|six) messages"]},
+    {"label": "that sessions are isolated", "source": "stakeholder-answers.md Q3", "any_of": ["isolated", "separate session", "per session"]},
+    {"label": "which sensitive data is refused", "source": "stakeholder-answers.md Q4", "any_of": ["card number"]},
+    {"label": "the exact refusal reply", "source": "stakeholder-answers.md Q4", "any_of": ["I can't help with passwords or card numbers here"]},
+    {"label": "that refused messages are not remembered", "source": "stakeholder-answers.md Q4", "any_of": ["not (be )?(kept|stored|remembered|added)[^\\n]*(memory|history)", "(memory|history)[^\\n]*(not|never) (kept|stored|include)"]},
+    {"label": "the model id", "source": "stakeholder-answers.md Q5", "any_of": ["claude-sonnet-5"]},
+    {"label": "max_tokens", "source": "stakeholder-answers.md Q5", "any_of": ["max_tokens[^\\n]*512"]},
+    {"label": "that temperature is not set", "source": "stakeholder-answers.md Q5", "any_of": ["temperature"]},
+    {"label": "how to try it", "source": "stakeholder-answers.md Q6", "any_of": ["python chatbot\\.py"]}
+  ],
+  "impl_rules": [
+    {"label": "this is a LangChain example", "glob": "chatbot.py", "must_match": ["^from langchain_core\\b"]},
+    {"label": "model id exactly as specified", "glob": "*.py", "must_match": ["[\"']claude-sonnet-5[\"']"], "must_not_match": ["claude-sonnet-5-\\d{6,}"]},
+    {"label": "temperature is never sent", "glob": "*.py", "must_not_match": ["temperature\\s*="]},
+    {"label": "no API key in source", "glob": "*.py", "must_not_match": ["sk-ant-", "api_key\\s*=\\s*[\"']"]}
+  ]
+}

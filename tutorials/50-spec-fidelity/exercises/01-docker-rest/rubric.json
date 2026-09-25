@@ -1,0 +1,24 @@
+{
+  "vague_terms": ["should", "fast", "properly", "anywhere", "usual", "secure", "works", "bad input", "handle errors"],
+  "prd_facts": [
+    {"label": "the endpoint and its query parameters", "source": "stakeholder-answers.md Q1", "any_of": ["GET /convert\\?amount="]},
+    {"label": "that money values are strings, not floats", "source": "stakeholder-answers.md Q1", "any_of": ["string"]},
+    {"label": "where rates come from", "source": "stakeholder-answers.md Q2", "any_of": ["rates\\.json"]},
+    {"label": "the rounding rule", "source": "stakeholder-answers.md Q3", "any_of": ["half[- _]to[- _]even", "ROUND_HALF_EVEN", "banker"]},
+    {"label": "what 'fast' means", "source": "stakeholder-answers.md Q4", "any_of": ["once at startup", "at startup"]},
+    {"label": "the invalid-amount response", "source": "stakeholder-answers.md Q5", "any_of": ["400[^\\n]*invalid_amount", "invalid_amount[^\\n]*400"]},
+    {"label": "the unknown-currency response", "source": "stakeholder-answers.md Q5", "any_of": ["404[^\\n]*unknown_currency", "unknown_currency[^\\n]*404"]},
+    {"label": "the method-not-allowed response", "source": "stakeholder-answers.md Q5", "any_of": ["405"]},
+    {"label": "the health check", "source": "stakeholder-answers.md Q6", "any_of": ["/healthz"]},
+    {"label": "the port and its override", "source": "stakeholder-answers.md Q7", "any_of": ["8080[^\\n]*PORT", "PORT[^\\n]*8080"]},
+    {"label": "the non-root container user", "source": "stakeholder-answers.md Q7", "any_of": ["non-root", "unprivileged"]}
+  ],
+  "impl_rules": [
+    {"label": "base image is the one ops approved", "glob": "Dockerfile", "must_match": ["^FROM python:3\\.12-slim\\b"]},
+    {"label": "container runs as non-root", "glob": "Dockerfile", "must_match": ["^USER (?!root\\b|0\\b)\\S+"]},
+    {"label": "container exposes the agreed port", "glob": "Dockerfile", "must_match": ["^EXPOSE 8080\\b"]},
+    {"label": "no third-party packages", "glob": "Dockerfile", "must_not_match": ["^\\s*RUN\\b[^\\n]*pip install"]},
+    {"label": "no network calls from the function", "glob": "app.py", "must_not_match": ["urlopen", "^\\s*import requests", "http\\.client"]},
+    {"label": "money is never a float", "glob": "app.py", "must_not_match": ["float\\("]}
+  ]
+}

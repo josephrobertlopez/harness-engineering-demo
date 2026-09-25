@@ -6,7 +6,7 @@ just put in the model's context actually pay for itself?**
 It implements **WikiSkill** ([arXiv 2608.27454](https://arxiv.org/html/2608.27454),
 *Compiling Agent Experience into Persistent Knowledge for Skill Evolution*)
 — an agent that writes its own instructions and keeps only the ones that
-measurably help — and five tutorial tracks around it.
+measurably help — and six tutorial tracks around it.
 
 ## The context-engineering bit
 
@@ -53,7 +53,7 @@ Measured here, with real models: a held-out test split went from **0.400 to
 that matter are in [docs/RESULTS.md](docs/RESULTS.md).
 
 ```
-python -m unittest discover -s tests -t .     # 92 tests, ~1 min
+python -m unittest discover -s tests -t .     # 119 tests, ~1 min
 ```
 
 No install, no API key, no network. Python 3.12+ and nothing else.
@@ -282,15 +282,17 @@ the paper's actual claim. A harder task set is the next thing this repo needs.
 
 ## Credits
 
-Two of the five tracks are about tools I did not write. Both are MIT
+Three of the six tracks are built on tools I did not write. All are MIT
 licensed and worth your time on their own terms:
 
 | Project | Author | Source |
 |---|---|---|
 | **BMAD-METHOD** — spec-driven development for AI-assisted work | bmad-code-org | [github.com/bmad-code-org/BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) |
 | **LLM Wiki** — LLM-compiled knowledge bases for any agent | nvk | [github.com/nvk/llm-wiki](https://github.com/nvk/llm-wiki) · [llm-wiki.net](https://llm-wiki.net/) |
+| **OpenSpec** — spec-driven development for AI coding assistants | Fission-AI | [github.com/Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) |
+| **ai-literacy-superpowers** — habitat and harness engineering for Claude Code | Habitat-Thinking | [github.com/Habitat-Thinking/ai-literacy-superpowers](https://github.com/Habitat-Thinking/ai-literacy-superpowers) |
 
-**Tracks 10 and 20 are my reading of those projects, not their
+**Tracks 10, 20 and 50 are my reading of those projects, not their
 documentation.** They are opinionated, they occasionally disagree with how
 the tools present themselves, and they will drift as the upstreams change.
 Go to the source for anything authoritative.

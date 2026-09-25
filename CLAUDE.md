@@ -173,6 +173,16 @@ were found by scanning every command and flag in the tutorials against the
 installed command definitions, not by reading. If you generate docs about a
 tool, diff the claims against the tool.
 
+**An unquoted YAML rule turned OpenSpec's rules off.** Track 50's
+`openspec-config.yaml` first listed a rule as
+`- End every requirement with "Trace: PRD-<n>"`. The `: ` inside it makes
+YAML read a mapping, and OpenSpec's response was one warning line and
+*every* rule for that artifact ignored -- so `/opsx:propose` would have
+written specs with no trace lines, and the judge would have blamed the
+learner. Rules containing `: ` are single-quoted, and a test asserts it.
+Check what the AI will actually see with
+`openspec instructions <artifact> --change <id>`.
+
 ## Style
 
 - LF endings, UTF-8, atomic writes. `util.py` has the helpers; use them.

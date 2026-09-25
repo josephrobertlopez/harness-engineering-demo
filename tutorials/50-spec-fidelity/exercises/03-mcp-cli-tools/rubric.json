@@ -1,0 +1,24 @@
+{
+  "vague_terms": ["should", "stuff", "whatever", "safe", "etc", "dangerous"],
+  "prd_facts": [
+    {"label": "which CLIs are allowed", "source": "stakeholder-answers.md Q1", "any_of": ["\\bgit\\b[^\\n]*\\b(rg|ripgrep)\\b", "\\b(rg|ripgrep)\\b[^\\n]*\\bgit\\b"]},
+    {"label": "the git_status tool", "source": "stakeholder-answers.md Q2", "any_of": ["git_status"]},
+    {"label": "the git_log tool and its limit", "source": "stakeholder-answers.md Q2", "any_of": ["git_log[^\\n]*50", "limit[^\\n]*50"]},
+    {"label": "the git_diff_stat tool", "source": "stakeholder-answers.md Q2", "any_of": ["git_diff_stat"]},
+    {"label": "the rg_search tool", "source": "stakeholder-answers.md Q2", "any_of": ["rg_search"]},
+    {"label": "the root directory", "source": "stakeholder-answers.md Q3", "any_of": ["--root"]},
+    {"label": "no shell", "source": "stakeholder-answers.md Q4", "any_of": ["no shell", "without a shell", "never[^\\n]*shell", "argument list"]},
+    {"label": "the timeout", "source": "stakeholder-answers.md Q4", "any_of": ["10[ -]?s(ec(ond)?s?)?\\b", "ten seconds"]},
+    {"label": "the output cap", "source": "stakeholder-answers.md Q4", "any_of": ["8000"]},
+    {"label": "the protocol version", "source": "stakeholder-answers.md Q5", "any_of": ["2025-06-18"]},
+    {"label": "the unknown-tool error code", "source": "stakeholder-answers.md Q5", "any_of": ["-32602"]},
+    {"label": "that tool failures are isError results", "source": "stakeholder-answers.md Q5", "any_of": ["isError"]},
+    {"label": "how to register it with Claude Code", "source": "stakeholder-answers.md Q6", "any_of": ["claude mcp add"]}
+  ],
+  "impl_rules": [
+    {"label": "never a shell", "glob": "server.py", "must_not_match": ["shell\\s*=\\s*True", "os\\.system\\(", "os\\.popen\\(", "\\bexec\\(", "\\beval\\("]},
+    {"label": "agreed protocol version", "glob": "server.py", "must_match": ["2025-06-18"]},
+    {"label": "output cap and timeout are declared", "glob": "server.py", "must_match": ["\\b8000\\b", "\\b10\\b"]},
+    {"label": "project registration file for Claude Code", "glob": ".mcp.json", "must_match": ["\"mcpServers\"", "--root"]}
+  ]
+}

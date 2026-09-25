@@ -526,11 +526,11 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 ---
 
-## `cbe5e7e` — Expose the byte-budget flags the README already promised
+## `91cbe11` — Expose the byte-budget flags the README already promised
 
 - **date:** 2026-09-23
 - **author:** Joseph Lopez
-- **sha:** `cbe5e7e3fb357c6e8e091a34526ebb13c5d3c2e4`
+- **sha:** `91cbe1179a0c6a9215ef98ab6a7b453eaa415ad5`
 
 The audit found `--skill-budget-bytes` documented but not implemented. The
 knob existed on RunConfig with a sensible default; it was simply never

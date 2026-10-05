@@ -1,9 +1,5 @@
 {
   "AC-1": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l0.py",
@@ -178,18 +174,9 @@
         "function": "check_prd",
         "line": 49
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-2": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
@@ -409,18 +396,9 @@
         "function": "check_banned_tokens",
         "line": 191
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-3": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l2.py",
@@ -920,18 +898,9 @@
         "function": "check",
         "line": 186
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-4": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l3.py",
@@ -1161,18 +1130,9 @@
         "function": "check",
         "line": 131
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-5": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l4.py",
@@ -1262,18 +1222,9 @@
         "function": "check",
         "line": 66
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-6": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l5.py",
@@ -1498,18 +1449,9 @@
         "function": "check",
         "line": 125
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-7": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l6.py",
@@ -1754,18 +1696,9 @@
         "function": "run_debate",
         "line": 23
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   },
   "AC-8": {
-    "coverage": {
-      "lines_covered": 0,
-      "lines_total": 0
-    },
     "covers": [
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
@@ -1805,11 +1738,6 @@
         "function": "check_markdownlint",
         "line": 235
       }
-    ],
-    "junit": null,
-    "mutations": {
-      "killed": 0,
-      "total": 0
-    }
+    ]
   }
 }

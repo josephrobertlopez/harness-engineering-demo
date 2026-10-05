@@ -17,8 +17,5 @@ Then read `/tmp/trace.json`. It is an object keyed by AC id (`AC-1`, ...). Each 
 - `id`: the AC id
 - `implements`: list of `{file, function, line}` for `# implements: AC-k` markers
 - `covers`: list of `{file, function, line}` for `# covers: AC-k` markers
-- `junit`: L3 status, or `null`
-- `coverage`: `{lines_covered, lines_total}`
-- `mutations`: `{killed, total}`
 
 An AC with an empty `implements` or `covers` list is a gap.

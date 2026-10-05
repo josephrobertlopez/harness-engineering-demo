@@ -1,6 +1,6 @@
 ---
 name: specgate
-description: Multi-layer acceptance testing framework that validates specifications through 7 gates (L0-L6), from schema to adversarial debate. Works with OpenSpec specs and BMAD product requirements.
+description: Multi-layer acceptance testing framework that validates specifications through 7 layers (L0-L6), from schema to adversarial debate. The CLI runs L0-L5; L6 is the library function `run_debate()`. Works with OpenSpec specs and BMAD product requirements.
 allowed-tools: Bash(specgate:*)
 license: MIT
 compatibility: Requires specgate CLI
@@ -12,7 +12,7 @@ metadata:
 
 # specgate: Multi-Layer Acceptance Testing
 
-Specgate is a 7-layer (L0-L6) acceptance testing framework that validates specifications from schema integrity through adversarial scrutiny.
+Specgate is a 7-layer (L0-L6) acceptance testing framework (the CLI runs L0-L5; L6 is the library function `run_debate()`) that validates specifications from schema integrity through adversarial scrutiny.
 
 ## When to Use Each Layer
 
@@ -22,20 +22,19 @@ Specgate is a 7-layer (L0-L6) acceptance testing framework that validates specif
 Verifies that your spec conforms to the JSON schema defined in `schema/prd.schema.json`. This is the foundation—if schema fails, nothing else can run.
 
 ### L1: Static Analysis
-**Use when:** Writing acceptance criteria, ensuring naming conventions, checking for incomplete specs.
+**Use when:** Before trusting any code or docs that carry AC markers.
 
-Analyzes the spec structure for consistency, completeness, and adherence to naming conventions. Catches issues like:
-- ACs missing descriptions or examples
-- Inconsistent numbering
-- Missing title or user story
+Runs static checks over the Python and Markdown files in the change:
+- `ruff` lint findings
+- `mypy` type errors
+- `vulture` dead code
+- banned tokens
+- `markdownlint` on the PRD (and KT docs)
 
 ### L2: Trace Generation
-**Use when:** Mapping requirements to implementation, understanding coverage gaps.
+**Use when:** Mapping requirements to implementation, understanding marker gaps.
 
-Generates `trace.json` mapping each AC to the source code that implements it and the tests that cover it. Essential for:
-- Understanding what you've built
-- Finding coverage gaps
-- Relating spec back to code
+Scans `# implements: AC-k` and `# covers: AC-k` markers with the AST and reports SG201-SG205: a covered AC with no implementation, an implemented AC with no covering test, a marker naming an unknown AC, a covering test with no assert, an implementing function with an empty body. When the layers pass, the CLI writes `trace.json` mapping each AC to its markers.
 
 ### L3: Execution Tests
 **Use when:** Validating that the implementation runs and fulfills the ACs.
@@ -55,13 +54,13 @@ Mutates the implementation (introduces small bugs) and checks that the tests fai
 ### L6: Debate
 **Use when:** Before shipping, engaging adversarial review of the specification itself.
 
-The highest layer. Questions whether the ACs truly capture intent:
+The highest layer, available only as the library function `run_debate()`. A prover, a refuter and three judges question whether the ACs truly capture intent:
 - Are assumptions grounded?
 - Are edge cases covered?
 - Would this catch real bugs?
 - Is the language precise?
 
-**Status:** the CLI does not run L6 (`--layers L6` returns no findings), and CI does not enforce it yet. Do this review by hand; see `docs/kt/specgate/README.md`.
+**Status:** L6 is calibrated locally and is NOT run by the CLI or CI. `--layers L6` exits 2 with "L6 is not run by the CLI; use run_debate()"; a range that extends to L6 warns on stderr and runs L0-L5. See `docs/kt/specgate/README.md`.
 
 ## Marker Convention: Linking Code to Spec
 
@@ -183,7 +182,7 @@ specgate check --change openspec/changes/<feature> --layers L0-L5 --output /tmp/
 - `15`: L5 failed (mutation testing)
 - `2`: bad arguments
 
-L6 (debate) is not run by the CLI: `--layers L6` returns no findings and exits 0.
+L6 (debate) is not run by the CLI: `--layers L6` exits 2, and a range such as `L0-L6` warns on stderr and runs L0-L5.
 
 ## Key Concepts
 
@@ -204,10 +203,7 @@ A JSON artifact mapping ACs to implementation and tests:
     ],
     "covers": [
       {"file": "tests/test_auth.py", "function": "test_email_validation_accepts_valid_format", "line": 10}
-    ],
-    "junit": null,
-    "coverage": {"lines_covered": 0, "lines_total": 0},
-    "mutations": {"killed": 0, "total": 0}
+    ]
   }
 }
 ```

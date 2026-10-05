@@ -1,4 +1,4 @@
-"""Trace module for generating trace.json with AC implementation and test coverage information."""
+"""Trace module: writes trace.json, mapping each AC to its `# implements:` and `# covers:` markers."""
 
 import json
 from pathlib import Path
@@ -11,16 +11,17 @@ def gather_trace_data(
     ac_ids: set[str],
     src_dirs: list[str],
     test_dirs: list[str],
-    junit_path: str | None = None,
 ) -> dict[str, Any]:
     """
-    Gather trace data from implementation markers, test coverage, and mutation testing.
+    Gather, per AC id, the `# implements:` and `# covers:` marker locations.
+
+    Only marker locations are recorded; test results, coverage and mutation
+    scores are reported by L3-L5, not stored in trace.json.
 
     Args:
         ac_ids: Set of known AC IDs
         src_dirs: List of source directories
         test_dirs: List of test directories
-        junit_path: Path to junit XML file (optional)
 
     Returns:
         Trace data dictionary with AC mappings
@@ -61,20 +62,6 @@ def gather_trace_data(
                     })
         ac_trace["covers"] = covers_locs
 
-        # JUnit status (from L3)
-        ac_trace["junit"] = None
-
-        # Coverage data (from L4)
-        ac_trace["coverage"] = {
-            "lines_covered": 0,
-            "lines_total": 0,
-        }
-
-        # Mutation data (from L5)
-        ac_trace["mutations"] = {
-            "killed": 0,
-            "total": 0,
-        }
 
         trace[ac_id] = ac_trace
 
@@ -105,7 +92,6 @@ def generate_trace(
     src_dirs: list[str],
     test_dirs: list[str],
     output_path: str = "trace.json",
-    junit_path: str | None = None,
 ) -> None:
     """
     Generate and write trace.json file.
@@ -115,12 +101,10 @@ def generate_trace(
         src_dirs: List of source directories
         test_dirs: List of test directories
         output_path: Path to write trace.json
-        junit_path: Path to junit XML file (optional)
     """
     trace_data = gather_trace_data(
         ac_ids,
         src_dirs,
         test_dirs,
-        junit_path=junit_path,
     )
     write_trace_json(trace_data, output_path)

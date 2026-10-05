@@ -207,6 +207,11 @@ def main(argv: list[str] | None = None) -> int:
     if layers is None:
         sys.stderr.write(f"specgate: invalid --layers {args.layers!r}" + "\n")
         return 2
+    if layers == [LAST_LAYER]:
+        sys.stderr.write("specgate: L6 is not run by the CLI; use run_debate()\n")
+        return 2
+    if LAST_LAYER in layers:
+        sys.stderr.write("specgate: warning: L6 is not run by the CLI; use run_debate()\n")
 
     base = args.change or "."
     only: frozenset[str] | None = None

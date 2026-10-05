@@ -55,7 +55,7 @@ acs:
       - "test_l5_mut.test_results_deterministic_weak"
   - id: AC-7
     given: "judges that veto a spec, or return bad JSON, or a debate with no cache and no API token"
-    when: "specgate runs layer L6"
+    when: "the library function run_debate() (layer L6, calibrated locally, not run by the CLI or CI) is called"
     then: "a veto fails only when a majority confirms it by deterministic recheck, an unconfirmed veto is ignored and logged, and bad output or a cache miss without a token fails"
     tests:
       - "test_l6_debate.test_run_debate_unconfirmed_veto_ignored"
@@ -65,7 +65,7 @@ acs:
   - id: AC-8
     given: "a pull request that changes code but touches nothing under docs"
     when: "the kt-docs workflow runs"
-    then: "it fails unless the PR adds or modifies docs/kt/** or a docs markdown file, and the KT markdown passes the L1 lint"
+    then: "it fails unless the PR adds or modifies a file under docs/kt/**, and the KT markdown passes the L1 lint"
     tests:
       - "kt-docs.yml::Require a KT doc change"
       - "test_l1_static.test_markdownlint_with_injected_runner"
@@ -94,4 +94,4 @@ The ACs live in the frontmatter above so layer L0 can validate them against `plu
 
 `# implements: AC-k` sits directly above the function that implements AC-k, and `# covers: AC-k` directly above each test that covers it. The `tests` lists in the frontmatter name the headline tests; the markers are the authoritative mapping, so every `test_cov_*` test in `plugins/specgate/tests` also carries its layer's marker. L3 to L5 then judge each AC by exactly the tests that carry its marker.
 
-AC-8 has two halves. The lint half ("the KT markdown passes the L1 lint") is code: `check_markdownlint` in `l1_static.py` carries `# implements: AC-8`, and the `test_markdownlint_*` tests carry `# covers: AC-8`. The other half, failing a pull request that touches no `docs/kt/**` or docs markdown, is not a function in `src/specgate`. It is enforced by the `kt-docs.yml` workflow, whose red path is proven by running it under `act` with an event that has no docs change (T14). L2 does not check that half, and no marker is claimed for it.
+AC-8 has two halves. The lint half ("the KT markdown passes the L1 lint") is code: `check_markdownlint` in `l1_static.py` carries `# implements: AC-8`, and the `test_markdownlint_*` tests carry `# covers: AC-8`. The other half, failing a pull request that touches nothing under `docs/kt/**`, is not a function in `src/specgate`. It is enforced by the `kt-docs.yml` workflow, whose red path is proven by running it under `act` with an event that has no docs change (T14). L2 does not check that half, and no marker is claimed for it.

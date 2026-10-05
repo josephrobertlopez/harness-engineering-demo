@@ -71,7 +71,7 @@ Run the unit tests of the plugin itself:
 cd plugins/specgate && ../../.venv/bin/python -m unittest discover -s tests -t .
 ```
 
-L6 (debate) is not enforced in CI. The `specgate` CLI does not run it (`--layers L6` returns no findings) and no debate cache is committed, so CI replays nothing. The debate code lives in `plugins/specgate/src/specgate/` and is exercised by the plugin's unit tests. CI shows "L6 debate: run locally, see docs/kt/specgate; not enforced in CI yet".
+L6 (debate) is not enforced in CI. The `specgate` CLI does not run it (`--layers L6` exits 2 with "L6 is not run by the CLI; use run_debate()") and no debate cache is committed, so CI replays nothing. The debate code lives in `plugins/specgate/src/specgate/` and is exercised by the plugin's unit tests. CI shows "L6 debate: run locally, see docs/kt/specgate; not enforced in CI yet".
 
 Calibration, run locally (`.specgate/evidence/T16/calibration.json`, not committed to CI): the panel caught 5/5 bad fixtures and the L6 panel blocked 0/4 good ones. Caveat: the same file records `good_wrongly_blocked: 4`, because an earlier layer (L1, rule SG101) flagged all four good fixtures. So only the L6 result is 0/4; the end-to-end result in that artifact is not.
 

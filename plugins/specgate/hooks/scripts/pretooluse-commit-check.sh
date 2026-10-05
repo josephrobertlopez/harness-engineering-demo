@@ -4,12 +4,12 @@ set -euo pipefail
 # PreToolUse hook: before a Bash `git commit`, run specgate L0-L2 on staged files.
 # Exit 0 = allow, exit 2 = block (stderr is shown to the model).
 
-for tool in jq specgate; do
-  if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "specgate hook: required tool '$tool' not found on PATH; cannot check commit" >&2
-    exit 2
-  fi
-done
+# jq is needed to parse the payload. Without it we cannot tell whether this is a
+# commit, so allow rather than block every Bash call.
+if ! command -v jq >/dev/null 2>&1; then
+  echo "specgate hook: warning: 'jq' not found on PATH; cannot tell whether this is a commit, allowing" >&2
+  exit 0
+fi
 
 input=$(cat)
 tool_name=$(jq -r '.tool_name // empty' <<<"$input")
@@ -23,6 +23,12 @@ unquoted=$(sed -E "s/\"[^\"]*\"//g; s/'[^']*'//g" <<<"$command")
 pattern='(^|[;&|(])[[:space:]]*git([[:space:]]+-[Cc][[:space:]]+[^[:space:]]+|[[:space:]]+-[^[:space:]]+)*[[:space:]]+commit([[:space:]]|$)'
 if ! grep -Eq "$pattern" <<<"$unquoted"; then
   exit 0
+fi
+
+# It is a commit: the gate itself must be available.
+if ! command -v specgate >/dev/null 2>&1; then
+  echo "specgate hook: required tool 'specgate' not found on PATH; cannot check commit" >&2
+  exit 2
 fi
 
 rc=0

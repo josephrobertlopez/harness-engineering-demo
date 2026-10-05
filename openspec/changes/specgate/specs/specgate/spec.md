@@ -51,7 +51,7 @@ The system SHALL mutate AC code with a fixed seed and fail when any mutant survi
 - **THEN** layer L5 reports no findings
 
 ### Requirement: L6 debate vetoes only when checkable
-The system SHALL run a prover, a refuter and three judges, and SHALL fail only on a majority veto confirmed by deterministic recheck, or on malformed output, or on a cache miss without a token. (AC-7)
+The library function `run_debate()` (layer L6, calibrated locally, NOT run by the CLI or CI) SHALL run a prover, a refuter and three judges, and SHALL fail only on a majority veto confirmed by deterministic recheck, or on malformed output, or on a cache miss without a token. (AC-7)
 
 #### Scenario: Unconfirmed veto
 - **WHEN** a judge vetoes with a claim the deterministic recheck cannot confirm
@@ -66,7 +66,7 @@ The system SHALL run a prover, a refuter and three judges, and SHALL fail only o
 - **THEN** layer L6 fails
 
 ### Requirement: Pull requests carry a knowledge-transfer doc
-The system SHALL fail a pull request that does not add or modify `docs/kt/**` or a docs markdown file, and SHALL lint the KT markdown. (AC-8)
+The system SHALL fail a pull request that does not add or modify a file under `docs/kt/**`, and SHALL lint the KT markdown. (AC-8)
 
 #### Scenario: No docs change
 - **WHEN** a pull request changes only code

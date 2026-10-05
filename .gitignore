@@ -13,7 +13,8 @@ workspace/raw/eval-*/
 observability/affordance-invocations.json
 
 # specgate build evidence (local only)
-.specgate/evidence/
+.specgate/
+/trace.json
 .venv/
 .coverage
 junit.xml

@@ -224,9 +224,7 @@ class TestTraceStructure(unittest.TestCase):
                 self.assertIn("id", ac)
                 self.assertIn("implements", ac)
                 self.assertIn("covers", ac)
-                self.assertIn("junit", ac)
-                self.assertIn("coverage", ac)
-                self.assertIn("mutations", ac)
+                self.assertEqual(set(ac), {"id", "implements", "covers"})
 
     def test_trace_implements_field(self):
         """Test trace implements field structure."""

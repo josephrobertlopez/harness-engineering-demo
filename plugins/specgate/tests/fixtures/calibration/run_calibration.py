@@ -7,7 +7,7 @@ import sys
 import traceback
 from pathlib import Path
 
-W = Path("/mnt/media/local-storage/code/GitHub/harness-engineering-demo-wt")
+W = Path(__file__).resolve().parents[5]
 CAL = W / "plugins/specgate/tests/fixtures/calibration"
 EVID = W / ".specgate/evidence/T16"
 sys.path.insert(0, str(W / "plugins/specgate/src"))

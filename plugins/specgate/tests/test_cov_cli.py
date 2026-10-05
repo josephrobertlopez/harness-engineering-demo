@@ -114,6 +114,17 @@ class TestParseLayers(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("invalid --layers", err)
 
+    def test_main_rejects_l6_only_with_exit_2(self) -> None:
+        code, err = run_main("check", "--layers", "L6")
+        self.assertEqual(code, 2)
+        self.assertIn("L6 is not run by the CLI; use run_debate()", err)
+
+    def test_main_warns_when_range_extends_to_l6(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            code, err = run_main("check", "--change", tmp, "--layers", "L5-L6")
+        self.assertEqual(code, 0)
+        self.assertIn("warning: L6 is not run by the CLI; use run_debate()", err)
+
 
 class TestDiscovery(unittest.TestCase):
     def test_find_prd_prefers_shallowest_and_skips_caches(self) -> None:
@@ -308,7 +319,7 @@ class TestMain(unittest.TestCase):
     def test_no_prd_means_no_trace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "trace.json"
-            code, _ = run_main("check", "--change", tmp, "--layers", "L6", "--output", str(out))
+            code, _ = run_main("check", "--change", tmp, "--layers", "L5", "--output", str(out))
             self.assertEqual(code, 0)
             self.assertFalse(out.exists())
 
@@ -408,7 +419,7 @@ class TestGitIsolation(unittest.TestCase):
             init_repo(root)
             (root / "a.py").write_text("x = 1\n")
             git(root, "add", "a.py")
-            git(root, "commit", "-q", "-m", "fixture")
+            git(root, "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-q", "-m", "fixture")
             (root / "b.py").write_text("y = 2\n")
             git(root, "add", "b.py")
             self.assertEqual(staged_files(tmp), ["b.py"])

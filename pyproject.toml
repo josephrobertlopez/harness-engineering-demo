@@ -17,6 +17,7 @@ dependencies = []
 # Only needed for `--backend anthropic`. The default `claude-cli` backend and
 # the `mock` backend are stdlib-only.
 api = ["anthropic>=1"]
+dev = ["ruff", "mypy", "vulture", "coverage", "pyyaml", "jsonschema"]
 
 [project.scripts]
 wikiskill = "wikiskill.cli:main"

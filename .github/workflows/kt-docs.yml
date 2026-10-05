@@ -1,0 +1,30 @@
+name: kt-docs
+
+on:
+  pull_request:
+
+jobs:
+  kt-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require a KT doc change
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${ACT:-}" = "true" ] && jq -e 'has("act_changed_files")' "$GITHUB_EVENT_PATH" >/dev/null; then
+            # act fallback: no real base ref, read the changed files from the event payload
+            files="$(jq -r '.act_changed_files[]' "$GITHUB_EVENT_PATH")"
+          else
+            git fetch --no-tags origin "${{ github.base_ref }}"
+            files="$(git diff --name-only origin/${{ github.base_ref }}...HEAD)"
+          fi
+          echo "changed files:"; echo "$files"
+          if echo "$files" | grep -Eq '^docs/(kt/|.*\.md$)'; then
+            echo "kt-docs: OK"
+          else
+            echo "kt-docs: FAIL - PR must add or modify docs/kt/** or docs/**/*.md" >&2
+            exit 1
+          fi

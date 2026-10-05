@@ -15,3 +15,5 @@ observability/affordance-invocations.json
 # specgate build evidence (local only)
 .specgate/evidence/
 .venv/
+.coverage
+junit.xml

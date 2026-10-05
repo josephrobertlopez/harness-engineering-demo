@@ -1,0 +1,20 @@
+{
+  "name": "harness-engineering",
+  "owner": {
+    "name": "Anthropic",
+    "email": "support@anthropic.com"
+  },
+  "metadata": {
+    "description": "Harness engineering tools for specification and acceptance testing",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "specgate",
+      "source": "./plugins/specgate",
+      "description": "Multi-layer acceptance testing framework for OpenSpec and BMAD specifications",
+      "version": "0.1.0",
+      "strict": true
+    }
+  ]
+}

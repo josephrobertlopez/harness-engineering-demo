@@ -327,13 +327,13 @@
     "2. Ready = deps all DONE and status in {TODO, RETRY}. Pick <=3 with no overlapping owns; <=1 touching docker/act; <=1 making real claude -p calls.",
     "3. H task -> Agent(model: haiku, subagent_type: general-purpose) with: task row verbatim, absolute paths, the relevant 'fixed' and 'layers' entries, and: 'Edit ONLY these paths. DO NOT modify anything else. Do not commit. Do not push. Red fixture before green. Report the done command and its raw output.' S task -> driver does it itself.",
     "4. Driver re-runs the done check ITSELF after each task. A subagent report is never evidence. Pass -> DONE + write evidence/<task>/done.log (command, exit code, last 20 lines). Fail -> attempts++, last_error = short signature; 3rd failure with same signature -> BLOCKED + root-cause note (no 4th try).",
-    "5. Commit each DONE task immediately on the worktree branch through lefthook (no bypass), message 'specgate: <task> <summary>' with '## Acceptance:' line citing the done result.",
+    "5. DO NOT git commit (Rail R2 consumes one Joey 'yes i attest' per commit; never attempt it, never bypass). Leave DONE work on disk. Append the DONE task id to loop.commit_queue so Joey can attest a checkpoint commit. .specgate/upd.py is a build helper: delete it in T19 before the final commit.",
     "6. Update tasks + loop fields here. Exit with <=5-line summary: tasks changed, blockers."
   ],
   "loop": {
-    "ticks": 0,
+    "ticks": 1,
     "no_progress_streak": 0,
-    "driver_running": true,
+    "driver_running": false,
     "driver_started": "2026-10-05T09:51:46.283089",
     "objections": []
   },

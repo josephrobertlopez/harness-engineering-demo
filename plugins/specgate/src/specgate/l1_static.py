@@ -1,0 +1,282 @@
+"""L1 layer for static code analysis (ruff, mypy, vulture, banned tokens, markdownlint)."""
+
+import json
+import re
+import subprocess
+import sys
+from collections.abc import Callable
+from typing import Any
+
+
+def check_ruff(paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
+    """
+    Run ruff on Python files to check for F401, ERA, T20 violations.
+
+    Args:
+        paths: List of file paths to check
+        runner: Optional subprocess runner (default: subprocess.run)
+
+    Returns:
+        List of findings with rule='SG101'
+    """
+    if runner is None:
+        runner = subprocess.run
+
+    if not paths:
+        return []
+
+    # Run ruff with select F401,ERA,T20
+    cmd = [
+        sys.executable, '-m', 'ruff', 'check',
+        '--select', 'F401,ERA,T20',
+        '--output-format', 'json'
+    ] + paths
+
+    try:
+        result = runner(cmd, capture_output=True, text=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        return [{'rule': 'SG101', 'file': '', 'line': 0, 'message': f'ruff error: {e}'}]
+
+    if result.returncode == 0:
+        return []
+
+    findings = []
+    if result.stdout:
+        try:
+            output = json.loads(result.stdout)
+            for item in output:
+                location = item.get('location', {})
+                findings.append({
+                    'rule': 'SG101',
+                    'file': item.get('filename', ''),
+                    'line': location.get('row', 0) if isinstance(location, dict) else 0,
+                    'message': item.get('message', '')
+                })
+        except json.JSONDecodeError:
+            # Fallback to stderr or empty
+            pass
+
+    if not findings and result.stderr:
+        findings.append({
+            'rule': 'SG101',
+            'file': '',
+            'line': 0,
+            'message': result.stderr
+        })
+
+    return findings
+
+
+def check_mypy(paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
+    """
+    Run mypy --strict on Python files.
+
+    Args:
+        paths: List of file paths to check
+        runner: Optional subprocess runner (default: subprocess.run)
+
+    Returns:
+        List of findings with rule='SG102'
+    """
+    if runner is None:
+        runner = subprocess.run
+
+    if not paths:
+        return []
+
+    # Run mypy --strict on the package (not individual files)
+    # We'll target the specgate package directly
+    cmd = [sys.executable, '-m', 'mypy', '--strict', 'specgate']
+
+    try:
+        result = runner(cmd, capture_output=True, text=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        return [{'rule': 'SG102', 'file': '', 'line': 0, 'message': f'mypy error: {e}'}]
+
+    if result.returncode == 0:
+        return []
+
+    findings = []
+    # Parse mypy output: file.py:line: error: message
+    for line in result.stdout.split('\n'):
+        if not line.strip():
+            continue
+        # Match pattern: path/to/file.py:123:45: error: message
+        match = re.match(r'^([^:]+):(\d+):\d+: error: (.+)$', line)
+        if match:
+            findings.append({
+                'rule': 'SG102',
+                'file': match.group(1),
+                'line': int(match.group(2)),
+                'message': match.group(3)
+            })
+
+    return findings
+
+
+def check_vulture(paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
+    """
+    Run vulture on Python files with min-confidence 80.
+
+    Args:
+        paths: List of file paths to check
+        runner: Optional subprocess runner (default: subprocess.run)
+
+    Returns:
+        List of findings with rule='SG103'
+    """
+    if runner is None:
+        runner = subprocess.run
+
+    if not paths:
+        return []
+
+    # Run vulture with min-confidence 80
+    cmd = [sys.executable, '-m', 'vulture', '--min-confidence', '80'] + paths
+
+    try:
+        result = runner(cmd, capture_output=True, text=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        return [{'rule': 'SG103', 'file': '', 'line': 0, 'message': f'vulture error: {e}'}]
+
+    if result.returncode == 0:
+        return []
+
+    findings = []
+    # Parse vulture output: path/to/file.py:123: unused variable 'foo' (90% confidence)
+    for line in result.stdout.split('\n'):
+        if not line.strip():
+            continue
+        # Match pattern: file.py:line: message
+        match = re.match(r'^([^:]+):(\d+): (.+)$', line)
+        if match:
+            findings.append({
+                'rule': 'SG103',
+                'file': match.group(1),
+                'line': int(match.group(2)),
+                'message': match.group(3)
+            })
+
+    return findings
+
+
+def check_banned_tokens(paths: list[str]) -> list[dict[str, Any]]:
+    """
+    Check for banned tokens in Python files: TODO, FIXME, XXX, @skip, skipTest, expectedFailure.
+
+    Args:
+        paths: List of file paths to check
+
+    Returns:
+        List of findings with rule='SG104'
+    """
+    banned_pattern = re.compile(r'\b(TODO|FIXME|XXX|@skip|skipTest|expectedFailure)\b')
+    findings = []
+
+    for path in paths:
+        try:
+            with open(path, 'r') as f:
+                lines = f.readlines()
+        except OSError as e:
+            findings.append({
+                'rule': 'SG104',
+                'file': path,
+                'line': 0,
+                'message': f'Error reading file: {e}'
+            })
+            continue
+
+        for line_num, line in enumerate(lines, start=1):
+            match = banned_pattern.search(line)
+            if match:
+                findings.append({
+                    'rule': 'SG104',
+                    'file': path,
+                    'line': line_num,
+                    'message': f"Banned token '{match.group(1)}' found"
+                })
+
+    return findings
+
+
+def check_markdownlint(md_paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
+    """
+    Run markdownlint-cli2 on Markdown files.
+
+    Args:
+        md_paths: List of markdown file paths to check
+        runner: Optional subprocess runner (default: subprocess.run)
+
+    Returns:
+        List of findings with rule='SG105'
+    """
+    if runner is None:
+        runner = subprocess.run
+
+    if not md_paths:
+        return []
+
+    # Run npx markdownlint-cli2
+    cmd = ['npx', '-y', 'markdownlint-cli2'] + md_paths
+
+    try:
+        result = runner(cmd, capture_output=True, text=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        return [{'rule': 'SG105', 'file': '', 'line': 0, 'message': f'markdownlint error: {e}'}]
+
+    if result.returncode == 0:
+        return []
+
+    findings = []
+    # Parse markdownlint output: file.md:123:4 MD001 message
+    for line in result.stdout.split('\n'):
+        if not line.strip():
+            continue
+        # Match pattern: file.md:line:col rule message
+        match = re.match(r'^([^:]+):(\d+):\d+ (\w+) (.+)$', line)
+        if match:
+            findings.append({
+                'rule': 'SG105',
+                'file': match.group(1),
+                'line': int(match.group(2)),
+                'message': f"{match.group(3)}: {match.group(4)}"
+            })
+
+    return findings
+
+
+def check(
+    paths: list[str],
+    md_paths: list[str] | None = None,
+    runner: Callable[..., Any] | None = None
+) -> list[dict[str, Any]]:
+    """
+    Run all L1 static checks on Python and Markdown files.
+
+    Args:
+        paths: List of Python file paths to check
+        md_paths: List of markdown file paths to check (optional)
+        runner: Optional subprocess runner (default: subprocess.run)
+
+    Returns:
+        Combined list of findings from all checks
+    """
+    if runner is None:
+        runner = subprocess.run
+
+    if md_paths is None:
+        md_paths = []
+
+    findings = []
+
+    # Run all checks
+    if paths:
+        findings.extend(check_ruff(paths, runner=runner))
+        findings.extend(check_mypy(paths, runner=runner))
+        findings.extend(check_vulture(paths, runner=runner))
+        findings.extend(check_banned_tokens(paths))
+
+    if md_paths:
+        findings.extend(check_markdownlint(md_paths, runner=runner))
+
+    return findings

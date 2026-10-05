@@ -1,6 +1,6 @@
 ---
 name: specgate
-description: Multi-layer acceptance testing framework that validates specifications through 6 gates, from schema to adversarial debate. Works with OpenSpec specs and BMAD product requirements.
+description: Multi-layer acceptance testing framework that validates specifications through 7 gates (L0-L6), from schema to adversarial debate. Works with OpenSpec specs and BMAD product requirements.
 allowed-tools: Bash(specgate:*)
 license: MIT
 compatibility: Requires specgate CLI
@@ -12,7 +12,7 @@ metadata:
 
 # specgate: Multi-Layer Acceptance Testing
 
-Specgate is a 6-layer acceptance testing framework that validates specifications from schema integrity through adversarial scrutiny.
+Specgate is a 7-layer (L0-L6) acceptance testing framework that validates specifications from schema integrity through adversarial scrutiny.
 
 ## When to Use Each Layer
 
@@ -60,6 +60,8 @@ The highest layer. Questions whether the ACs truly capture intent:
 - Are edge cases covered?
 - Would this catch real bugs?
 - Is the language precise?
+
+**Status:** the CLI does not run L6 (`--layers L6` returns no findings), and CI does not enforce it yet. Do this review by hand; see `docs/kt/specgate/README.md`.
 
 ## Marker Convention: Linking Code to Spec
 
@@ -139,23 +141,23 @@ OpenSpec Spec
 4. **QA writes tests**: Tests marked with `# covers: AC-k`
    - Each AC has tests validating it
 
-5. **specgate trace**: Connects all three
+5. **specgate check** (trace.json): Connects all three
    - Shows which code implements which AC
    - Shows which tests cover which AC
    - Identifies gaps (ACs with no impl, impl with no tests)
 
 ## Running the Layers
 
-### Run all layers:
+### Run the deterministic layers on a change:
 ```bash
-specgate check
+specgate check --change openspec/changes/<feature> --layers L0-L5
 ```
 
 ### Run specific layers:
 ```bash
 specgate check --layers L0-L2
 specgate check --layers L3
-specgate check --layers L4-L6
+specgate check --layers L4-L5
 ```
 
 ### Run only staged changes:
@@ -163,15 +165,12 @@ specgate check --layers L4-L6
 specgate check --layers L0-L2 --staged
 ```
 
-### Just trace (L2):
+### Write the trace somewhere specific:
 ```bash
-specgate trace
+specgate check --change openspec/changes/<feature> --layers L0-L5 --output /tmp/trace.json
 ```
 
-### Just debate (L6):
-```bash
-specgate debate
-```
+`check` is the only subcommand (`--change`, `--layers`, `--staged`, `--output`). There is no `specgate trace` or `specgate debate`.
 
 ## Exit Codes
 
@@ -182,7 +181,9 @@ specgate debate
 - `13`: L3 failed (execution tests)
 - `14`: L4 failed (coverage analysis)
 - `15`: L5 failed (mutation testing)
-- `16`: L6 failed (debate)
+- `2`: bad arguments
+
+L6 (debate) is not run by the CLI: `--layers L6` returns no findings and exits 0.
 
 ## Key Concepts
 
@@ -197,12 +198,21 @@ A JSON artifact mapping ACs to implementation and tests:
 ```json
 {
   "AC-1": {
-    "description": "Email must be valid format",
-    "implementation": ["src/auth.py:45-67"],
-    "tests": ["tests/test_auth.py:10-20", "tests/test_auth.py:25-35"]
+    "id": "AC-1",
+    "implements": [
+      {"file": "src/auth.py", "function": "validate_user_email", "line": 45}
+    ],
+    "covers": [
+      {"file": "tests/test_auth.py", "function": "test_email_validation_accepts_valid_format", "line": 10}
+    ],
+    "junit": null,
+    "coverage": {"lines_covered": 0, "lines_total": 0},
+    "mutations": {"killed": 0, "total": 0}
   }
 }
 ```
+
+It is keyed by AC id. An empty `implements` or `covers` list is a gap.
 
 ### Coverage Gap
 An AC with no tests, or tests with no implementation. Specgate flags both.
@@ -217,4 +227,4 @@ Specgate integrates with OpenSpec and BMAD:
 - **BMAD** (BMad Method) handles PRD → spec conversion and product thinking
 - **specgate** validates that the spec→implementation→test chain is complete and sound
 
-Use `/opsx:explore` to think through spec changes, `/opsx:propose` to create a change, and `/specgate:check` to validate it through all 6 gates before shipping.
+Use `/opsx:explore` to think through spec changes, `/opsx:propose` to create a change, and `/specgate:check` to validate it through the gates before shipping.

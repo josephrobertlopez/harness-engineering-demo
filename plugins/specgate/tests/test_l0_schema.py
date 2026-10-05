@@ -1,13 +1,13 @@
 import unittest
 import unittest.mock
-import subprocess
 from pathlib import Path
-from specgate.l0_schema import check_prd, check_openspec, check
+from specgate.l0_schema import check_prd, check_openspec
 
 
 class TestL0BadID(unittest.TestCase):
     """Test SG001: schema violation (invalid AC id format)"""
 
+    # covers: AC-1
     def test_bad_id_fixture(self):
         fixture_path = Path(__file__).parent / "fixtures" / "l0" / "bad-id.md"
         findings = check_prd(str(fixture_path))
@@ -22,6 +22,7 @@ class TestL0BadID(unittest.TestCase):
 class TestL0DupID(unittest.TestCase):
     """Test SG002: duplicate AC id"""
 
+    # covers: AC-1
     def test_dup_id_fixture(self):
         fixture_path = Path(__file__).parent / "fixtures" / "l0" / "dup-id.md"
         findings = check_prd(str(fixture_path))
@@ -36,6 +37,7 @@ class TestL0DupID(unittest.TestCase):
 class TestL0MissingThen(unittest.TestCase):
     """Test SG003: AC missing then field"""
 
+    # covers: AC-1
     def test_missing_then_fixture(self):
         fixture_path = Path(__file__).parent / "fixtures" / "l0" / "missing-then.md"
         findings = check_prd(str(fixture_path))
@@ -50,6 +52,7 @@ class TestL0MissingThen(unittest.TestCase):
 class TestL0NoTests(unittest.TestCase):
     """Test SG003: AC missing tests"""
 
+    # covers: AC-1
     def test_no_tests_fixture(self):
         fixture_path = Path(__file__).parent / "fixtures" / "l0" / "no-tests.md"
         findings = check_prd(str(fixture_path))
@@ -78,6 +81,7 @@ class TestL0NoFrontmatter(unittest.TestCase):
 class TestL0Good(unittest.TestCase):
     """Test green fixture passes all rules"""
 
+    # covers: AC-1
     def test_good_fixture(self):
         fixture_path = Path(__file__).parent / "fixtures" / "l0" / "good.md"
         findings = check_prd(str(fixture_path))

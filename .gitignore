@@ -17,3 +17,4 @@ observability/affordance-invocations.json
 .venv/
 .coverage
 junit.xml
+.secrets

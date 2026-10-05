@@ -43,7 +43,7 @@ act push -W .github/workflows/ci.yml --matrix os:ubuntu-latest --matrix python:3
 **Expected output** (final lines):
 
 ```
-Ran 159 tests in 22.696s
+Ran N tests in ...s
 
 OK
 ```
@@ -63,45 +63,43 @@ This repo ships two PR gates: `spec-gate.yml` (OpenSpec compliance) and `kt-docs
 
 ### spec-gate
 
-Runs on every PR and checks that PRD ACs map to OpenSpec specs with at least one test each, for layers L0–L6.
+Runs on every PR and checks every `openspec/changes/*/prd.md` with `specgate check --change openspec/changes/<name> --layers L0-L5`. Layers L1-L5 look for `# implements:` / `# covers:` markers in the change dir and fall back to the repo root, which is where `plugins/specgate` lives. CI installs specgate itself. Locally, lefthook expects `.venv/bin/specgate`, so create the `.venv` first (`uv venv --python 3.12 && uv pip install -e "plugins/specgate[dev]"`).
 
 ```bash
-act pull_request -W .github/workflows/spec-gate.yml -e .github/act-events/pr-code-only.json -P ubuntu-latest=catthehacker/ubuntu:act-latest
+act pull_request -W .github/workflows/spec-gate.yml -P ubuntu-latest=catthehacker/ubuntu:act-latest
 ```
 
-The `-e .github/act-events/pr-code-only.json` fixture simulates a PR that changes code but not docs. This gate enforces:
-- **L0–L5**: Deterministic checks (PRD exists, specs trace to PRD, tests trace to specs).
-- **L6**: Replay of the committed `debate.cache.json` to verify debate conclusions are stable (requires `CLAUDE_CODE_OAUTH_TOKEN`; most local runs need no token).
+spec-gate does not read the PR's changed files, so it needs no event fixture. It enforces:
+- **L0–L5**: Deterministic checks (PRD schema, static analysis, trace markers, tests, coverage, mutation), plus `trace.json` being byte-identical after regeneration.
+- **L6**: Not enforced. The workflow step is a labelled no-op ("L6 debate: run locally, see docs/kt/specgate; not enforced in CI yet"). The CLI does not run L6 and no debate cache is committed.
+
+Local calibration of the L6 panel (`.specgate/evidence/T16/calibration.json`): it caught 5/5 bad fixtures and the L6 panel blocked 0/4 good ones. The same file also records `good_wrongly_blocked: 4`, because an earlier layer (L1, SG101) flagged all four good fixtures.
 
 ### kt-docs
 
-Ensures every PR adds or modifies a Knowledge Transfer doc (anything under `docs/kt/` or a top-level `docs/*.md` file).
+Requires every PR to add or change (not delete) a file under `docs/kt/`. Nothing else counts, so a `docs/*.md` edit alone fails. The workflow uses `git diff --name-only --diff-filter=AM` and `grep -Eq '^docs/kt/'`.
 
 ```bash
 act pull_request -W .github/workflows/kt-docs.yml -e .github/act-events/pr-docs-kt.json -P ubuntu-latest=catthehacker/ubuntu:act-latest
 ```
 
-The `-e .github/act-events/pr-docs-kt.json` fixture simulates a PR that changed a KT doc.
+The `-e .github/act-events/pr-docs-kt.json` fixture simulates a PR that changed a KT doc. **Expected: exit 0.**
 
-## Secrets: CLAUDE_CODE_OAUTH_TOKEN
-
-The spec-gate L6 layer replays a committed debate cache, which usually requires no token. If you need to regenerate the cache, create a `.secrets` file (gitignored) with your token:
+Negative control: the code-only fixture must fail.
 
 ```bash
-echo "CLAUDE_CODE_OAUTH_TOKEN=your_token_here" > .secrets
+act pull_request -W .github/workflows/kt-docs.yml -e .github/act-events/pr-code-only.json -P ubuntu-latest=catthehacker/ubuntu:act-latest
 ```
 
-Then pass it to act:
+**Expected: FAIL (non-zero exit)** with `kt-docs: FAIL - PR must add or change a file under docs/kt/`. Use this fixture only with kt-docs; it is not a spec-gate input.
 
-```bash
-act pull_request -W .github/workflows/spec-gate.yml -e .github/act-events/pr-code-only.json --secret-file .secrets -P ubuntu-latest=catthehacker/ubuntu:act-latest
-```
+## Secrets
 
-Most local runs can skip this — the gate replays the committed cache and passes without a token.
+No workflow needs a secret today: L6 is a no-op in CI, so `CLAUDE_CODE_OAUTH_TOKEN` is not read. `.secrets` is gitignored in case you add an L6 step later; pass it with `act --secret-file .secrets`.
 
 ## Troubleshooting
 
-### Port or container leftovers
+### Container leftovers
 
 Act leaves behind containers on failure. Clean them up carefully — only the act-named containers, never your other Docker resources:
 
@@ -110,14 +108,6 @@ docker ps -aq --filter name=act- | xargs -r docker rm -f
 ```
 
 **Do NOT run a blanket `docker rm -f $(docker ps -aq)`** — this can kill other local clusters like k3d or Kubernetes deployments.
-
-If port 34567 is in use (from a prior act run):
-
-```bash
-fuser -k 34567/tcp
-```
-
-Then retry your act command.
 
 ### First image pull is slow
 

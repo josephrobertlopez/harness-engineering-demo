@@ -4,12 +4,10 @@ import unittest
 import os
 import tempfile
 import xml.etree.ElementTree as ET
-from pathlib import Path
-from specgate.l3_run import run_tests, write_junit, check
-from specgate.l2_trace import get_marker_map
+from specgate.l3_run import check
 
 
-def load_tests(loader, tests, pattern):
+def load_tests(loader, tests, _pattern):
     """Load tests from the L3 fixtures directory.
 
     This function implements the load_tests protocol to allow unittest.discover()
@@ -33,6 +31,7 @@ class TestL3RuleDiscovery(unittest.TestCase):
             os.path.dirname(__file__), 'fixtures', 'l3'
         )
 
+    # covers: AC-4
     def test_sg301_failing_test_produces_rule(self):
         """Verify SG301 rule is produced for failing AC test."""
         fixture_path = os.path.join(self.fixtures_dir, 'failing')
@@ -67,6 +66,7 @@ class TestL3RuleDiscovery(unittest.TestCase):
             if os.path.exists(junit_path):
                 os.unlink(junit_path)
 
+    # covers: AC-4
     def test_sg301_skipped_test_produces_rule(self):
         """Verify SG301 rule is produced for skipped AC test."""
         fixture_path = os.path.join(self.fixtures_dir, 'skipped')
@@ -98,6 +98,7 @@ class TestL3RuleDiscovery(unittest.TestCase):
             if os.path.exists(junit_path):
                 os.unlink(junit_path)
 
+    # covers: AC-4
     def test_junit_parses_and_has_ac_properties(self):
         """Verify JUnit XML is valid and contains AC properties."""
         fixture_path = os.path.join(self.fixtures_dir, 'passing')

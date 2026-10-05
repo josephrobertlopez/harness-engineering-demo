@@ -14,16 +14,18 @@ import hashlib
 import json
 import os
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 
+# implements: AC-7
 def run_debate(
     change_dir: Path,
     inputs: dict[str, Any],
     recheck: Callable[[str, str, str], bool],
     claude_bin: str = "claude",
-    env: Optional[dict[str, str]] = None,
+    env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Run the L6 debate layer.
 
@@ -56,7 +58,7 @@ def run_debate(
             cache_data = {}
 
     findings = []
-    ignored_vetoes = []
+    ignored_vetoes: list[dict[str, Any]] = []
     calls = 0
 
     # Build prompts for prover, refuter, and judges
@@ -178,15 +180,14 @@ def run_debate(
                 "claim": claim,
                 "reason": "Unconfirmed (veto claim did not pass recheck)"
             })
-    elif veto_count == 1:
+    elif veto_count == 1 and veto_details is not None:
         # Single judge veto - unconfirmed by definition
-        if veto_details:
-            ignored_vetoes.append({
-                "file": veto_details.get("file", ""),
-                "line": veto_details.get("line", ""),
-                "claim": veto_details.get("claim", ""),
-                "reason": "Single judge veto (not majority)"
-            })
+        ignored_vetoes.append({
+            "file": veto_details.get("file", ""),
+            "line": veto_details.get("line", ""),
+            "claim": veto_details.get("claim", ""),
+            "reason": "Single judge veto (not majority)"
+        })
 
     return {
         "findings": findings,
@@ -199,10 +200,10 @@ def _run_judge(
     claude_bin: str,
     prompt: str,
     model: str,
-    cache_data: dict,
+    cache_data: dict[str, Any],
     cache_file: Path,
-    env: dict,
-) -> tuple[Optional[dict], int, Optional[str]]:
+    env: dict[str, str],
+) -> tuple[dict[str, Any] | None, int, str | None]:
     """Run a judge (or prover/refuter) and return parsed verdict, calls count, error rule.
 
     Returns:
@@ -234,10 +235,9 @@ def _run_judge(
             text=True,
             timeout=30,
             env=env,
+            check=False,
         )
-    except subprocess.TimeoutExpired:
-        return None, 1, "SG601"
-    except Exception:
+    except (subprocess.TimeoutExpired, OSError):
         return None, 1, "SG601"
 
     # Parse JSON envelope
@@ -269,7 +269,7 @@ def _run_judge(
     return verdict, 1, None
 
 
-def _build_prover_prompt(inputs: dict) -> str:
+def _build_prover_prompt(inputs: dict[str, Any]) -> str:
     """Build the prover prompt."""
     return f"""You are a prover arguing that a change is good.
 
@@ -280,7 +280,7 @@ Argue in favor of this change. Return JSON only:
 """
 
 
-def _build_refuter_prompt(inputs: dict) -> str:
+def _build_refuter_prompt(inputs: dict[str, Any]) -> str:
     """Build the refuter prompt."""
     return f"""You are a refuter arguing that a change is problematic.
 
@@ -291,7 +291,7 @@ Argue against this change if you can. Return JSON only:
 """
 
 
-def _build_judge_prompt(judge_id: int, prover: dict, refuter: dict) -> str:
+def _build_judge_prompt(judge_id: int, prover: dict[str, Any], refuter: dict[str, Any]) -> str:
     """Build a judge prompt."""
     return f"""You are judge {judge_id} evaluating a debate.
 

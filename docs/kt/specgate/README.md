@@ -47,7 +47,7 @@ The change directory is `openspec/changes/<feature>/`. Use `openspec/changes/spe
 2. Write `proposal.md`, `tasks.md`, and `specs/<feature>/spec.md`, with one `### Requirement:` and at least one `#### Scenario:` per AC.
 3. Write the tests first. Mark each with `# covers: AC-k`.
 4. Write the code. Mark it with `# implements: AC-k`.
-5. Add or update a doc under `docs/kt/<feature>/`. CI fails the PR without one.
+5. Add or change a file under `docs/kt/<feature>/`. The `kt-docs` check fails the PR unless the diff has an added or changed (not deleted) file under `docs/kt/`.
 6. Run the gates locally (next section) until they are green.
 
 ## Running it locally
@@ -61,7 +61,7 @@ uv venv --python 3.12 && uv pip install -e "plugins/specgate[dev]"
 Check a change:
 
 ```bash
-.venv/bin/specgate check --change specgate --layers L0-L5
+.venv/bin/specgate check --change openspec/changes/specgate --layers L0-L5
 npx -y @fission-ai/openspec@1.14.0 validate specgate --strict
 ```
 
@@ -71,7 +71,11 @@ Run the unit tests of the plugin itself:
 cd plugins/specgate && ../../.venv/bin/python -m unittest discover -s tests -t .
 ```
 
-L6 calls the `claude` CLI. It replays a committed cache, so it needs no token unless the spec changed.
+L6 (debate) is not enforced in CI. The `specgate` CLI does not run it (`--layers L6` returns no findings) and no debate cache is committed, so CI replays nothing. The debate code lives in `plugins/specgate/src/specgate/` and is exercised by the plugin's unit tests. CI shows "L6 debate: run locally, see docs/kt/specgate; not enforced in CI yet".
+
+Calibration, run locally (`.specgate/evidence/T16/calibration.json`, not committed to CI): the panel caught 5/5 bad fixtures and the L6 panel blocked 0/4 good ones. Caveat: the same file records `good_wrongly_blocked: 4`, because an earlier layer (L1, rule SG101) flagged all four good fixtures. So only the L6 result is 0/4; the end-to-end result in that artifact is not.
+
+lefthook (`lefthook.yml`) runs `.venv/bin/specgate`, so create the `.venv` first.
 
 To run the same workflows CI runs, use `act`. See [tutorials/act/README.md](../../../tutorials/act/README.md) for the setup and the exact commands.
 
@@ -82,5 +86,5 @@ To run the same workflows CI runs, use `act`. See [tutorials/act/README.md](../.
 | `plugins/specgate/src/specgate/` | one module per gate, plus `cli.py` and `trace.py` |
 | `plugins/specgate/schema/prd.schema.json` | the PRD frontmatter schema |
 | `openspec/changes/<feature>/` | PRD, proposal, spec, tasks |
-| `.github/workflows/spec-gate.yml` | CI for L0 to L6 |
-| `.github/workflows/kt-docs.yml` | CI rule: every PR carries a KT doc |
+| `.github/workflows/spec-gate.yml` | CI for L0 to L5 (L6 is a labelled no-op) |
+| `.github/workflows/kt-docs.yml` | CI rule: every PR adds or changes a file under `docs/kt/` |

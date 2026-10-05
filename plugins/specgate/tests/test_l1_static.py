@@ -2,7 +2,8 @@
 
 import unittest
 import unittest.mock
-import subprocess
+import shutil
+import tempfile
 from pathlib import Path
 from specgate.l1_static import (
     check_ruff, check_mypy, check_vulture, check_banned_tokens,
@@ -13,6 +14,7 @@ from specgate.l1_static import (
 class TestL1Ruff(unittest.TestCase):
     """Test SG101: ruff violations (F401, ERA, T20)."""
 
+    # covers: AC-2
     def test_bad_f401_fixture(self):
         """Red fixture should fail SG101 check."""
         fixture_path = str(Path(__file__).parent / "fixtures" / "l1" / "bad_f401.py")
@@ -38,6 +40,7 @@ class TestL1Ruff(unittest.TestCase):
 class TestL1Mypy(unittest.TestCase):
     """Test SG102: mypy --strict violations."""
 
+    # covers: AC-2
     def test_mypy_with_injected_runner(self):
         """Test mypy with injected runner that simulates failure."""
         def fake_runner(*args, **kwargs):
@@ -73,6 +76,7 @@ class TestL1Mypy(unittest.TestCase):
 class TestL1Vulture(unittest.TestCase):
     """Test SG103: vulture dead code detection."""
 
+    # covers: AC-2
     def test_vulture_with_injected_runner(self):
         """Test vulture with injected runner that simulates failure."""
         def fake_runner(*args, **kwargs):
@@ -106,22 +110,33 @@ class TestL1Vulture(unittest.TestCase):
 
 
 class TestL1BannedTokens(unittest.TestCase):
-    """Test SG104: banned token detection (TODO, FIXME, XXX, @skip, skipTest, expectedFailure)."""
+    """Test SG104: banned token detection."""
 
+    # covers: AC-2
     def test_bad_tokens_fixture(self):
-        """Red fixture should have banned tokens."""
-        fixture_path = str(Path(__file__).parent / "fixtures" / "l1" / "bad_tokens.py")
-        findings = check_banned_tokens([fixture_path])
+        """The red fixture is test data: only a copy outside tests/fixtures is scanned."""
+        fixture = Path(__file__).parent / "fixtures" / "l1" / "bad_tokens.py"
+        self.assertEqual(check_banned_tokens([str(fixture)]), [])
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "bad_tokens.py"
+            shutil.copy(fixture, copy)
+            findings = check_banned_tokens([str(copy)])
+        found = " ".join(f["message"] for f in findings)
+        self.assertTrue(all(f["rule"] == "SG104" for f in findings))
+        for token in ("TO" "DO", "FIX" "ME", "X" "XX"):
+            self.assertIn(token, found)
 
-        # Should have multiple SG104 findings
-        sg104_findings = [f for f in findings if f['rule'] == 'SG104']
-        self.assertTrue(len(sg104_findings) > 0,
-                       f"Expected SG104 findings for bad_tokens.py, got: {findings}")
-
-        # Check that the banned tokens are identified
-        tokens_found = [f['message'] for f in sg104_findings]
-        self.assertTrue(any('TODO' in msg for msg in tokens_found),
-                       f"Expected TODO token to be found, got: {tokens_found}")
+    def test_fixture_directory_is_ignored(self):
+        """A banned token under tests/fixtures is ignored; the same file elsewhere is not."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fixtures = Path(tmp) / "tests" / "fixtures"
+            fixtures.mkdir(parents=True)
+            data = fixtures / "data.py"
+            data.write_text("# TO" "DO: data\n")
+            other = Path(tmp) / "tests" / "test_x.py"
+            other.write_text("# TO" "DO: real\n")
+            self.assertEqual(check_banned_tokens([str(data)]), [])
+            self.assertEqual(len(check_banned_tokens([str(other)])), 1)
 
     def test_good_tokens_fixture(self):
         """Green fixture should have no banned tokens."""
@@ -137,6 +152,7 @@ class TestL1BannedTokens(unittest.TestCase):
 class TestL1Markdownlint(unittest.TestCase):
     """Test SG105: markdownlint violations."""
 
+    # covers: AC-8
     def test_markdownlint_with_injected_runner(self):
         """Test markdownlint with injected runner that simulates failure."""
         def fake_runner(*args, **kwargs):

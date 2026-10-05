@@ -1,13 +1,35 @@
 """L1 layer for static code analysis (ruff, mypy, vulture, banned tokens, markdownlint)."""
 
 import json
+import os
 import re
 import subprocess
 import sys
 from collections.abc import Callable
+from itertools import pairwise
+from pathlib import Path, PurePath
 from typing import Any
 
+_BANNED_WORDS = ("TO" + "DO", "FIX" + "ME", "X" + "XX", "@sk" + "ip", "skip" + "Test", "expected" + "Failure")
+_BANNED = re.compile(r"\b(" + "|".join(_BANNED_WORDS) + r")\b")
+_MARKER_LINE = re.compile(r"^\s*# (implements|covers): AC-\d+")
 
+
+def _is_marker_line(path: str, row: int) -> bool:
+    """True when line `row` of `path` is an AC marker comment (not commented-out code)."""
+    try:
+        lines = Path(path).read_text().splitlines()
+    except (OSError, UnicodeDecodeError):
+        return False
+    return 0 < row <= len(lines) and bool(_MARKER_LINE.match(lines[row - 1]))
+
+
+def _is_fixture(path: str) -> bool:
+    parts = PurePath(path).parts
+    return any(pair == ("tests", "fixtures") for pair in pairwise(parts))
+
+
+# implements: AC-2
 def check_ruff(paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
     """
     Run ruff on Python files to check for F401, ERA, T20 violations.
@@ -29,7 +51,7 @@ def check_ruff(paths: list[str], runner: Callable[..., Any] | None = None) -> li
     cmd = [
         sys.executable, '-m', 'ruff', 'check',
         '--select', 'F401,ERA,T20',
-        '--output-format', 'json'
+        '--output-format', 'json', '--no-cache'
     ] + paths
 
     try:
@@ -46,10 +68,13 @@ def check_ruff(paths: list[str], runner: Callable[..., Any] | None = None) -> li
             output = json.loads(result.stdout)
             for item in output:
                 location = item.get('location', {})
+                row = location.get('row', 0) if isinstance(location, dict) else 0
+                if item.get('code') == 'ERA001' and _is_marker_line(item.get('filename', ''), row):
+                    continue
                 findings.append({
                     'rule': 'SG101',
                     'file': item.get('filename', ''),
-                    'line': location.get('row', 0) if isinstance(location, dict) else 0,
+                    'line': row,
                     'message': item.get('message', '')
                 })
         except json.JSONDecodeError:
@@ -67,6 +92,7 @@ def check_ruff(paths: list[str], runner: Callable[..., Any] | None = None) -> li
     return findings
 
 
+# implements: AC-2
 def check_mypy(paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
     """
     Run mypy --strict on Python files.
@@ -86,7 +112,7 @@ def check_mypy(paths: list[str], runner: Callable[..., Any] | None = None) -> li
 
     # Run mypy --strict on the package (not individual files)
     # We'll target the specgate package directly
-    cmd = [sys.executable, '-m', 'mypy', '--strict', 'specgate']
+    cmd = [sys.executable, '-m', 'mypy', '--strict', '--cache-dir', os.devnull, 'specgate']
 
     try:
         result = runner(cmd, capture_output=True, text=True)
@@ -114,6 +140,7 @@ def check_mypy(paths: list[str], runner: Callable[..., Any] | None = None) -> li
     return findings
 
 
+# implements: AC-2
 def check_vulture(paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
     """
     Run vulture on Python files with min-confidence 80.
@@ -160,9 +187,12 @@ def check_vulture(paths: list[str], runner: Callable[..., Any] | None = None) ->
     return findings
 
 
+# implements: AC-2
 def check_banned_tokens(paths: list[str]) -> list[dict[str, Any]]:
     """
-    Check for banned tokens in Python files: TODO, FIXME, XXX, @skip, skipTest, expectedFailure.
+    Check Python files for banned work-marker and test-disabling tokens.
+
+    Files under a tests/fixtures directory are test data and are ignored.
 
     Args:
         paths: List of file paths to check
@@ -170,10 +200,12 @@ def check_banned_tokens(paths: list[str]) -> list[dict[str, Any]]:
     Returns:
         List of findings with rule='SG104'
     """
-    banned_pattern = re.compile(r'\b(TODO|FIXME|XXX|@skip|skipTest|expectedFailure)\b')
+    banned_pattern = _BANNED
     findings = []
 
     for path in paths:
+        if _is_fixture(path):
+            continue
         try:
             with open(path, 'r') as f:
                 lines = f.readlines()
@@ -199,6 +231,7 @@ def check_banned_tokens(paths: list[str]) -> list[dict[str, Any]]:
     return findings
 
 
+# implements: AC-8
 def check_markdownlint(md_paths: list[str], runner: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
     """
     Run markdownlint-cli2 on Markdown files.

@@ -1,12 +1,12 @@
 {
   "name": "specgate",
   "version": "0.1.0",
-  "description": "Harness-engineering specgate plugin for multi-layer acceptance testing. Works alongside OpenSpec and BMAD to validate specifications through 6 layers of gates.",
+  "description": "Harness-engineering specgate plugin for multi-layer acceptance testing. Works alongside OpenSpec and BMAD to validate specifications through 7 layers of gates (L0-L6).",
   "author": {
-    "name": "Anthropic",
-    "email": "support@anthropic.com"
+    "name": "Joseph Lopez",
+    "email": "josephrobertlopez@gmail.com"
   },
-  "homepage": "https://github.com/josephrobertlopez/harness-engineering-demo-wt",
+  "homepage": "https://github.com/josephrobertlopez/harness-engineering-demo",
   "license": "MIT",
   "keywords": [
     "testing",

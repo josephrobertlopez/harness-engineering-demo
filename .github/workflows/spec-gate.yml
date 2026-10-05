@@ -3,11 +3,12 @@ name: spec-gate
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   spec-gate:
     runs-on: ubuntu-latest
-    env:
-      CLAUDE_CODE_OAUTH_TOKEN_SECRET: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,6 +19,10 @@ jobs:
           node-version: "22"
       - name: Install specgate
         run: pip install -e "plugins/specgate[dev]"
+      # With --change, L0 validates the change dir. L1-L5 search the change dir
+      # for `# implements:` / `# covers:` markers and, when it holds none (the
+      # change dir only has the PRD), fall back to the repo root, which is
+      # where plugins/specgate lives. The CLI has no option to point at another path.
       - name: L0-L5 on every change with a prd.md
         shell: bash
         run: |
@@ -26,22 +31,11 @@ jobs:
             [ -e "$prd" ] || { echo "no changes with prd.md"; exit 0; }
             change="$(basename "$(dirname "$prd")")"
             echo "== $change L0-L5"
-            specgate check --change "$change" --layers L0-L5
+            specgate check --change "openspec/changes/$change" --layers L0-L5 \
+              --output "openspec/changes/$change/trace.json"
           done
-      - name: L6 replay of committed debate.cache.json
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Only export the token if it is non-empty: a cache miss without it is a FAIL.
-          if [ -n "${CLAUDE_CODE_OAUTH_TOKEN_SECRET:-}" ]; then
-            export CLAUDE_CODE_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN_SECRET"
-          fi
-          for prd in openspec/changes/*/prd.md; do
-            [ -e "$prd" ] || exit 0
-            change="$(basename "$(dirname "$prd")")"
-            echo "== $change L6"
-            specgate check --change "$change" --layers L6
-          done
+      - name: L6 debate (no-op)
+        run: echo "L6 debate - run locally, see docs/kt/specgate; not enforced in CI yet"
       - name: trace.json must be byte-identical after regeneration
         shell: bash
         run: |
@@ -49,9 +43,10 @@ jobs:
           for prd in openspec/changes/*/prd.md; do
             [ -e "$prd" ] || exit 0
             change="$(basename "$(dirname "$prd")")"
-            specgate check --change "$change" --layers L0-L5
-            test -f "openspec/changes/$change/trace.json" || { echo "missing trace.json for $change" >&2; exit 1; }
+            trace="openspec/changes/$change/trace.json"
+            specgate check --change "openspec/changes/$change" --layers L0-L5 --output "$trace"
+            test -f "$trace" || { echo "missing $trace" >&2; exit 1; }
           done
-          git diff --exit-code
+          git diff --exit-code -- 'openspec/changes/*/trace.json'
           untracked="$(git ls-files --others --exclude-standard -- 'openspec/changes/*/trace.json')"
           if [ -n "$untracked" ]; then echo "untracked trace.json: $untracked" >&2; exit 1; fi

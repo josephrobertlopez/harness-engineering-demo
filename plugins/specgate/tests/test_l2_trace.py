@@ -2,11 +2,10 @@
 
 import unittest
 import os
-from pathlib import Path
 from specgate.l2_trace import check
 
 
-def load_tests(loader, tests, pattern):
+def load_tests(loader, tests, _pattern):
     """Load tests from the L2 fixtures directory.
 
     This function implements the load_tests protocol to allow unittest.discover()
@@ -34,8 +33,8 @@ class TestL2RuleDiscovery(unittest.TestCase):
             os.path.dirname(__file__), 'fixtures', 'l2'
         )
 
-    def _check_fixture_produces_rule(self, fixture_name, expected_rule_id):
-        """Helper to verify a fixture produces the expected rule.
+    def _rules(self, fixture_name):
+        """Rule ids that l2_trace.check reports for a fixture.
 
         Each fixture may have src.py and/or test.py. Include whichever files exist.
         """
@@ -62,34 +61,32 @@ class TestL2RuleDiscovery(unittest.TestCase):
         # sg203 specifically needs AC-999 to NOT be in the set to trigger SG203
         ac_ids = {'AC-1'}
 
-        findings = check(ac_ids, src_paths, test_paths)
+        return {f['rule'] for f in check(ac_ids, src_paths, test_paths)}
 
-        # Verify the expected rule is produced
-        rule_findings = [f for f in findings if f['rule'] == expected_rule_id]
-        self.assertGreater(
-            len(rule_findings), 0,
-            f"Expected rule {expected_rule_id} in findings, got: {findings}"
-        )
-
+    # covers: AC-3
     def test_sg201_rule_produced(self):
         """Verify SG201 rule is produced by sg201 fixture."""
-        self._check_fixture_produces_rule('sg201', 'SG201')
+        self.assertIn('SG201', self._rules('sg201'))
 
+    # covers: AC-3
     def test_sg202_rule_produced(self):
         """Verify SG202 rule is produced by sg202 fixture."""
-        self._check_fixture_produces_rule('sg202', 'SG202')
+        self.assertIn('SG202', self._rules('sg202'))
 
+    # covers: AC-3
     def test_sg203_rule_produced(self):
         """Verify SG203 rule is produced by sg203 fixture."""
-        self._check_fixture_produces_rule('sg203', 'SG203')
+        self.assertIn('SG203', self._rules('sg203'))
 
+    # covers: AC-3
     def test_sg204_rule_produced(self):
         """Verify SG204 rule is produced by sg204 fixture."""
-        self._check_fixture_produces_rule('sg204', 'SG204')
+        self.assertIn('SG204', self._rules('sg204'))
 
+    # covers: AC-3
     def test_sg205_rule_produced(self):
         """Verify SG205 rule is produced by sg205 fixture."""
-        self._check_fixture_produces_rule('sg205', 'SG205')
+        self.assertIn('SG205', self._rules('sg205'))
 
 
 if __name__ == '__main__':

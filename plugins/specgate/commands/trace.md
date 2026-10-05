@@ -1,26 +1,24 @@
 ---
 name: "specgate: trace"
-description: "Show the trace.json per acceptance criteria"
+description: "Generate and read trace.json for a change"
 allowed-tools: Bash(specgate:*)
 category: "Analysis"
 tags: ["tracing", "debugging", "analysis"]
 ---
 
-Display the execution trace for each acceptance criterion.
+There is no `specgate trace` subcommand. `specgate check` writes `trace.json` when the requested layers pass.
 
 Run:
 ```bash
-specgate trace
+specgate check --change openspec/changes/<feature> --layers L0-L5 --output /tmp/trace.json
 ```
 
-**Exit codes:**
-- `0`: Trace successfully generated and displayed
-- `1`: Trace generation failed
+Then read `/tmp/trace.json`. It is an object keyed by AC id (`AC-1`, ...). Each entry has:
+- `id`: the AC id
+- `implements`: list of `{file, function, line}` for `# implements: AC-k` markers
+- `covers`: list of `{file, function, line}` for `# covers: AC-k` markers
+- `junit`: L3 status, or `null`
+- `coverage`: `{lines_covered, lines_total}`
+- `mutations`: `{killed, total}`
 
-This command shows `trace.json` which maps each acceptance criterion (AC) in your spec to the code and tests that implement/cover it. Useful for understanding coverage and finding gaps in implementation.
-
-**Output includes:**
-- AC identifier
-- Implementing source files (marked with `# implements: AC-k`)
-- Covering test files (marked with `# covers: AC-k`)
-- Execution flow through the implementation
+An AC with an empty `implements` or `covers` list is a gap.

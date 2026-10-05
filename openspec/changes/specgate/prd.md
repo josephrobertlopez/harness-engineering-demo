@@ -89,3 +89,9 @@ Make the tie mechanical. A feature merges only if every acceptance criterion is 
 ## Acceptance criteria
 
 The ACs live in the frontmatter above so layer L0 can validate them against `plugins/specgate/schema/prd.schema.json`. One AC per layer, L0 to L6, plus the knowledge-transfer docs rule.
+
+## How ACs map to code
+
+`# implements: AC-k` sits directly above the function that implements AC-k, and `# covers: AC-k` directly above each test that covers it. The `tests` lists in the frontmatter name the headline tests; the markers are the authoritative mapping, so every `test_cov_*` test in `plugins/specgate/tests` also carries its layer's marker. L3 to L5 then judge each AC by exactly the tests that carry its marker.
+
+AC-8 has two halves. The lint half ("the KT markdown passes the L1 lint") is code: `check_markdownlint` in `l1_static.py` carries `# implements: AC-8`, and the `test_markdownlint_*` tests carry `# covers: AC-8`. The other half, failing a pull request that touches no `docs/kt/**` or docs markdown, is not a function in `src/specgate`. It is enforced by the `kt-docs.yml` workflow, whose red path is proven by running it under `act` with an event that has no docs change (T14). L2 does not check that half, and no marker is claimed for it.

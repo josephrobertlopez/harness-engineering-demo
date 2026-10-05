@@ -6,7 +6,6 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 from specgate.l6_debate import run_debate
 
@@ -90,6 +89,7 @@ class TestL6Debate(unittest.TestCase):
             self.assertIn("findings", result)
             self.assertIn("calls", result)
 
+    # covers: AC-7
     def test_run_debate_bad_json_fails(self):
         """Test that bad JSON output causes SG601 failure."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -143,6 +143,7 @@ class TestL6Debate(unittest.TestCase):
                 "Expected SG601 finding for truncated output",
             )
 
+    # covers: AC-7
     def test_run_debate_unconfirmed_veto_ignored(self):
         """Test that unconfirmed vetoes (single judge) are logged but not reported as findings."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -167,6 +168,7 @@ class TestL6Debate(unittest.TestCase):
             self.assertTrue(len(result["ignored_vetoes"]) > 0)
             self.assertTrue(all(f["rule"] != "SG603" for f in result["findings"]))
 
+    # covers: AC-7
     def test_run_debate_confirmed_majority_veto_fails(self):
         """Test that confirmed majority veto causes SG603 failure."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -193,6 +195,7 @@ class TestL6Debate(unittest.TestCase):
                 "Expected SG603 finding for confirmed veto",
             )
 
+    # covers: AC-7
     def test_run_debate_cache_miss_no_token_fails(self):
         """Test that cache miss with no token available causes SG602 failure."""
         with tempfile.TemporaryDirectory() as tmpdir:

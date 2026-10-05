@@ -1,8 +1,8 @@
 {
   "name": "harness-engineering",
   "owner": {
-    "name": "Anthropic",
-    "email": "support@anthropic.com"
+    "name": "Joseph Lopez",
+    "email": "josephrobertlopez@gmail.com"
   },
   "metadata": {
     "description": "Harness engineering tools for specification and acceptance testing",
@@ -14,7 +14,8 @@
       "source": "./plugins/specgate",
       "description": "Multi-layer acceptance testing framework for OpenSpec and BMAD specifications",
       "version": "0.1.0",
-      "strict": true
+      "strict": true,
+      "homepage": "https://github.com/josephrobertlopez/harness-engineering-demo"
     }
   ]
 }

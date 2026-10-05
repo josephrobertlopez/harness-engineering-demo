@@ -1,0 +1,9 @@
+#!/bin/bash
+# Stub claude that returns a good pass response
+
+cat <<'EOF'
+{
+  "stop_reason": "end_turn",
+  "result": "{\"verdict\":\"pass\",\"file\":\"\",\"line\":\"\",\"claim\":\"\"}"
+}
+EOF

@@ -1,0 +1,6 @@
+pre-commit:
+  commands:
+    specgate:
+      run: .venv/bin/specgate check --layers L0-L2 --staged
+    unittest:
+      run: env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE .venv/bin/python -m unittest discover -s tests -t .

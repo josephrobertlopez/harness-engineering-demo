@@ -1,0 +1,1743 @@
+{
+  "AC-1": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_file_not_found",
+        "line": 15
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_no_frontmatter",
+        "line": 23
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_no_closing_frontmatter",
+        "line": 37
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_empty_frontmatter",
+        "line": 51
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_invalid_yaml",
+        "line": 65
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_valid",
+        "line": 79
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_schema_not_found",
+        "line": 98
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_parse_error",
+        "line": 115
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_duplicate_ac_ids",
+        "line": 128
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_missing_ac_fields",
+        "line": 148
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_success",
+        "line": 174
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_failure",
+        "line": 184
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_exception",
+        "line": 194
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_default_runner",
+        "line": 205
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_only",
+        "line": 217
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_with_openspec",
+        "line": 230
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_stdout_error",
+        "line": 258
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_parse_prd_minimal_valid",
+        "line": 272
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_with_empty_acs_list",
+        "line": 287
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_with_bad_cwd",
+        "line": 313
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_ac_not_dict",
+        "line": 340
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_ac_dict_no_id",
+        "line": 355
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_duplicate_ac_ids",
+        "line": 371
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_ac_with_all_required_fields",
+        "line": 400
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_prd_ac_with_empty_string_fields",
+        "line": 424
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_returncode_zero",
+        "line": 447
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_returncode_nonzero_with_stderr",
+        "line": 456
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l0.py",
+        "function": "test_check_openspec_returncode_nonzero_with_stdout",
+        "line": 467
+      },
+      {
+        "file": "plugins/specgate/tests/test_l0_schema.py",
+        "function": "test_bad_id_fixture",
+        "line": 11
+      },
+      {
+        "file": "plugins/specgate/tests/test_l0_schema.py",
+        "function": "test_dup_id_fixture",
+        "line": 26
+      },
+      {
+        "file": "plugins/specgate/tests/test_l0_schema.py",
+        "function": "test_missing_then_fixture",
+        "line": 41
+      },
+      {
+        "file": "plugins/specgate/tests/test_l0_schema.py",
+        "function": "test_no_tests_fixture",
+        "line": 56
+      },
+      {
+        "file": "plugins/specgate/tests/test_l0_schema.py",
+        "function": "test_good_fixture",
+        "line": 85
+      }
+    ],
+    "id": "AC-1",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l0_schema.py",
+        "function": "check_prd",
+        "line": 49
+      }
+    ]
+  },
+  "AC-2": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_empty_paths",
+        "line": 21
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_success",
+        "line": 27
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_failure",
+        "line": 36
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_invalid_json",
+        "line": 51
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_exception",
+        "line": 61
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_malformed_location",
+        "line": 71
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_empty_stdout_with_stderr",
+        "line": 84
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_mypy_empty_paths",
+        "line": 99
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_mypy_success",
+        "line": 105
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_mypy_failure",
+        "line": 114
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_mypy_exception",
+        "line": 129
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_mypy_malformed_output",
+        "line": 139
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_vulture_empty_paths",
+        "line": 156
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_vulture_success",
+        "line": 162
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_vulture_failure",
+        "line": 171
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_vulture_exception",
+        "line": 186
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_empty",
+        "line": 200
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_todo",
+        "line": 213
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_fixme",
+        "line": 228
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_xxx",
+        "line": 242
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_skip",
+        "line": 256
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_file_error",
+        "line": 270
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_python_only",
+        "line": 325
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdown_only",
+        "line": 342
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_both",
+        "line": 359
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_vulture_malformed_output",
+        "line": 384
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_ruff_empty_json_array",
+        "line": 418
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_mypy_multiple_lines",
+        "line": 431
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_with_none_runner",
+        "line": 450
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_multiple_in_file",
+        "line": 471
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_banned_tokens_expectedfailure",
+        "line": 486
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_marker_only_file_has_no_sg101",
+        "line": 515
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_real_commented_out_code_still_flagged",
+        "line": 520
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_marker_exemption_is_per_line",
+        "line": 525
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_unreadable_or_out_of_range_rows_are_not_markers",
+        "line": 530
+      },
+      {
+        "file": "plugins/specgate/tests/test_l1_static.py",
+        "function": "test_bad_f401_fixture",
+        "line": 18
+      },
+      {
+        "file": "plugins/specgate/tests/test_l1_static.py",
+        "function": "test_mypy_with_injected_runner",
+        "line": 44
+      },
+      {
+        "file": "plugins/specgate/tests/test_l1_static.py",
+        "function": "test_vulture_with_injected_runner",
+        "line": 80
+      },
+      {
+        "file": "plugins/specgate/tests/test_l1_static.py",
+        "function": "test_bad_tokens_fixture",
+        "line": 116
+      }
+    ],
+    "id": "AC-2",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l1_static.py",
+        "function": "check_ruff",
+        "line": 33
+      },
+      {
+        "file": "plugins/specgate/src/specgate/l1_static.py",
+        "function": "check_mypy",
+        "line": 96
+      },
+      {
+        "file": "plugins/specgate/src/specgate/l1_static.py",
+        "function": "check_vulture",
+        "line": 144
+      },
+      {
+        "file": "plugins/specgate/src/specgate/l1_static.py",
+        "function": "check_banned_tokens",
+        "line": 191
+      }
+    ]
+  },
+  "AC-3": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_tokenize_comments_simple",
+        "line": 20
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_tokenize_comments_multiple",
+        "line": 27
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_tokenize_comments_no_comments",
+        "line": 36
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_tokenize_comments_invalid_syntax",
+        "line": 43
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_implements",
+        "line": 54
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_covers",
+        "line": 61
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_with_extra_text",
+        "line": 68
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_invalid",
+        "line": 75
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_incomplete",
+        "line": 81
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_whitespace",
+        "line": 87
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_functions_simple",
+        "line": 98
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_functions_class_method",
+        "line": 109
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_functions_multiple_classes_same_method",
+        "line": 119
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_functions_invalid_syntax",
+        "line": 146
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_has_asserts_direct",
+        "line": 157
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_has_asserts_method",
+        "line": 165
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_has_asserts_none",
+        "line": 173
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_pass",
+        "line": 185
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_ellipsis",
+        "line": 193
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_docstring",
+        "line": 201
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_docstring_pass",
+        "line": 209
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_code",
+        "line": 217
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_implements",
+        "line": 229
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_covers",
+        "line": 242
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_both",
+        "line": 253
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_different_classes_same_method",
+        "line": 267
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_all_covered",
+        "line": 299
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_unimplemented",
+        "line": 312
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_untested",
+        "line": 323
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_unknown_ac",
+        "line": 334
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_no_asserts",
+        "line": 345
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_empty_impl",
+        "line": 359
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_get_marker_map",
+        "line": 377
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_different_classes_same_method_with_different_markers",
+        "line": 394
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_functions_empty_file",
+        "line": 449
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_tokenize_comments_empty_file",
+        "line": 456
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_with_file_not_found",
+        "line": 467
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_marker_location_has_qualname",
+        "line": 478
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_marker_location_default_qualname",
+        "line": 492
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_nested_classes",
+        "line": 508
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_all_violations_in_one_run",
+        "line": 528
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_tokenize_comments_with_tokenize_error",
+        "line": 558
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_empty_string",
+        "line": 570
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_no_colon",
+        "line": 576
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_implements_no_id",
+        "line": 582
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_covers_with_id",
+        "line": 588
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_async_function",
+        "line": 599
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_nested_functions",
+        "line": 607
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_extract_multiple_methods_in_one_class",
+        "line": 620
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_has_asserts_multiple_asserts",
+        "line": 640
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_has_asserts_nested_asserts",
+        "line": 648
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_has_asserts_with_different_methods",
+        "line": 656
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_only_pass_multiple",
+        "line": 668
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_docstring_and_ellipsis",
+        "line": 676
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_ellipsis_constant",
+        "line": 684
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_ellipsis_with_pass",
+        "line": 694
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_multiline_comment",
+        "line": 707
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_marker_on_same_line",
+        "line": 721
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_multiple_dirs",
+        "line": 730
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_sg201_covered_not_implemented",
+        "line": 748
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_sg202_implemented_not_tested",
+        "line": 759
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_sg203_unknown_ac_in_implementation",
+        "line": 770
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_sg203_unknown_ac_in_test",
+        "line": 781
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_sg204_test_without_asserts",
+        "line": 792
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_sg205_empty_implementation",
+        "line": 806
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_get_marker_map_returns_same_as_scan_markers",
+        "line": 824
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_implements_empty_id",
+        "line": 840
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_covers_empty_id",
+        "line": 846
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_implements_with_trailing_text",
+        "line": 852
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_parse_marker_covers_with_trailing_text",
+        "line": 859
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_with_code_and_pass",
+        "line": 870
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_is_empty_body_with_only_docstring",
+        "line": 878
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_no_markers_in_files",
+        "line": 890
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_wrong_marker_type_in_src",
+        "line": 900
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_wrong_marker_type_in_test",
+        "line": 911
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_no_violations",
+        "line": 926
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_non_test_function_in_test_file",
+        "line": 940
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_multiple_acs_mixed_coverage",
+        "line": 955
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_ac_only_in_test",
+        "line": 977
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_marker_on_same_line_as_def",
+        "line": 989
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_empty_source_files",
+        "line": 1003
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_empty_test_files",
+        "line": 1014
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_with_unreadable_source_file",
+        "line": 1029
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_with_unreadable_test_file",
+        "line": 1036
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_with_unreadable_src_dir",
+        "line": 1047
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_with_unreadable_test_dir",
+        "line": 1053
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_exception_in_src",
+        "line": 1059
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_scan_markers_exception_in_test",
+        "line": 1071
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_multiple_implementations_same_ac",
+        "line": 1087
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_multiple_tests_same_ac",
+        "line": 1108
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_covers_marker_in_source",
+        "line": 1129
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_implements_marker_in_test",
+        "line": 1146
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l2.py",
+        "function": "test_check_invalid_marker_format",
+        "line": 1163
+      },
+      {
+        "file": "plugins/specgate/tests/test_l2_trace.py",
+        "function": "test_sg201_rule_produced",
+        "line": 67
+      },
+      {
+        "file": "plugins/specgate/tests/test_l2_trace.py",
+        "function": "test_sg202_rule_produced",
+        "line": 72
+      },
+      {
+        "file": "plugins/specgate/tests/test_l2_trace.py",
+        "function": "test_sg203_rule_produced",
+        "line": 77
+      },
+      {
+        "file": "plugins/specgate/tests/test_l2_trace.py",
+        "function": "test_sg204_rule_produced",
+        "line": 82
+      },
+      {
+        "file": "plugins/specgate/tests/test_l2_trace.py",
+        "function": "test_sg205_rule_produced",
+        "line": 87
+      }
+    ],
+    "id": "AC-3",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l2_trace.py",
+        "function": "check",
+        "line": 186
+      }
+    ]
+  },
+  "AC-4": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_test_result_creation",
+        "line": 26
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_write_junit_basic",
+        "line": 44
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_write_junit_error_status",
+        "line": 72
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_write_junit_multiple_results",
+        "line": 109
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_returns_list",
+        "line": 140
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_with_empty_directories",
+        "line": 160
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_with_empty_test_dirs",
+        "line": 175
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_basic",
+        "line": 195
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_default_top_level",
+        "line": 215
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_with_skip",
+        "line": 233
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_with_expected_failure",
+        "line": 253
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_with_unexpected_success",
+        "line": 273
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_with_error",
+        "line": 293
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_with_failure",
+        "line": 312
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_custom_test_result_record_result",
+        "line": 335
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_custom_test_result_module_file",
+        "line": 352
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_custom_test_result_no_file_fallback",
+        "line": 374
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_write_junit_with_ac_properties",
+        "line": 397
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_with_sg301_violation",
+        "line": 441
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_with_sg302_violation",
+        "line": 482
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_record_result_attribute_error_on_module",
+        "line": 517
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_record_result_key_error",
+        "line": 538
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_record_result_index_error",
+        "line": 557
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_cleanup_sys_modules",
+        "line": 575
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_absolute_path_conversion",
+        "line": 604
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_path_isolation",
+        "line": 627
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_clears_conflicting_modules",
+        "line": 651
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_handles_module_deletion_error",
+        "line": 676
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_sg301_with_multiple_acs",
+        "line": 698
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_check_sg302_with_multiple_markers",
+        "line": 750
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_record_result_with_complex_test_id",
+        "line": 792
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_module_cleanup_error",
+        "line": 813
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_record_result_with_missing_attributes",
+        "line": 838
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_write_junit_with_multiple_results",
+        "line": 861
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_write_junit_with_ac_map",
+        "line": 905
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_run_tests_no_test_files",
+        "line": 952
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_add_expected_failure",
+        "line": 965
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_add_unexpected_success",
+        "line": 978
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_record_result_with_split_parts",
+        "line": 991
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l3.py",
+        "function": "test_unmarked_failure_is_not_sg301",
+        "line": 1010
+      },
+      {
+        "file": "plugins/specgate/tests/test_l3_run.py",
+        "function": "test_sg301_failing_test_produces_rule",
+        "line": 35
+      },
+      {
+        "file": "plugins/specgate/tests/test_l3_run.py",
+        "function": "test_sg301_skipped_test_produces_rule",
+        "line": 70
+      },
+      {
+        "file": "plugins/specgate/tests/test_l3_run.py",
+        "function": "test_junit_parses_and_has_ac_properties",
+        "line": 102
+      }
+    ],
+    "id": "AC-4",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l3_run.py",
+        "function": "write_junit",
+        "line": 96
+      },
+      {
+        "file": "plugins/specgate/src/specgate/l3_run.py",
+        "function": "check",
+        "line": 131
+      }
+    ]
+  },
+  "AC-5": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_docstring_is_excluded",
+        "line": 51
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_without_docstring_and_nested_statements",
+        "line": 56
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_non_string_first_expression_is_a_statement",
+        "line": 61
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_method_and_missing_function",
+        "line": 71
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_runs_only_the_named_tests",
+        "line": 81
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_unloadable_test_yields_no_coverage",
+        "line": 96
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_ambient_coverage_environment_is_ignored",
+        "line": 101
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_fully_covered_ac_is_green",
+        "line": 112
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_unexecuted_line_is_sg401_with_exact_line",
+        "line": 119
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_other_tests_do_not_count_for_the_ac",
+        "line": 128
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_acs_missing_an_implementation_or_a_test_are_skipped",
+        "line": 141
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_tests_in_two_directories_are_pooled",
+        "line": 150
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_nothing_is_written_into_the_working_tree",
+        "line": 164
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l4.py",
+        "function": "test_marker_on_missing_function_adds_no_lines",
+        "line": 173
+      },
+      {
+        "file": "plugins/specgate/tests/test_l4_cov.py",
+        "function": "test_uncovered_lines_produce_sg401",
+        "line": 34
+      },
+      {
+        "file": "plugins/specgate/tests/test_l4_cov.py",
+        "function": "test_covered_lines_no_sg401",
+        "line": 64
+      }
+    ],
+    "id": "AC-5",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l4_cov.py",
+        "function": "check",
+        "line": 66
+      }
+    ]
+  },
+  "AC-6": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_compare_cmp_flip",
+        "line": 25
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_compare_no_mutation_different_type",
+        "line": 36
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_compare_no_target_line",
+        "line": 46
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_boolop_flip_and",
+        "line": 56
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_boolop_flip_or",
+        "line": 66
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_boolop_wrong_type",
+        "line": 76
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_return_with_value",
+        "line": 86
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_binop_add",
+        "line": 96
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_binop_sub",
+        "line": 106
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_binop_wrong_type",
+        "line": 116
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_compare_already_mutated",
+        "line": 130
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_compare_no_flippable_ops",
+        "line": 142
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_boolop_not_and_or",
+        "line": 152
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_boolop_already_mutated",
+        "line": 162
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_return_bare_return",
+        "line": 173
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_return_already_mutated",
+        "line": 183
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_binop_other_operators",
+        "line": 194
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_binop_already_mutated",
+        "line": 204
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_boolop_non_target_line",
+        "line": 215
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_return_non_target_line",
+        "line": 225
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_compare_all_operators",
+        "line": 235
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_visit_binop_sub_mutation",
+        "line": 254
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_run_tests_success",
+        "line": 267
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_run_tests_failure",
+        "line": 284
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_run_tests_timeout",
+        "line": 300
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_run_tests_oserror",
+        "line": 313
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_run_tests_real_oserror_for_missing_directory",
+        "line": 325
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_methods_with_the_same_name_are_told_apart",
+        "line": 333
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_unknown_function_has_no_lines",
+        "line": 338
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_returns_mutated_source_and_original_line",
+        "line": 344
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_each_mutation_type",
+        "line": 351
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_return_none_drops_the_value",
+        "line": 360
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_nothing_to_mutate_or_bad_source",
+        "line": 366
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_only_the_first_eligible_node_is_mutated",
+        "line": 371
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_strong_test_kills_every_mutant",
+        "line": 394
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_weak_test_leaves_exact_survivors",
+        "line": 400
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_acs_without_markers_or_without_tests_are_skipped",
+        "line": 414
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_ac_with_tests_but_no_implementation_has_no_mutants",
+        "line": 420
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_unmutable_implementation_has_no_findings",
+        "line": 426
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l5.py",
+        "function": "test_survives_uses_mutant_not_original_when_in_same_directory",
+        "line": 432
+      },
+      {
+        "file": "plugins/specgate/tests/test_l5_mut.py",
+        "function": "test_weak_fixture_produces_sg501",
+        "line": 35
+      },
+      {
+        "file": "plugins/specgate/tests/test_l5_mut.py",
+        "function": "test_strong_fixture_produces_no_sg501",
+        "line": 55
+      },
+      {
+        "file": "plugins/specgate/tests/test_l5_mut.py",
+        "function": "test_results_deterministic_weak",
+        "line": 75
+      }
+    ],
+    "id": "AC-6",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l5_mut.py",
+        "function": "check",
+        "line": 125
+      }
+    ]
+  },
+  "AC-7": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_prover_prompt",
+        "line": 23
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_refuter_prompt",
+        "line": 33
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_judge_prompt",
+        "line": 43
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_prover_prompt_empty_change",
+        "line": 54
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_refuter_prompt_empty_change",
+        "line": 63
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_cache_hit",
+        "line": 76
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_cache_miss_no_token",
+        "line": 102
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_timeout",
+        "line": 124
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_subprocess_oserror",
+        "line": 149
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_invalid_json_envelope",
+        "line": 174
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_non_end_turn_stop_reason",
+        "line": 202
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_invalid_result_json",
+        "line": 231
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_success_with_caching",
+        "line": 260
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_basic",
+        "line": 304
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_with_env",
+        "line": 323
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_sg602_no_token",
+        "line": 341
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_sg602_rule_implementation",
+        "line": 365
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_prover_prompt_with_multiline_change",
+        "line": 382
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_refuter_prompt_with_special_chars",
+        "line": 391
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_judge_prompt_different_judges",
+        "line": 399
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_build_judge_prompt_with_complex_verdict",
+        "line": 409
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_cache_hit_with_verdict_data",
+        "line": 425
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_with_anthropic_api_key",
+        "line": 446
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_with_claude_code_oauth_token",
+        "line": 465
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_successful_subprocess_run",
+        "line": 484
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_cache_write_failure",
+        "line": 512
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_json_decode_error_envelope",
+        "line": 540
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_json_value_error_envelope",
+        "line": 561
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_judge_json_value_error_result",
+        "line": 581
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_prover_error",
+        "line": 610
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_prover_output_invalid",
+        "line": 629
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_refuter_error",
+        "line": 648
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_refuter_output_invalid",
+        "line": 668
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_judge_error",
+        "line": 688
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_majority_veto_confirmed",
+        "line": 709
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_majority_veto_unconfirmed",
+        "line": 738
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_single_judge_veto",
+        "line": 767
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_single_judge_veto_with_details_single_veto",
+        "line": 799
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_no_veto",
+        "line": 833
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_cache_directory_creation",
+        "line": 858
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_cache_file_corruption",
+        "line": 872
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_verdict_without_veto_details",
+        "line": 888
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l6.py",
+        "function": "test_run_debate_calls_counter",
+        "line": 912
+      },
+      {
+        "file": "plugins/specgate/tests/test_l6_debate.py",
+        "function": "test_run_debate_bad_json_fails",
+        "line": 93
+      },
+      {
+        "file": "plugins/specgate/tests/test_l6_debate.py",
+        "function": "test_run_debate_unconfirmed_veto_ignored",
+        "line": 147
+      },
+      {
+        "file": "plugins/specgate/tests/test_l6_debate.py",
+        "function": "test_run_debate_confirmed_majority_veto_fails",
+        "line": 172
+      },
+      {
+        "file": "plugins/specgate/tests/test_l6_debate.py",
+        "function": "test_run_debate_cache_miss_no_token_fails",
+        "line": 199
+      }
+    ],
+    "id": "AC-7",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l6_debate.py",
+        "function": "run_debate",
+        "line": 23
+      }
+    ]
+  },
+  "AC-8": {
+    "covers": [
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_empty",
+        "line": 281
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_success",
+        "line": 287
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_failure",
+        "line": 296
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_exception",
+        "line": 311
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_malformed_output",
+        "line": 401
+      },
+      {
+        "file": "plugins/specgate/tests/test_l1_static.py",
+        "function": "test_markdownlint_with_injected_runner",
+        "line": 156
+      }
+    ],
+    "id": "AC-8",
+    "implements": [
+      {
+        "file": "plugins/specgate/src/specgate/l1_static.py",
+        "function": "check_markdownlint",
+        "line": 235
+      }
+    ]
+  }
+}

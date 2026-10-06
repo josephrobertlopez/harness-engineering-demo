@@ -1,0 +1,7 @@
+// L1 runs markdownlint on every PRD. Prose is not hard-wrapped in this repo,
+// so MD013 (80-column lines) would only teach people to ignore the output.
+{
+  "config": {
+    "MD013": false
+  }
+}

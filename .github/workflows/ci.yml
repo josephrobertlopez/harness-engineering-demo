@@ -9,12 +9,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-latest]
         python: ["3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       # No install, no secrets: the package is stdlib-only and the mock
@@ -22,3 +22,10 @@ jobs:
       # anything opens a socket.
       - name: Run tests
         run: python -m unittest discover -s tests -t . -v
+      # specgate's own suite never ran in CI before: spec-gate runs only the
+      # tests carrying a `# covers:` marker, and three Windows-only failures
+      # sat unnoticed in the rest.
+      - name: Install specgate (not editable, as a consumer would)
+        run: pip install "./plugins/specgate[dev]"
+      - name: Run specgate's own tests
+        run: python -m unittest discover -s plugins/specgate/tests -t plugins/specgate

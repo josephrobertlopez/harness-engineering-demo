@@ -213,6 +213,18 @@ class TestL3RuleDiscovery(unittest.TestCase):
             if os.path.exists(junit_path):
                 os.unlink(junit_path)
 
+    # covers: AC-4
+    def test_stats_count_tests_run_and_passed(self):
+        """The CLI's evidence line is only as honest as these counts."""
+        with tempfile.TemporaryDirectory() as tmp:
+            junit = os.path.join(tmp, 'junit.xml')
+            for fixture, expected in (('passing', {'tests': 1, 'passed': 1}),
+                                      ('failing', {'tests': 1, 'passed': 0})):
+                path = os.path.join(self.fixtures_dir, fixture)
+                stats = {}
+                check({'AC-1', 'AC-2'}, [path], [path], junit, stats=stats)
+                self.assertEqual(stats, expected, fixture)
+
 
 if __name__ == '__main__':
     unittest.main()

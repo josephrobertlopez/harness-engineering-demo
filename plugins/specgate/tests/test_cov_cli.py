@@ -198,16 +198,23 @@ class TestCheckLayer(unittest.TestCase):
         self.assertTrue(red)
         self.assertIn("SG003", {f["rule"] for f in findings})
 
-    def test_l0_runs_openspec_only_when_an_openspec_dir_exists(self) -> None:
+    def test_l0_runs_openspec_only_for_a_dir_under_openspec_changes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = make_repo(Path(tmp))
             with patch("specgate.l0_schema.check", return_value=[]) as fake:
                 check_layer(0, change_dir=tmp, cwd=tmp)
                 fake.assert_called_once_with(str(root / "prd.md"), None, None)
+            # An openspec/ dir in cwd does not make an unrelated --change an OpenSpec change.
             (root / "openspec").mkdir()
             with patch("specgate.l0_schema.check", return_value=[]) as fake:
                 check_layer(0, change_dir=tmp, cwd=tmp)
-                fake.assert_called_once_with(str(root / "prd.md"), root.name, tmp)
+                fake.assert_called_once_with(str(root / "prd.md"), None, None)
+            change = root / "openspec" / "changes" / "feat"
+            change.mkdir(parents=True)
+            (change / "prd.md").write_text(PRD)
+            with patch("specgate.l0_schema.check", return_value=[]) as fake:
+                check_layer(0, change_dir=str(change), cwd=tmp)
+                fake.assert_called_once_with(str(change / "prd.md"), "feat", tmp)
 
     def test_l1_passes_python_and_markdown_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

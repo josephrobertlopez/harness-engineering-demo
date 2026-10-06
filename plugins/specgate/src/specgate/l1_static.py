@@ -1,24 +1,30 @@
 """L1 layer for static code analysis (ruff, mypy, vulture, banned tokens, markdownlint)."""
 
 import json
-import os
 import re
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable
 from itertools import pairwise
 from pathlib import Path, PurePath
 from typing import Any
 
+from specgate.l0_schema import npx
+
 _BANNED_WORDS = ("TO" + "DO", "FIX" + "ME", "X" + "XX", "@sk" + "ip", "skip" + "Test", "expected" + "Failure")
 _BANNED = re.compile(r"\b(" + "|".join(_BANNED_WORDS) + r")\b")
 _MARKER_LINE = re.compile(r"^\s*# (implements|covers): AC-\d+")
+_MDL_LINE = re.compile(
+    r"^(?P<file>(?:[A-Za-z]:)?[^:]+):(?P<line>\d+)(?::\d+)?\s+(?:error\s+|warning\s+)?"
+    r"(?P<rule>MD\d+(?:/[\w-]+)*)\s+(?P<msg>.+)$"
+)
 
 
 def _is_marker_line(path: str, row: int) -> bool:
     """True when line `row` of `path` is an AC marker comment (not commented-out code)."""
     try:
-        lines = Path(path).read_text().splitlines()
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeDecodeError):
         return False
     return 0 < row <= len(lines) and bool(_MARKER_LINE.match(lines[row - 1]))
@@ -110,25 +116,27 @@ def check_mypy(paths: list[str], runner: Callable[..., Any] | None = None) -> li
     if not paths:
         return []
 
-    # Run mypy --strict on the package (not individual files)
-    # We'll target the specgate package directly
-    cmd = [sys.executable, '-m', 'mypy', '--strict', '--cache-dir', os.devnull, 'specgate']
-
-    try:
-        result = runner(cmd, capture_output=True, text=True)
-    except (OSError, subprocess.CalledProcessError) as e:
-        return [{'rule': 'SG102', 'file': '', 'line': 0, 'message': f'mypy error: {e}'}]
+    # This used to check the literal target 'specgate' whatever it was given.
+    # Outside this repo mypy answered "Cannot read file", the parser below
+    # found no `file:line:col: error:` lines in that, and L1 stayed green
+    # without type-checking anything.
+    with tempfile.TemporaryDirectory() as cache:
+        cmd = [sys.executable, '-m', 'mypy', '--strict', '--show-column-numbers',
+               '--cache-dir', cache] + paths
+        try:
+            result = runner(cmd, capture_output=True, text=True)
+        except (OSError, subprocess.CalledProcessError) as e:
+            return [{'rule': 'SG102', 'file': '', 'line': 0, 'message': f'mypy error: {e}'}]
 
     if result.returncode == 0:
         return []
 
     findings = []
-    # Parse mypy output: file.py:line: error: message
     for line in result.stdout.split('\n'):
         if not line.strip():
             continue
-        # Match pattern: path/to/file.py:123:45: error: message
-        match = re.match(r'^([^:]+):(\d+):\d+: error: (.+)$', line)
+        # path/to/file.py:123:45: error: message (a drive letter's colon is allowed)
+        match = re.match(r'^((?:[A-Za-z]:)?[^:]+):(\d+):\d+: error: (.+)$', line)
         if match:
             findings.append({
                 'rule': 'SG102',
@@ -136,6 +144,12 @@ def check_mypy(paths: list[str], runner: Callable[..., Any] | None = None) -> li
                 'line': int(match.group(2)),
                 'message': match.group(3)
             })
+
+    # A non-zero exit that names no file:line is a tool failure, not a pass.
+    if not findings:
+        detail = (result.stderr or result.stdout or '').strip()
+        findings.append({'rule': 'SG102', 'file': '', 'line': 0,
+                         'message': f'mypy exited {result.returncode}: {detail[:500]}'})
 
     return findings
 
@@ -207,9 +221,9 @@ def check_banned_tokens(paths: list[str]) -> list[dict[str, Any]]:
         if _is_fixture(path):
             continue
         try:
-            with open(path, 'r') as f:
+            with open(path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-        except OSError as e:
+        except (OSError, UnicodeDecodeError) as e:
             findings.append({
                 'rule': 'SG104',
                 'file': path,
@@ -249,8 +263,7 @@ def check_markdownlint(md_paths: list[str], runner: Callable[..., Any] | None = 
     if not md_paths:
         return []
 
-    # Run npx markdownlint-cli2
-    cmd = ['npx', '-y', 'markdownlint-cli2'] + md_paths
+    cmd = [npx(), '-y', 'markdownlint-cli2'] + md_paths
 
     try:
         result = runner(cmd, capture_output=True, text=True)
@@ -260,20 +273,26 @@ def check_markdownlint(md_paths: list[str], runner: Callable[..., Any] | None = 
     if result.returncode == 0:
         return []
 
+    # markdownlint-cli2 writes findings to stderr as
+    # `file.md:3:81 error MD013/line-length Line length [...]`, with the column
+    # and the severity word optional. This used to read stdout only, expect
+    # `file:line:col MD001 msg`, and drop everything else -- exit 1, no
+    # findings, L1 green: markdownlint had never failed a file.
     findings = []
-    # Parse markdownlint output: file.md:123:4 MD001 message
-    for line in result.stdout.split('\n'):
-        if not line.strip():
-            continue
-        # Match pattern: file.md:line:col rule message
-        match = re.match(r'^([^:]+):(\d+):\d+ (\w+) (.+)$', line)
+    output = '\n'.join(s for s in (result.stdout, result.stderr) if isinstance(s, str) and s)
+    for line in output.split('\n'):
+        match = _MDL_LINE.match(line.strip())
         if match:
             findings.append({
                 'rule': 'SG105',
-                'file': match.group(1),
-                'line': int(match.group(2)),
-                'message': f"{match.group(3)}: {match.group(4)}"
+                'file': match.group('file'),
+                'line': int(match.group('line')),
+                'message': f"{match.group('rule')}: {match.group('msg')}"
             })
+
+    if not findings:
+        findings.append({'rule': 'SG105', 'file': '', 'line': 0,
+                         'message': f'markdownlint exited {result.returncode}: {output.strip()[:500]}'})
 
     return findings
 
@@ -281,7 +300,8 @@ def check_markdownlint(md_paths: list[str], runner: Callable[..., Any] | None = 
 def check(
     paths: list[str],
     md_paths: list[str] | None = None,
-    runner: Callable[..., Any] | None = None
+    runner: Callable[..., Any] | None = None,
+    typed_paths: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Run all L1 static checks on Python and Markdown files.
@@ -290,6 +310,9 @@ def check(
         paths: List of Python file paths to check
         md_paths: List of markdown file paths to check (optional)
         runner: Optional subprocess runner (default: subprocess.run)
+        typed_paths: Files held to mypy --strict (default: all of `paths`).
+            The CLI passes implementation files only: strict typing is a
+            bar for the code an AC ships, not for the tests that exercise it.
 
     Returns:
         Combined list of findings from all checks
@@ -305,7 +328,7 @@ def check(
     # Run all checks
     if paths:
         findings.extend(check_ruff(paths, runner=runner))
-        findings.extend(check_mypy(paths, runner=runner))
+        findings.extend(check_mypy(paths if typed_paths is None else typed_paths, runner=runner))
         findings.extend(check_vulture(paths, runner=runner))
         findings.extend(check_banned_tokens(paths))
 

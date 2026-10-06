@@ -56,7 +56,7 @@ def _covered_lines(test_dir: str, test_ids: list[str]) -> set[tuple[str, int]]:
 
 def _impl_lines(marker: MarkerLocation) -> list[int]:
     """Executable lines of the function a marker is attached to ([] if not found)."""
-    source = Path(marker.file).read_text()
+    source = Path(marker.file).read_text(encoding="utf-8")
     key = marker.qualname.split(":", 1)[1]
     info = _extract_functions(source, marker.file).get(key)
     return _executable_lines(info[1]) if info else []
@@ -64,10 +64,15 @@ def _impl_lines(marker: MarkerLocation) -> list[int]:
 
 # implements: AC-5
 def check(
-    ac_ids: set[str], src_dirs: list[str], test_dirs: list[str]
+    ac_ids: set[str], src_dirs: list[str], test_dirs: list[str],
+    stats: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
-    """SG401 for each implementation line not executed by that AC's own tests."""
+    """SG401 for each implementation line not executed by that AC's own tests.
+
+    `stats`, when given, receives counts for the CLI's evidence line.
+    """
     findings: list[dict[str, Any]] = []
+    checked = 0
     for ac_id, markers in sorted(get_marker_map(src_dirs, test_dirs).items()):
         impls = [m for m in markers if m.marker_type == "implements"]
         covers = [m for m in markers if m.marker_type == "covers"]
@@ -85,6 +90,7 @@ def check(
         for impl in impls:
             real = os.path.realpath(impl.file)
             for line in _impl_lines(impl):
+                checked += 1
                 if (real, line) not in covered:
                     findings.append({
                         "rule": "SG401",
@@ -95,4 +101,6 @@ def check(
                     })
 
     findings.sort(key=lambda f: (f["file"], f["line"], f["rule"]))
+    if stats is not None:
+        stats["lines"] = checked
     return findings

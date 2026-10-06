@@ -1,6 +1,8 @@
+# Run with the project venv active. `python -m` instead of .venv/bin/... because
+# Windows venvs put executables in .venv/Scripts, and the old path failed there.
 pre-commit:
   commands:
     specgate:
-      run: .venv/bin/specgate check --layers L0-L2 --staged
+      run: python -m specgate check --layers L0-L2 --staged
     unittest:
-      run: env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE .venv/bin/python -m unittest discover -s tests -t .
+      run: env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE python -m unittest discover -s tests -t .

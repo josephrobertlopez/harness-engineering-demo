@@ -20,6 +20,7 @@ def load_tests(loader, tests, _pattern):
 
     # Add the rule verification tests from this module
     suite.addTests(loader.loadTestsFromTestCase(TestL2RuleDiscovery))
+    suite.addTests(loader.loadTestsFromTestCase(TestSG206))
 
     return suite
 
@@ -87,6 +88,18 @@ class TestL2RuleDiscovery(unittest.TestCase):
     def test_sg205_rule_produced(self):
         """Verify SG205 rule is produced by sg205 fixture."""
         self.assertIn('SG205', self._rules('sg205'))
+
+
+class TestSG206(unittest.TestCase):
+    """An AC with neither an implements nor a covers marker used to pass L2."""
+
+    # covers: AC-3
+    def test_ac_with_no_markers_at_all_is_sg206(self):
+        findings = check({"AC-1", "AC-2"}, [], [], prd_path="prd.md")
+        self.assertEqual([(f["rule"], f["file"], f["message"]) for f in findings], [
+            ("SG206", "prd.md", "AC-1 has no '# implements: AC-1' code and no '# covers: AC-1' test"),
+            ("SG206", "prd.md", "AC-2 has no '# implements: AC-2' code and no '# covers: AC-2' test"),
+        ])
 
 
 if __name__ == '__main__':

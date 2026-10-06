@@ -47,6 +47,8 @@ class TestL0MissingThen(unittest.TestCase):
         self.assertTrue(len(sg003_findings) > 0,
                        f"Expected SG003 findings for missing-then.md, got: {findings}")
         self.assertEqual(sg003_findings[0]['rule'], 'SG003')
+        # The AC is named by its 1-based position; L5 showed nothing pinned it.
+        self.assertEqual([f['message'] for f in sg003_findings], ["AC 1 missing 'then' field"])
 
 
 class TestL0NoTests(unittest.TestCase):
@@ -62,6 +64,7 @@ class TestL0NoTests(unittest.TestCase):
         self.assertTrue(len(sg003_findings) > 0,
                        f"Expected SG003 findings for no-tests.md, got: {findings}")
         self.assertEqual(sg003_findings[0]['rule'], 'SG003')
+        self.assertEqual([f['message'] for f in sg003_findings], ["AC 1 missing or empty 'tests' field"])
 
 
 class TestL0NoFrontmatter(unittest.TestCase):

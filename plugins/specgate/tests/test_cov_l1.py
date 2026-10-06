@@ -137,7 +137,11 @@ class TestCheckMypy(unittest.TestCase):
 
     # covers: AC-2
     def test_check_mypy_malformed_output(self) -> None:
-        """Test mypy with malformed output."""
+        """A failing mypy whose output names no file:line is a tool failure, not a pass.
+
+        This used to assert zero findings, which is how a mypy call aimed at a
+        path that did not exist ("Cannot read file") passed silently.
+        """
         mock_runner = Mock()
         mock_runner.return_value = Mock(
             returncode=1,
@@ -146,7 +150,45 @@ class TestCheckMypy(unittest.TestCase):
         )
 
         findings = check_mypy(['test.py'], runner=mock_runner)
-        self.assertEqual(len(findings), 0)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]['rule'], 'SG102')
+        self.assertEqual(findings[0]['file'], '')
+        self.assertIn('mypy exited 1: malformed output', findings[0]['message'])
+
+    # covers: AC-2
+    def test_check_mypy_checks_the_paths_it_is_given(self) -> None:
+        mock_runner = Mock(return_value=Mock(returncode=0, stdout='', stderr=''))
+        check_mypy(['src/a.py', 'src/b.py'], runner=mock_runner)
+        cmd = mock_runner.call_args[0][0]
+        self.assertEqual(cmd[-2:], ['src/a.py', 'src/b.py'])
+        self.assertNotIn('specgate', cmd)
+        self.assertIn('--show-column-numbers', cmd)
+
+    # covers: AC-2
+    def test_check_mypy_parses_a_windows_drive_path(self) -> None:
+        mock_runner = Mock(return_value=Mock(
+            returncode=1, stdout='C:\\repo\\src\\a.py:3:5: error: Bad [misc]\n', stderr=''))
+        findings = check_mypy(['a.py'], runner=mock_runner)
+        self.assertEqual([(f['file'], f['line']) for f in findings], [('C:\\repo\\src\\a.py', 3)])
+
+    # covers: AC-2
+    def test_check_mypy_against_a_real_strict_error(self) -> None:
+        """No mock: the real tool, on a real file, must produce a real finding."""
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = os.path.join(tmp, 'untyped.py')
+            Path(bad).write_text('def add(a, b):\n    return a + b\n', encoding='utf-8')
+            findings = check_mypy([bad])
+        self.assertEqual([(f['rule'], f['line']) for f in findings], [('SG102', 1)])
+
+    # covers: AC-2
+    def test_check_runs_mypy_only_on_typed_paths(self) -> None:
+        mock_runner = Mock(return_value=Mock(returncode=0, stdout='[]', stderr=''))
+        with patch('specgate.l1_static.check_markdownlint', return_value=[]):
+            check(['src/a.py', 'tests/test_a.py'], runner=mock_runner, typed_paths=['src/a.py'])
+        mypy_cmds = [c[0][0] for c in mock_runner.call_args_list if 'mypy' in c[0][0]]
+        self.assertEqual(len(mypy_cmds), 1)
+        self.assertEqual(mypy_cmds[0][-1], 'src/a.py')
+        self.assertNotIn('tests/test_a.py', mypy_cmds[0])
 
 
 class TestCheckVulture(unittest.TestCase):

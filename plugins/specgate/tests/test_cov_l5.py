@@ -12,7 +12,9 @@ from specgate.l5_mut import (
     MutantGenerator,
     _function_lines,
     _generate_source_mutant,
+    _import_root,
     _run_tests,
+    _Sandbox,
     _survives,
     check,
 )
@@ -423,17 +425,107 @@ class TestCheck(unittest.TestCase):
             self.assertEqual(check({"AC-1"}, [src], [tests]), [])
 
     # covers: AC-6
-    def test_unmutable_implementation_has_no_findings(self) -> None:
+    def test_unmutable_implementation_is_sg503_not_a_pass(self) -> None:
+        """This used to assert [] -- "0/0 mutants killed" read as green."""
         with tempfile.TemporaryDirectory() as tmp:
             src, tests = project(tmp, "# implements: AC-1\ndef add(a, b):\n    pass\n", WEAK)
-            self.assertEqual(check({"AC-1"}, [src], [tests]), [])
+            stats: dict[str, int] = {}
+            findings = check({"AC-1"}, [src], [tests], stats=stats)
+            self.assertEqual([(f["rule"], f["line"]) for f in findings], [("SG503", 2)])
+            self.assertIn("AC-1: no mutable operation", findings[0]["message"])
+            self.assertEqual(stats, {"mutants": 0, "killed": 0})
+
+    # covers: AC-6
+    def test_one_mutable_ac_does_not_hide_an_unmutable_one(self) -> None:
+        impl = IMPL + "\n\n# implements: AC-2\ndef noop():\n    pass\n"
+        test = STRONG + "\n    # covers: AC-2\n    def test_noop(self):\n        self.assertIsNone(impl.noop())\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            src, tests = project(tmp, impl, test)
+            findings = check({"AC-1", "AC-2"}, [src], [tests])
+            self.assertEqual([f["rule"] for f in findings], ["SG503"])
+            self.assertIn("AC-2", findings[0]["message"])
 
     # covers: AC-6
     def test_survives_uses_mutant_not_original_when_in_same_directory(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "impl.py").write_text("def add(a, b):\n    return a + b\n")
             Path(tmp, "test_impl.py").write_text(STRONG)
-            test = os.path.join(tmp, "test_impl.py")
             impl = os.path.join(tmp, "impl.py")
-            self.assertFalse(_survives(impl, "def add(a, b):\n    return a - b\n", [test]))
-            self.assertTrue(_survives(impl, "def add(a, b):\n    return a + b\n", [test]))
+            box = _Sandbox([impl, os.path.join(tmp, "test_impl.py")])
+            try:
+                tests = {tmp: ["test_impl"]}
+                self.assertFalse(_survives(box, impl, "def add(a, b):\n    return a - b\n", tests))
+                self.assertTrue(_survives(box, impl, "def add(a, b):\n    return a + b\n", tests))
+                # The copy is restored after each mutant, and the original never touched.
+                self.assertTrue(box.passes(tests))
+                self.assertEqual(Path(impl).read_text(), "def add(a, b):\n    return a + b\n")
+            finally:
+                box.close()
+
+
+PKG_IMPL = "# implements: AC-1\ndef add(a, b):\n    return a + b\n"
+PKG_TEST = (
+    "import unittest\nfrom pathlib import Path\nfrom calc.ops import add\n\n\n"
+    "class T(unittest.TestCase):\n"
+    "    # covers: AC-1\n    def test_add(self):\n"
+    "        self.assertTrue((Path(__file__).parent / 'fixtures' / 'data.txt').is_file())\n"
+    "        self.assertEqual(add(1, 2), 3)\n"
+)
+
+
+def package_project(root: str, test: str = PKG_TEST) -> tuple[str, str]:
+    """src/calc/ops.py as a package; tests/ needs a fixture beside __file__."""
+    pkg = Path(root, "src", "calc")
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("")
+    (pkg / "ops.py").write_text(PKG_IMPL)
+    tests = Path(root, "tests")
+    (tests / "fixtures").mkdir(parents=True)
+    (tests / "fixtures" / "data.txt").write_text("x")
+    (tests / "test_ops.py").write_text(test)
+    return str(pkg), str(tests)
+
+
+class TestSandboxIsReal(unittest.TestCase):
+    """The flat-copy sandbox made every mutant of a package or fixture-using test 'killed'."""
+
+    # covers: AC-6
+    def test_package_layout_with_fixtures_is_mutated_for_real(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            src, tests = package_project(tmp)
+            stats: dict[str, int] = {}
+            self.assertEqual(check({"AC-1"}, [src], [tests], stats=stats), [])
+            self.assertEqual(stats, {"mutants": 2, "killed": 2})
+
+    # covers: AC-6
+    def test_weak_package_test_now_leaves_survivors(self) -> None:
+        weak = PKG_TEST.replace("self.assertEqual(add(1, 2), 3)", "self.assertTrue(add)")
+        with tempfile.TemporaryDirectory() as tmp:
+            src, tests = package_project(tmp, weak)
+            stats: dict[str, int] = {}
+            findings = check({"AC-1"}, [src], [tests], stats=stats)
+            self.assertEqual([f["rule"] for f in findings], ["SG501", "SG501"])
+            self.assertEqual(stats, {"mutants": 2, "killed": 0})
+
+    # covers: AC-6
+    def test_tests_failing_unmutated_are_sg502_not_kills(self) -> None:
+        broken = PKG_TEST.replace("add(1, 2), 3", "add(1, 2), 4")
+        with tempfile.TemporaryDirectory() as tmp:
+            src, tests = package_project(tmp, broken)
+            stats: dict[str, int] = {}
+            findings = check({"AC-1"}, [src], [tests], stats=stats)
+            self.assertEqual([(f["rule"], f["line"]) for f in findings], [("SG502", 8)])
+            self.assertIn("before any mutation", findings[0]["message"])
+            self.assertEqual(stats, {"mutants": 0, "killed": 0})
+
+    # covers: AC-6
+    def test_no_plan_reports_zero_counts(self) -> None:
+        stats: dict[str, int] = {}
+        self.assertEqual(check({"AC-1"}, [], [], stats=stats), [])
+        self.assertEqual(stats, {"mutants": 0, "killed": 0})
+
+    def test_import_root_is_above_the_outermost_package(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            src, _ = package_project(tmp)
+            self.assertEqual(_import_root(Path(src) / "ops.py"), Path(tmp, "src"))
+            self.assertEqual(_import_root(Path(tmp, "tests", "test_ops.py")), Path(tmp, "tests"))

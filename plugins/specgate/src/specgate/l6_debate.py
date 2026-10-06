@@ -14,9 +14,13 @@ import hashlib
 import json
 import os
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any
+
+
+def _command(claude_bin: str | Sequence[str]) -> list[str]:
+    return [claude_bin] if isinstance(claude_bin, str) else list(claude_bin)
 
 
 # implements: AC-7
@@ -24,7 +28,7 @@ def run_debate(
     change_dir: Path,
     inputs: dict[str, Any],
     recheck: Callable[[str, str, str], bool],
-    claude_bin: str = "claude",
+    claude_bin: str | Sequence[str] = "claude",
     env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Run the L6 debate layer.
@@ -33,7 +37,9 @@ def run_debate(
         change_dir: Directory for debate cache and outputs
         inputs: Inputs to the debate (prover/refuter context)
         recheck: Function to verify a veto's file:line:claim (returns True if confirmed)
-        claude_bin: Path to claude CLI binary
+        claude_bin: Path to claude CLI binary, or a command prefix such as
+            [sys.executable, "stub.py"] (an extensionless script cannot be
+            executed directly on Windows)
         env: Optional environment dict (defaults to os.environ)
 
     Returns:
@@ -53,7 +59,7 @@ def run_debate(
     cache_data = {}
     if cache_file.exists():
         try:
-            cache_data = json.loads(cache_file.read_text())
+            cache_data = json.loads(cache_file.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             cache_data = {}
 
@@ -197,7 +203,7 @@ def run_debate(
 
 
 def _run_judge(
-    claude_bin: str,
+    claude_bin: str | Sequence[str],
     prompt: str,
     model: str,
     cache_data: dict[str, Any],
@@ -229,7 +235,7 @@ def _run_judge(
     # Cache miss and we have token - run subprocess
     try:
         result = subprocess.run(
-            [claude_bin, "-p", "--model", model, "--output-format", "json"],
+            [*_command(claude_bin), "-p", "--model", model, "--output-format", "json"],
             input=prompt,
             capture_output=True,
             text=True,
@@ -262,7 +268,7 @@ def _run_judge(
     # Cache the result
     cache_data[cache_key] = {"verdict": verdict}
     try:
-        cache_file.write_text(json.dumps(cache_data, sort_keys=True))
+        cache_file.write_text(json.dumps(cache_data, sort_keys=True), encoding="utf-8")
     except OSError:
         pass  # Ignore cache write failures
 

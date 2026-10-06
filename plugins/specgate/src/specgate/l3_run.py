@@ -129,13 +129,20 @@ def write_junit(
 
 # implements: AC-4
 def check(
-    ac_ids: set[str], src_dirs: list[str], test_dirs: list[str], junit_path: str
+    ac_ids: set[str], src_dirs: list[str], test_dirs: list[str], junit_path: str,
+    stats: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
-    """Run the tests, write JUnit, and flag SG301 (non-PASS) / SG302 (never ran)."""
+    """Run the tests, write JUnit, and flag SG301 (non-PASS) / SG302 (never ran).
+
+    `stats`, when given, receives counts for the CLI's evidence line.
+    """
     findings: list[dict[str, Any]] = []
     ac_map = get_marker_map(src_dirs, test_dirs)
     results = [r for test_dir in test_dirs for r in run_tests(test_dir, test_dir)]
     write_junit(results, ac_map, junit_path)
+    if stats is not None:
+        stats["tests"] = len(results)
+        stats["passed"] = sum(r.status == "PASS" for r in results)
 
     covers = [
         (ac_id, marker)

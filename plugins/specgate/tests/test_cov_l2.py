@@ -467,8 +467,8 @@ class TestCheckWithExceptionHandling(unittest.TestCase):
     def test_check_with_file_not_found(self) -> None:
         """Test check with non-existent files."""
         findings = check({'AC-1'}, ['/nonexistent/src.py'], ['/nonexistent/test.py'])
-        # Should complete without error, just no findings
-        self.assertEqual(len(findings), 0)
+        # Completes without error; the only finding is that AC-1 has no markers.
+        self.assertEqual([f['rule'] for f in findings], ['SG206'])
 
 
 class TestMarkerLocationQualname(unittest.TestCase):
@@ -1029,15 +1029,15 @@ class TestCheckExceptionHandling(unittest.TestCase):
     def test_check_with_unreadable_source_file(self) -> None:
         """Test check handles unreadable source files gracefully."""
         findings = check({'AC-1'}, ["/nonexistent/path.py"], [])
-        # Should return empty findings (exception caught)
-        self.assertEqual(findings, [])
+        # Exception caught; the only finding is that AC-1 has no markers.
+        self.assertEqual([f['rule'] for f in findings], ['SG206'])
 
     # covers: AC-3
     def test_check_with_unreadable_test_file(self) -> None:
         """Test check handles unreadable test files gracefully."""
         findings = check({'AC-1'}, [], ["/nonexistent/path.py"])
-        # Should return empty findings (exception caught)
-        self.assertEqual(findings, [])
+        # Exception caught; the only finding is that AC-1 has no markers.
+        self.assertEqual([f['rule'] for f in findings], ['SG206'])
 
 
 class TestScanMarkersExceptionHandling(unittest.TestCase):
@@ -1171,5 +1171,5 @@ def test_ac1_case2():
             test_file.write_text("# also not a marker\ndef test_foo():\n    assert True\n")
 
             findings = check({'AC-1'}, [str(src_file)], [str(test_file)])
-            # No markers found, so no violations
-            self.assertEqual(len(findings), 0)
+            # A non-marker comment is not a marker: AC-1 is simply unmarked.
+            self.assertEqual([f['rule'] for f in findings], ['SG206'])

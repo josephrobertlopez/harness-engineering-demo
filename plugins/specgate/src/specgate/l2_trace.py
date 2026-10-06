@@ -27,10 +27,22 @@ class MarkerLocation:
     qualname: str = ""
 
 
+SKIP_MARKER = ".specgate-skip"
+
+
 def iter_py_files(directory: str) -> list[Path]:
-    """Sorted .py files under directory, skipping tool caches and test-data `fixtures` dirs."""
+    """Sorted .py files under directory, skipping tool caches, test-data `fixtures` dirs,
+    and any directory holding a `.specgate-skip` file.
+
+    The marker file exists for vendored code: a repo that keeps a copy of
+    specgate (or any tool carrying its own `# implements:` markers) would
+    otherwise have those markers read as its own ACs.
+    """
     found: list[Path] = []
     for root, dirs, files in os.walk(directory):
+        if SKIP_MARKER in files:
+            dirs[:] = []
+            continue
         dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS and d != "fixtures")
         found.extend(Path(root) / name for name in sorted(files) if name.endswith(".py"))
     return found
@@ -125,7 +137,7 @@ def _is_empty_body(func_node: ast.FunctionDef) -> bool:
 def _read(path: Path) -> str | None:
     """Read a file as text; None when it is unreadable or not UTF-8."""
     try:
-        return path.read_text()
+        return path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         return None
 
@@ -184,12 +196,20 @@ def _finding(rule: str, file: str, line: int, message: str) -> dict[str, Any]:
 
 # implements: AC-3
 def check(
-    ac_ids: set[str], src_paths: list[str], test_paths: list[str]
+    ac_ids: set[str], src_paths: list[str], test_paths: list[str], prd_path: str = ""
 ) -> list[dict[str, Any]]:
-    """Check AC marker violations SG201..SG205 over source and test files."""
+    """Check AC marker violations SG201..SG206 over source and test files."""
     findings: list[dict[str, Any]] = []
     implemented = _collect(src_paths, "implements", False)
     covered = _collect(test_paths, "covers", True)
+
+    # SG201/SG202 need one side of the pair to exist, so an AC nobody had
+    # started passed L2 -- the opposite of "every AC is implemented and covered".
+    for ac_id in sorted(ac_ids - implemented.keys() - covered.keys()):
+        findings.append(_finding(
+            "SG206", prd_path, 0,
+            f"{ac_id} has no '# implements: {ac_id}' code and no '# covers: {ac_id}' test",
+        ))
 
     for ac_id, tests in covered.items():
         if ac_id not in implemented:

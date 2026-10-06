@@ -1,9 +1,8 @@
-#!/bin/bash
-# Stub claude that returns a good pass response
+"""Stub claude that returns a good pass response."""
+import sys
 
-cat <<'EOF'
-{
+sys.stdout.write(r"""{
   "stop_reason": "end_turn",
   "result": "{\"verdict\":\"pass\",\"file\":\"\",\"line\":\"\",\"claim\":\"\"}"
 }
-EOF
+""")

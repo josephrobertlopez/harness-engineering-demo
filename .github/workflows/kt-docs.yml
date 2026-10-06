@@ -8,9 +8,9 @@ permissions:
 
 jobs:
   kt-docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Require an added or changed file under docs/kt/
@@ -24,7 +24,7 @@ jobs:
             files="$(jq -r '.act_changed_files[]' "$GITHUB_EVENT_PATH")"
           else
             git fetch --no-tags origin "$BASE_REF"
-            files="$(git diff --name-only --diff-filter=AM "origin/$BASE_REF...HEAD")"
+            files="$(git diff --name-only --diff-filter=AMR "origin/$BASE_REF...HEAD")"
           fi
           echo "added/changed files:"; echo "$files"
           if grep -Eq '^docs/kt/' <<<"$files"; then

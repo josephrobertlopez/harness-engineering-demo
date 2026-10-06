@@ -81,6 +81,16 @@ class TestL4CoverageRules(unittest.TestCase):
             f"Fully covered AC should not produce SG401, but got: {sg401_findings}",
         )
 
+    # covers: AC-5
+    def test_stats_count_every_implementation_line_checked(self) -> None:
+        """validate_positive has three executable lines (7, 8, 10) in both fixtures."""
+        for fixture, sg401 in (("covered", []), ("uncovered", [10])):
+            path = os.path.join(self.fixtures_dir, fixture)
+            stats: dict[str, int] = {}
+            findings = check({"AC-1"}, [path], [path], stats=stats)
+            self.assertEqual(stats, {"lines": 3}, fixture)
+            self.assertEqual([f["line"] for f in findings], sg401, fixture)
+
     def test_findings_deterministic(self) -> None:
         """Verify findings are sorted and deterministic."""
         fixture_path = os.path.join(self.fixtures_dir, "uncovered")

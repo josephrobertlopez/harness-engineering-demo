@@ -52,32 +52,59 @@ The change directory is `openspec/changes/<feature>/`. Use `openspec/changes/spe
 
 ## Running it locally
 
-Install once:
+Install once (not editable, the way a consumer installs it, and the way CI does):
 
 ```bash
-uv venv --python 3.12 && uv pip install -e "plugins/specgate[dev]"
+uv venv --python 3.12 && uv pip install "plugins/specgate[dev]"
 ```
 
-Check a change:
+Check a change, with the venv active (`python -m specgate` works whether the
+venv keeps executables in `bin/` or, on Windows, `Scripts/`):
 
 ```bash
-.venv/bin/specgate check --change openspec/changes/specgate --layers L0-L5
-npx -y @fission-ai/openspec@1.14.0 validate specgate --strict
+python -m specgate check --change openspec/changes/specgate --layers L0-L5
 ```
 
-Run the unit tests of the plugin itself:
+A green run prints one line per layer saying what it looked at, for example
+`L5 ok: 33/33 mutants killed`. A gate that prints nothing cannot be told apart
+from one that checked nothing.
+
+Run the unit tests of the plugin itself (CI runs these too, on Linux and Windows):
 
 ```bash
-cd plugins/specgate && ../../.venv/bin/python -m unittest discover -s tests -t .
+python -m unittest discover -s plugins/specgate/tests -t plugins/specgate
 ```
 
 L6 (debate) is not enforced in CI. The `specgate` CLI does not run it (`--layers L6` exits 2 with "L6 is not run by the CLI; use run_debate()") and no debate cache is committed, so CI replays nothing. The debate code lives in `plugins/specgate/src/specgate/` and is exercised by the plugin's unit tests. CI shows "L6 debate: run locally, see docs/kt/specgate; not enforced in CI yet".
 
 Calibration, run locally (`.specgate/evidence/T16/calibration.json`, not committed to CI): the panel caught 5/5 bad fixtures and the L6 panel blocked 0/4 good ones. Caveat: the same file records `good_wrongly_blocked: 4`, because an earlier layer (L1, rule SG101) flagged all four good fixtures. So only the L6 result is 0/4; the end-to-end result in that artifact is not.
 
-lefthook (`lefthook.yml`) runs `.venv/bin/specgate`, so create the `.venv` first.
+lefthook (`lefthook.yml`) runs `python -m specgate`, so activate the venv before committing.
 
 To run the same workflows CI runs, use `act`. See [tutorials/act/README.md](../../../tutorials/act/README.md) for the setup and the exact commands.
+
+## Using specgate from another repo
+
+1. Install it: `pip install "git+https://github.com/josephrobertlopez/harness-engineering-demo@<sha>#subdirectory=plugins/specgate"`, or keep a copy inside the repo.
+2. A vendored copy carries specgate's own `# implements:` markers. Put an empty `.specgate-skip` file at its root, or those markers are read as your repo's ACs.
+3. Run from the repo root with `--change openspec/changes/<name>`. The OpenSpec check runs only for a directory that is exactly `openspec/changes/<name>`.
+4. Write tests as unittest `TestCase` methods. L3 discovers with unittest, and L4 and L5 run single test ids such as `test_x.TestY.test_z`.
+
+What each rule found the first time it ran for real, so you know they bite:
+
+| Rule | Meaning | Why it exists |
+|---|---|---|
+| SG206 | An AC has no `implements` and no `covers` marker | Before it, an AC nobody had started passed L2 |
+| SG502 | The AC's tests fail in the L5 sandbox before any mutation | The old sandbox flattened every module into one folder; specgate's own tests could not run there, so every mutant counted as killed and L5 measured nothing |
+| SG503 | An AC's code has nothing L5 can mutate | Otherwise `0/0 mutants killed` reads as a pass |
+| SG102 | mypy failed, including a failure that names no file | mypy used to be run on the literal name `specgate`, answered "Cannot read file", and L1 stayed green |
+
+Known limits:
+
+- **AC ids are global.** Two active changes, or the markers an archived change leaves behind, collide. Keep one active change per repo.
+- **Only one AC per marker.** `# covers: AC-1, AC-2` reads only `AC-1`.
+- **Small mutation set.** L5 applies one mutant per operator type, at the first eligible node, and does not follow calls out of the marked function.
+- **Slow.** A real L5 run is slow (about nine minutes for specgate's own change); the old one took under two minutes because it measured nothing.
 
 ## Where things live
 

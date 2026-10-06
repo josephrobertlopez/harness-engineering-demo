@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,10 @@ class TestL6Debate(unittest.TestCase):
         self.bin_dir = self.fixtures_dir / "bin"
         self.bin_dir.mkdir(exist_ok=True)
 
+    def stub(self, name):
+        """Run a stub through the interpreter: Windows cannot exec an extensionless script."""
+        return [sys.executable, str(self.bin_dir / f"{name}.py")]
+
     def test_run_debate_good_pass_all_judges(self):
         """Test when all judges vote pass."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -41,7 +46,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "added foo()"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "good-pass"),
+                claude_bin=self.stub("good-pass"),
                 env=env,
             )
 
@@ -80,7 +85,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "good-pass"),
+                claude_bin=self.stub("good-pass"),
                 env=env,
             )
 
@@ -107,7 +112,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "bad-json"),
+                claude_bin=self.stub("bad-json"),
                 env=env,
             )
 
@@ -133,7 +138,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "truncated"),
+                claude_bin=self.stub("truncated"),
                 env=env,
             )
 
@@ -160,7 +165,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "veto-unconfirmed"),
+                claude_bin=self.stub("veto-unconfirmed"),
                 env=env,
             )
 
@@ -185,7 +190,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "veto-confirmed"),
+                claude_bin=self.stub("veto-confirmed"),
                 env=env,
             )
 
@@ -209,15 +214,13 @@ class TestL6Debate(unittest.TestCase):
                    if k not in ("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")}
 
             # Create a mock stub that should never be called
-            stub_path = self.bin_dir / "should-not-be-called"
-            stub_path.write_text("#!/bin/bash\nexit 1\n")
-            stub_path.chmod(0o755)
+            stub_path = self.bin_dir / "should-not-be-called.py"
 
             result = run_debate(
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(stub_path),
+                claude_bin=[sys.executable, str(stub_path)],
                 env=env,
             )
 
@@ -274,15 +277,13 @@ class TestL6Debate(unittest.TestCase):
                    if k not in ("CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY")}
 
             # Stub that should never be called
-            stub_path = self.bin_dir / "should-not-be-called"
-            stub_path.write_text("#!/bin/bash\nexit 1\n")
-            stub_path.chmod(0o755)
+            stub_path = self.bin_dir / "should-not-be-called.py"
 
             result = run_debate(
                 change_dir=change_dir,
                 inputs=inputs,
                 recheck=recheck,
-                claude_bin=str(stub_path),
+                claude_bin=[sys.executable, str(stub_path)],
                 env=env,
             )
 
@@ -312,7 +313,7 @@ class TestL6Debate(unittest.TestCase):
                 change_dir=change_dir,
                 inputs={"change": "test"},
                 recheck=recheck,
-                claude_bin=str(self.bin_dir / "good-pass"),
+                claude_bin=self.stub("good-pass"),
                 env=env,
             )
 

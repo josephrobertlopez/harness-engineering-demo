@@ -1,6 +1,7 @@
 """L0 layer for PRD schema validation."""
 
 import json
+import shutil
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -9,7 +10,17 @@ from typing import Any
 import jsonschema  # type: ignore[import-untyped]
 import yaml  # type: ignore[import-untyped]
 
-DEFAULT_SCHEMA = Path(__file__).parent.parent.parent / "schema" / "prd.schema.json"
+# A wheel install puts the schema inside the package (pyproject force-include);
+# an editable install leaves it at the project root. Looking only at the root
+# made every non-editable install fail L0 on every PRD.
+_PACKAGED_SCHEMA = Path(__file__).parent / "schema" / "prd.schema.json"
+_SOURCE_SCHEMA = Path(__file__).parent.parent.parent / "schema" / "prd.schema.json"
+DEFAULT_SCHEMA = _PACKAGED_SCHEMA if _PACKAGED_SCHEMA.is_file() else _SOURCE_SCHEMA
+
+
+def npx() -> str:
+    """The npx executable. On Windows it is `npx.cmd`, which a bare "npx" never finds."""
+    return shutil.which("npx") or "npx"
 
 
 def _finding(rule: str, file: str, message: str) -> dict[str, Any]:
@@ -22,7 +33,7 @@ def parse_prd(path: str) -> tuple[dict[str, Any] | None, str | None]:
     Returns (frontmatter, error); error is None on success.
     """
     try:
-        content = Path(path).read_text()
+        content = Path(path).read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return None, f"Could not read file: {exc}"
 
@@ -49,7 +60,7 @@ def parse_prd(path: str) -> tuple[dict[str, Any] | None, str | None]:
 def check_prd(path: str, schema_path: str | None = None) -> list[dict[str, Any]]:
     """Check a PRD file against the schema and rules SG001-SG003, SG005."""
     try:
-        schema = json.loads(Path(schema_path or DEFAULT_SCHEMA).read_text())
+        schema = json.loads(Path(schema_path or DEFAULT_SCHEMA).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         return [_finding("SG005", path, f"Could not load schema: {exc}")]
 
@@ -86,7 +97,7 @@ def check_openspec(
     run = runner or subprocess.run
     try:
         result = run(
-            ["npx", "-y", "@fission-ai/openspec@1.14.0", "validate", change, "--strict"],
+            [npx(), "-y", "@fission-ai/openspec@1.14.0", "validate", change, "--strict"],
             cwd=cwd,
             capture_output=True,
             text=True,

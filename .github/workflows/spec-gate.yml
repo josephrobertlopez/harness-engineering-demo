@@ -8,21 +8,26 @@ permissions:
 
 jobs:
   spec-gate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
+      # Not editable: an editable install hid a schema path that only resolved
+      # from a source checkout, so every consumer's L0 failed and CI never saw it.
       - name: Install specgate
-        run: pip install -e "plugins/specgate[dev]"
+        run: pip install "./plugins/specgate[dev]"
       # With --change, L0 validates the change dir. L1-L5 search the change dir
       # for `# implements:` / `# covers:` markers and, when it holds none (the
       # change dir only has the PRD), fall back to the repo root, which is
-      # where plugins/specgate lives. The CLI has no option to point at another path.
+      # where plugins/specgate lives.
+      #
+      # This step writes trace.json; the next one only diffs it. Running the
+      # gate a second time to regenerate doubled the job, and L5 is the slow part.
       - name: L0-L5 on every change with a prd.md
         shell: bash
         run: |
@@ -42,9 +47,7 @@ jobs:
           set -euo pipefail
           for prd in openspec/changes/*/prd.md; do
             [ -e "$prd" ] || exit 0
-            change="$(basename "$(dirname "$prd")")"
-            trace="openspec/changes/$change/trace.json"
-            specgate check --change "openspec/changes/$change" --layers L0-L5 --output "$trace"
+            trace="$(dirname "$prd")/trace.json"
             test -f "$trace" || { echo "missing $trace" >&2; exit 1; }
           done
           git diff --exit-code -- 'openspec/changes/*/trace.json'

@@ -1,9 +1,0 @@
-#!/bin/bash
-# Stub claude that returns invalid JSON
-
-cat <<'EOF'
-{
-  "stop_reason": "end_turn",
-  "result": "NOT VALID JSON {{"
-}
-EOF

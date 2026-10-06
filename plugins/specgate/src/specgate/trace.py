@@ -7,6 +7,15 @@ from typing import Any
 from specgate.l2_trace import scan_markers
 
 
+def _portable(path: str) -> str:
+    """Forward slashes on every OS.
+
+    CI regenerates trace.json on Linux and fails on any byte difference, so a
+    trace written on Windows with backslashes could never be committed green.
+    """
+    return Path(path).as_posix()
+
+
 def gather_trace_data(
     ac_ids: set[str],
     src_dirs: list[str],
@@ -40,8 +49,7 @@ def gather_trace_data(
         if ac_id in markers:
             for marker in markers[ac_id]:
                 if marker.marker_type == "implements":
-                    # Normalize paths to be relative to repo root
-                    file_path = str(Path(marker.file))
+                    file_path = _portable(marker.file)
                     impl_locs.append({
                         "file": file_path,
                         "function": marker.funcname,
@@ -54,7 +62,7 @@ def gather_trace_data(
         if ac_id in markers:
             for marker in markers[ac_id]:
                 if marker.marker_type == "covers":
-                    file_path = str(Path(marker.file))
+                    file_path = _portable(marker.file)
                     covers_locs.append({
                         "file": file_path,
                         "function": marker.funcname,
@@ -76,7 +84,8 @@ def write_trace_json(trace_data: dict[str, Any], output_path: str) -> None:
         trace_data: Trace data dictionary
         output_path: Path to output JSON file
     """
-    with open(output_path, 'w') as f:
+    # Explicit LF and UTF-8 for the same byte-identical reason as _portable.
+    with open(output_path, 'w', encoding='utf-8', newline='\n') as f:
         json.dump(
             trace_data,
             f,

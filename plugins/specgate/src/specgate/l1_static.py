@@ -15,6 +15,10 @@ from specgate.l0_schema import npx
 _BANNED_WORDS = ("TO" + "DO", "FIX" + "ME", "X" + "XX", "@sk" + "ip", "skip" + "Test", "expected" + "Failure")
 _BANNED = re.compile(r"\b(" + "|".join(_BANNED_WORDS) + r")\b")
 _MARKER_LINE = re.compile(r"^\s*# (implements|covers): AC-\d+")
+_MDL_LINE = re.compile(
+    r"^(?P<file>(?:[A-Za-z]:)?[^:]+):(?P<line>\d+)(?::\d+)?\s+(?:error\s+|warning\s+)?"
+    r"(?P<rule>MD\d+(?:/[\w-]+)*)\s+(?P<msg>.+)$"
+)
 
 
 def _is_marker_line(path: str, row: int) -> bool:
@@ -269,20 +273,26 @@ def check_markdownlint(md_paths: list[str], runner: Callable[..., Any] | None = 
     if result.returncode == 0:
         return []
 
+    # markdownlint-cli2 writes findings to stderr as
+    # `file.md:3:81 error MD013/line-length Line length [...]`, with the column
+    # and the severity word optional. This used to read stdout only, expect
+    # `file:line:col MD001 msg`, and drop everything else -- exit 1, no
+    # findings, L1 green: markdownlint had never failed a file.
     findings = []
-    # Parse markdownlint output: file.md:123:4 MD001 message
-    for line in result.stdout.split('\n'):
-        if not line.strip():
-            continue
-        # Match pattern: file.md:line:col rule message
-        match = re.match(r'^([^:]+):(\d+):\d+ (\w+) (.+)$', line)
+    output = '\n'.join(s for s in (result.stdout, result.stderr) if isinstance(s, str) and s)
+    for line in output.split('\n'):
+        match = _MDL_LINE.match(line.strip())
         if match:
             findings.append({
                 'rule': 'SG105',
-                'file': match.group(1),
-                'line': int(match.group(2)),
-                'message': f"{match.group(3)}: {match.group(4)}"
+                'file': match.group('file'),
+                'line': int(match.group('line')),
+                'message': f"{match.group('rule')}: {match.group('msg')}"
             })
+
+    if not findings:
+        findings.append({'rule': 'SG105', 'file': '', 'line': 0,
+                         'message': f'markdownlint exited {result.returncode}: {output.strip()[:500]}'})
 
     return findings
 

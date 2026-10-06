@@ -98,6 +98,7 @@ What each rule found the first time it ran for real, so you know they bite:
 | SG502 | The AC's tests fail in the L5 sandbox before any mutation | The old sandbox flattened every module into one folder; specgate's own tests could not run there, so every mutant counted as killed and L5 measured nothing |
 | SG503 | An AC's code has nothing L5 can mutate | Otherwise `0/0 mutants killed` reads as a pass |
 | SG102 | mypy failed, including a failure that names no file | mypy used to be run on the literal name `specgate`, answered "Cannot read file", and L1 stayed green |
+| SG105 | markdownlint failed, including output that names no file | markdownlint-cli2 reports on stderr as `f.md:3:81 error MD013/line-length ...`; the parser read stdout in another format, so markdownlint never failed a file. MD013 is off in `.markdownlint-cli2.jsonc` because prose here is not hard-wrapped |
 
 Known limits:
 

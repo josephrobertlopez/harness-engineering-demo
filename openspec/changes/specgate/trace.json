@@ -331,47 +331,47 @@
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_check_ruff_empty_json_array",
-        "line": 460
+        "line": 489
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_check_mypy_multiple_lines",
-        "line": 473
+        "line": 502
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_check_with_none_runner",
-        "line": 492
+        "line": 521
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_check_banned_tokens_multiple_in_file",
-        "line": 513
+        "line": 542
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_check_banned_tokens_expectedfailure",
-        "line": 528
-      },
-      {
-        "file": "plugins/specgate/tests/test_cov_l1.py",
-        "function": "test_marker_only_file_has_no_sg101",
         "line": 557
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_marker_only_file_has_no_sg101",
+        "line": 586
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_real_commented_out_code_still_flagged",
-        "line": 562
+        "line": 591
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_marker_exemption_is_per_line",
-        "line": 567
+        "line": 596
       },
       {
         "file": "plugins/specgate/tests/test_cov_l1.py",
         "function": "test_unreadable_or_out_of_range_rows_are_not_markers",
-        "line": 572
+        "line": 601
       },
       {
         "file": "plugins/specgate/tests/test_l1_static.py",
@@ -399,22 +399,22 @@
       {
         "file": "plugins/specgate/src/specgate/l1_static.py",
         "function": "check_ruff",
-        "line": 35
+        "line": 39
       },
       {
         "file": "plugins/specgate/src/specgate/l1_static.py",
         "function": "check_mypy",
-        "line": 98
+        "line": 102
       },
       {
         "file": "plugins/specgate/src/specgate/l1_static.py",
         "function": "check_vulture",
-        "line": 154
+        "line": 158
       },
       {
         "file": "plugins/specgate/src/specgate/l1_static.py",
         "function": "check_banned_tokens",
-        "line": 201
+        "line": 205
       }
     ]
   },
@@ -1786,6 +1786,16 @@
         "line": 443
       },
       {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_reads_cli2_stderr_format",
+        "line": 461
+      },
+      {
+        "file": "plugins/specgate/tests/test_cov_l1.py",
+        "function": "test_check_markdownlint_against_a_real_violation",
+        "line": 471
+      },
+      {
         "file": "plugins/specgate/tests/test_l1_static.py",
         "function": "test_markdownlint_with_injected_runner",
         "line": 156
@@ -1796,7 +1806,7 @@
       {
         "file": "plugins/specgate/src/specgate/l1_static.py",
         "function": "check_markdownlint",
-        "line": 245
+        "line": 249
       }
     ]
   }

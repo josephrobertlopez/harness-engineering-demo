@@ -441,7 +441,11 @@ class TestMarkdownlintMalformedOutput(unittest.TestCase):
 
     # covers: AC-8
     def test_check_markdownlint_malformed_output(self) -> None:
-        """Test markdownlint with malformed output."""
+        """A failing markdownlint whose output names no file:line is a tool failure.
+
+        This used to assert zero findings -- how every real markdownlint
+        failure passed L1 unseen.
+        """
         mock_runner = Mock()
         mock_runner.return_value = Mock(
             returncode=1,
@@ -450,7 +454,32 @@ class TestMarkdownlintMalformedOutput(unittest.TestCase):
         )
 
         findings = check_markdownlint(['test.md'], runner=mock_runner)
-        self.assertEqual(len(findings), 0)
+        self.assertEqual([(f['rule'], f['file']) for f in findings], [('SG105', '')])
+        self.assertIn('markdownlint exited 1: malformed output', findings[0]['message'])
+
+    # covers: AC-8
+    def test_check_markdownlint_reads_cli2_stderr_format(self) -> None:
+        """The exact shape markdownlint-cli2 v0.23 prints, on stderr."""
+        mock_runner = Mock(return_value=Mock(returncode=1, stdout='Linting: 1 file\n', stderr=(
+            'long.md:3:81 error MD013/line-length Line length [Expected: 80; Actual: 102]\n'
+            'long.md:5 error MD012/no-multiple-blanks Multiple consecutive blank lines\n')))
+        findings = check_markdownlint(['long.md'], runner=mock_runner)
+        self.assertEqual([(f['file'], f['line'], f['message'].split(':')[0]) for f in findings],
+                         [('long.md', 3, 'MD013/line-length'), ('long.md', 5, 'MD012/no-multiple-blanks')])
+
+    # covers: AC-8
+    def test_check_markdownlint_against_a_real_violation(self) -> None:
+        """No mock: real markdownlint-cli2 on a real file must produce a finding."""
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, 'bad.md').write_text('# One\n\n### Skips a level\n', encoding='utf-8')
+            old = os.getcwd()
+            os.chdir(tmp)
+            try:
+                findings = check_markdownlint(['bad.md'])
+            finally:
+                os.chdir(old)
+        self.assertIn(('bad.md', 3), [(f['file'], f['line']) for f in findings])
+        self.assertTrue(any(f['message'].startswith('MD001') for f in findings), findings)
 
 
 class TestRuffEmptyOutput(unittest.TestCase):
